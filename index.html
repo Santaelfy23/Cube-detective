@@ -46,6 +46,7 @@ body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
 .app{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+#view{display:flex;flex-direction:column;gap:16px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .brand{display:flex;flex-direction:column}
 .brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.7rem,5vw,2.3rem);margin:0;letter-spacing:.02em;line-height:1.1}
@@ -227,6 +228,19 @@ textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-
 .sd i{width:100%;max-width:30px;aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);display:block}
 .sd.on i{background:var(--folder);border:2px solid var(--folder)}
 .sd.today span,.sd.today{font-weight:700;color:var(--ink)}
+.rowsum{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
+.pp{display:block;font-weight:700;color:var(--folder);margin-bottom:6px}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;width:100%}
+.layer{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface);border-radius:8px;padding:4px}
+.layer canvas{width:100%;display:block}.layer span{font-size:.78rem;font-weight:700;color:var(--muted)}
+.challenge{background:var(--surface);border:2px solid var(--folder);border-radius:var(--r);padding:14px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.challenge.won{border-color:var(--good);background:var(--good-soft)}
+.ch-day{display:flex;flex-direction:column;align-items:center;min-width:72px}
+.ch-day b{font-family:var(--font-display);font-weight:400;font-size:2.4rem;line-height:1;color:var(--folder)}
+.ch-day span{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ch-main{flex:1 1 240px;min-width:0}
+.ch-bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin-top:6px}.ch-bar i{display:block;height:100%;background:var(--good)}
+.ocv{width:100%;display:block}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
 </style>
 </head>
@@ -306,55 +320,241 @@ function hiddenCubes(H){
   const d=ctx.getImageData(0,0,cw,ch).data,cnt=new Array(cubes.length+1).fill(0);
   for(let p=0;p<d.length;p+=4){if(d[p+2]!==200||d[p+3]!==255)continue;const id=d[p]+(d[p+1]<<8);if(id>0&&id<=cubes.length)cnt[id]++}
   const hid=new Set();cubes.forEach((cb,i)=>{if(cnt[i+1]<14)hid.add(cb.join(','))});return hid}
-function towerOrder(H){const k=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])k.push([x,y]);
-  return k.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0])}
-function towerLetters(H){const m={};towerOrder(H).forEach(([x,y],i)=>m[x+','+y]='ABCDEFGHIJKLMNOP'[i]);return m}
-/* Towers pulled apart in a row, hidden cubes in yellow */
+/* Towers are read row by row: row 1 is the back-left row, then each row in front of it. */
+function towerOrder(H){const k=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])k.push([x,y]);return k}
+function towerRows(H){const rows=[];for(let x=0;x<H.length;x++){const r=[];for(let y=0;y<H[0].length;y++)if(H[x][y])r.push([x,y]);if(r.length)rows.push(r)}return rows}
+function towerLetters(H){const m={};towerOrder(H).forEach(([x,y],i)=>m[x+','+y]='ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]||'?');return m}
+/* Each row of towers pulled apart on its own line, in its real place; gaps show as 0; hidden cubes in yellow */
 function drawLineup(canvas,H,hidden,letters,only){
-  const cols=towerOrder(H).filter(([x,y])=>!only||only.includes(x+','+y)),cubes=[],g=1.55;
-  cols.forEach(([x,y],i)=>{for(let z=0;z<H[x][y];z++)cubes.push([i*g,-i*g,z])});
-  const cw=canvas.clientWidth||300,ch=Math.round(Math.min(cw*0.62,240));
-  const ctx=setupCanvas(canvas,cw,ch),{s,T}=isoFit(cubes,cw,ch,46,16,30,30);
-  const N=PAL('cube'),HID=PAL('hid');
-  cols.forEach(([x,y],i)=>{for(let z=0;z<H[x][y];z++)paintCube(ctx,T,[i*g,-i*g,z],hidden.has(x+','+y+','+z)?HID:N);
-    const[tx,ty]=T(i*g+.5,-i*g+.5,H[x][y]);ctx.fillStyle=tok('--ink');ctx.textAlign='center';ctx.textBaseline='alphabetic';
-    ctx.font=`700 ${Math.round(Math.max(13,s*.42))}px Lexend, system-ui, sans-serif`;ctx.fillText(H[x][y],tx,ty-s*.55);
-    const[bx,by]=T(i*g+1,-i*g+1,0);badge(ctx,bx,by+Math.max(12,s*.35),Math.max(9,s*.26),letters[x+','+y])})}
+  const D=H[0].length,g=1.55,P=(x,y,z)=>[x-y,(x+y)/2-z];
+  const rows=towerRows(H).map(r=>({x:r[0][0],r:r.filter(([x,y])=>!only||only.includes(x+','+y))})).filter(o=>o.r.length);
+  const slot=(o,y)=>only?o.r.findIndex(p=>p[1]===y):y,span=o=>only?o.r.map(p=>p[1]):[...Array(D).keys()];
+  const bands=rows.map(o=>{let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;span(o).forEach(y=>{const i=slot(o,y),h=H[o.x][y];for(let z=0;z<=Math.max(h,0);z++)for(const a of[0,1])for(const b of[0,1]){const[px,py]=P(i*g+a,-i*g+b,z);mnX=Math.min(mnX,px);mxX=Math.max(mxX,px);mnY=Math.min(mnY,py);mxY=Math.max(mxY,py)}});return{...o,mnX,mxX,mnY,mxY}});
+  const cw=canvas.clientWidth||300,lab=46,padTop=22,gap=30,maxW=Math.max(...bands.map(b=>b.mxX-b.mnX)),sumH=bands.reduce((a,b)=>a+(b.mxY-b.mnY),0);
+  const s=Math.min(34,(cw-lab-16)/maxW,(560-bands.length*(gap+padTop))/sumH),ch=Math.round(bands.reduce((a,b)=>a+(b.mxY-b.mnY)*s+padTop+gap,0));
+  const ctx=setupCanvas(canvas,cw,ch),N=PAL('cube'),HID=PAL('hid'),allRows=towerRows(H);let y0=0;
+  bands.forEach(B=>{const ox=lab+8-s*B.mnX,oy=y0+padTop-s*B.mnY,T=(x,y,z)=>{const[px,py]=P(x,y,z);return[ox+px*s,oy+py*s]};
+    ctx.fillStyle=tok('--muted');ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='700 12px Lexend, system-ui, sans-serif';
+    ctx.fillText('Row '+(allRows.findIndex(r=>r[0][0]===B.x)+1),4,oy+s*((B.mnY+B.mxY)/2));
+    span(B).forEach(y=>{const i=slot(B,y),h=H[B.x][y];
+      if(!h){ctx.save();ctx.setLineDash([4,3]);ctx.strokeStyle=tok('--muted');ctx.lineWidth=1.4;ctx.beginPath();[[0,0],[1,0],[1,1],[0,1]].forEach(([a,b],k)=>{const q=T(i*g+a,-i*g+b,0);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.stroke();ctx.restore();
+        const[cx,cy]=T(i*g+.5,-i*g+.5,0);ctx.fillStyle=tok('--muted');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 ${Math.round(Math.max(11,s*.4))}px Lexend, system-ui, sans-serif`;ctx.fillText('0',cx,cy);return}
+      for(let z=0;z<h;z++)paintCube(ctx,T,[i*g,-i*g,z],hidden.has(B.x+','+y+','+z)?HID:N)});
+    span(B).forEach(y=>{const i=slot(B,y),h=H[B.x][y];if(!h)return;const[tx,ty]=T(i*g+.5,-i*g+.5,h);ctx.fillStyle=tok('--ink');ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      ctx.font=`700 ${Math.round(Math.max(12,s*.45))}px Lexend, system-ui, sans-serif`;ctx.fillText(`${letters[B.x+','+y]} ${h}`,tx,ty-s*.5)});
+    y0+=(B.mxY-B.mnY)*s+padTop+gap})}
 function towerNotes(H,{given=null,timeout=false,wrong=null}={}){
   const hid=hiddenCubes(H),t=total(H),letters=towerLetters(H),order=towerOrder(H);
   const per=order.map(([x,y])=>{let n=0;for(let z=0;z<H[x][y];z++)if(hid.has(`${x},${y},${z}`))n++;return{k:x+','+y,L:letters[x+','+y],h:H[x][y],n}});
   const worst=per.slice().sort((a,b)=>b.n-a.n)[0],seen=t-hid.size;
-  const sum=per.map(p=>`${p.L}&nbsp;${p.h}`).join(' + ')+` = <b>${t}</b>`;
+  const rows=towerRows(H),rowSum=r=>r.reduce((a,[x,y])=>a+H[x][y],0);
+  const sum=`<ul class="rowsum">${rows.map((r,i)=>`<li><b>Row ${i+1}:</b> ${r.map(([x,y])=>`${letters[x+','+y]}&nbsp;${H[x][y]}`).join(' + ')} = <b>${rowSum(r)}</b></li>`).join('')}</ul><p><b>Total:</b> ${rows.map(rowSum).join(' + ')} = <b>${t}</b></p>`;
   let what,trap;
   if(wrong){const w=per.filter(p=>wrong.includes(p.k));
     what=`Look at tower${w.length>1?'s':''} ${w.map(p=>`<b>${p.L}</b> (${p.h} high${p.n?`, ${p.n} hidden`:''})`).join(', ')}. In the picture on the right, the towers are pulled apart so you can see every cube.`;
     trap=w.some(p=>p.n)?`<b>Hidden supporters.</b> The yellow cubes are covered by towers in front. You can’t see them, but the cube on top can’t float, so they must be there.`:`<b>Counting levels.</b> Find the tower’s top face, then count each level down to the floor. Use a neighbouring tower to help line up the levels.`}
   else{
     what=`${timeout?'Time ran out.':`You said <b>${given}</b>.`} There are <b>${t}</b> cubes. You can see ${seen} of them${hid.size?`; the other <b>${hid.size}</b> are hidden (yellow <span class="key"></span> in the pictures)`:', nothing is hidden in this one'}.${worst&&worst.n?` Tower <b>${worst.L}</b> is ${worst.h} high, but only ${worst.h-worst.n} of its cubes show.`:''}`;
-    trap=timeout?`<b>Counting one by one is slow.</b> Tower numbers are quicker: one number per floor square, then add.`:
+    trap=timeout?`<b>Counting one by one is slow.</b> Tower numbers are quicker: jot one number per tower on paper, row by row, then add.`:
       given<t?(hid.size?`<b>Hidden supporters.</b> You were ${t-given} short. Cubes under tall towers are covered by the towers in front. The top cube can’t float, so the ones underneath must be there.`:`<b>Adding slip.</b> You were ${t-given} short. Add the tower numbers again, one row at a time.`):
       `<b>Counting twice.</b> You were ${given-t} over. A cube seen from the front and again from the side gets counted twice. Counting each tower once, by its height, stops this.`}
   return{html:`<div class="notes"><h3>Case notes</h3>
-    <div class="figs"><figure class="fig" style="margin:0"><canvas id="nA"></canvas><figcaption>Each tower gets a letter</figcaption></figure>
-    <figure class="fig" style="margin:0"><canvas id="nB"></canvas><figcaption>Towers pulled apart: hidden cubes in yellow</figcaption></figure></div>
+    <div class="figs"><figure class="fig" style="margin:0"><canvas id="nA"></canvas><figcaption>Each tower gets a letter, row by row from the back</figcaption></figure>
+    <figure class="fig" style="margin:0"><canvas id="nB"></canvas><figcaption>Each row pulled apart · hidden cubes in yellow · gaps are 0</figcaption></figure></div>
     <div class="nb"><h4>What happened</h4><p>${what}</p></div>
-    <div class="nb trick"><h4>The trick: Tower Method</h4><p>${sum}</p><p><b>Quick elimination:</b> the cubes you can see (${seen}) are the smallest possible answer, so cross out anything lower straight away.</p></div>
+    <div class="nb trick"><h4>The trick: Tower Method, row by row</h4>${sum}<p><b>On paper:</b> write one line per row, like the list above, then add the row totals. Don’t try to hold it all in your head.</p><p><b>Odd shapes:</b> a gap in the floor is a tower of 0, so skip it. Tall towers at the front hide whole cubes behind them; the tops still show you every tower.</p><p><b>Quick elimination:</b> the cubes you can see (${seen}) are the smallest possible answer, so cross out anything lower straight away.</p></div>
     <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
    draw:()=>{const a=$('#nA'),b=$('#nB');if(a)drawStack(a,H,{letters,hidden:hid,maxH:260});if(b)drawLineup(b,H,hid,letters,wrong)}}}
+/* ============ Brick stacks: blocks that are not single cubes ============ */
+/* A stack is a list of blocks; each block is a list of unit cells [x,y,z]. Every block is fully held up, and every block
+   shows at least a little of itself, so the count can always be worked out from the picture. */
+/* Like the exam: every stack uses ONE block shape (long bars, longer bars, or thick slabs), turned different ways. No single cubes. */
+const BLOCK_SHAPES={bar:{dims:[1,1,2],name:'long bars (2 cubes long)'},bar3:{dims:[1,1,3],name:'longer bars (3 cubes long)'},slab:{dims:[1,2,2],name:'thick slabs (2 by 2)'}};
+const BRICK_CFG=[{layers:2,upright:0,min:5,max:9,shapes:{bar:{w:4,d:3,fill:[.9,.7]}}},
+  {layers:3,upright:.2,min:8,max:14,shapes:{bar:{w:3,d:3,fill:[.8,.6,.45]},slab:{w:4,d:4,fill:[.9,.7,.55]}}},
+  {layers:4,upright:.3,min:10,max:18,shapes:{bar:{w:4,d:4,fill:[.6,.45,.35,.3]},slab:{w:5,d:4,fill:[.6,.45,.35,.3]},bar3:{w:5,d:4,fill:[.6,.45,.35,.3]}}}];
+function orientations(dims,allowUp){const[a,b,c]=dims,set=new Map();
+  [[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]].forEach(([dx,dy,dz])=>{if(dz>1&&!allowUp)return;set.set(dx+','+dy+','+dz,[dx,dy,dz])});return[...set.values()]}
+function genBrickRaw(level,shape){const C=BRICK_CFG[level];shape=shape||pick(Object.keys(C.shapes));const c={...C,...C.shapes[shape]},dims=BLOCK_SHAPES[shape].dims,occ=new Map(),blocks=[],K=(x,y,z)=>x+','+y+','+z;
+  const free=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<c.w&&y<c.d&&z<c.layers&&!occ.has(K(x,y,z)),held=(x,y,z)=>z===0||occ.has(K(x,y,z-1));
+  for(let z=0;z<c.layers;z++){const cells=shuffle([...Array(c.w*c.d).keys()].map(i=>[i%c.w,Math.floor(i/c.w)]));
+    for(const[x,y]of cells){if(!free(x,y,z)||!held(x,y,z)||Math.random()>c.fill[z])continue;
+      const ors=shuffle(orientations(dims,Math.random()<c.upright));
+      for(const[dx,dy,dz]of ors){let placed=false;for(const[ox,oy]of shuffle([[0,0],[1-dx,0],[0,1-dy],[1-dx,1-dy]])){
+          const cs=[];for(let i=0;i<dx;i++)for(let j=0;j<dy;j++)for(let k=0;k<dz;k++)cs.push([x+ox+i,y+oy+j,z+k]);
+          if(cs.every(p=>free(...p))&&cs.filter(p=>p[2]===z).every(p=>held(...p))){cs.forEach(p=>occ.set(K(...p),blocks.length));blocks.push(cs);placed=true;break}}
+        if(placed)break}}}
+  return{w:c.w,d:c.d,blocks,occ,shape}}
+/* sample what the viewer sees of each block */
+function brickSight(S){const P=(x,y,z)=>[x-y,(x+y)/2-z],cubes=[];S.blocks.forEach((b,bi)=>b.forEach(c=>cubes.push({c,bi})));
+  cubes.sort((a,b)=>(a.c[0]+a.c[1]+a.c[2])-(b.c[0]+b.c[1]+b.c[2])||a.c[2]-b.c[2]);
+  const polys=cubes.map(({c})=>{const f=cubeFaces(...c);return[f.top,f.l,f.r].map(pts=>pts.map(p=>P(...p)))});
+  const inside=(q,poly)=>{let sgn=0;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],cr=(b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]);if(Math.abs(cr)<1e-9)continue;const s2=Math.sign(cr);if(sgn&&s2!==sgn)return false;sgn=s2}return true};
+  const vis=S.blocks.map(()=>({n:0,pts:[]})),G=[.2,.5,.8];
+  cubes.forEach(({c:[x,y,z],bi},i)=>{const faces=[u=>[x+u[0],y+u[1],z+1],u=>[x+u[0],y+1,z+u[1]],u=>[x+1,y+u[0],z+u[1]]];
+    faces.forEach((F,fi)=>G.forEach(u=>G.forEach(v=>{const p=F([u,v]),q=P(...p);let hid=false;for(let j=i+1;j<cubes.length&&!hid;j++){if(cubes[j].bi===bi)continue;for(const poly of polys[j])if(inside(q,poly)){hid=true;break}}
+      if(!hid){vis[bi].n++;vis[bi].pts.push({p,fi})}})))});
+  return vis}
+function genBricks(level){const c=BRICK_CFG[level],shape=pick(Object.keys(c.shapes));let best=null,alt=null;
+  for(let t=0;t<1500;t++){const S=genBrickRaw(level,shape);const n=S.blocks.length;if(n>c.max)continue;
+    const vis=brickSight(S);if(vis.some(v=>v.n<3))continue;S.vis=vis;S.peek=vis.map((v,i)=>v.n<=8?i:-1).filter(i=>i>=0);
+    if(n<c.min){if(!alt||n>alt.blocks.length)alt=S;continue}
+    if(level>0&&!S.peek.length){best=best||S;continue}return S}
+  if(best||alt)return best||alt;const F=genBrickRaw(level,shape);F.vis=brickSight(F);F.peek=[];return F}
+/* draw: each block drawn as one solid piece, only its outline edges stroked. opt.layer draws one layer on its own, set on the floor. */
+function drawBricks(canvas,S,opt={}){const P=(x,y,z)=>[x-y,(x+y)/2-z],K=(x,y,z)=>x+','+y+','+z,cubes=[],dz=opt.layer||0;
+  const only=opt.layer!=null?S.blocks.map((b,i)=>Math.min(...b.map(p=>p[2]))===opt.layer?i:-1).filter(i=>i>=0):null;
+  S.blocks.forEach((b,bi)=>{if(only&&!only.includes(bi))return;b.forEach(([x,y,z])=>cubes.push({c:[x,y,z-dz],bi}))});
+  cubes.sort((a,b)=>(a.c[0]+a.c[1]+a.c[2])-(b.c[0]+b.c[1]+b.c[2])||a.c[2]-b.c[2]);
+  const cw=canvas.clientWidth||400,ch=Math.round(Math.min(cw*(opt.ratio||.78),opt.maxH||380)),ctx=setupCanvas(canvas,cw,ch);
+  const fit=opt.layer!=null?[...S.blocks.flat().map(([x,y])=>[x,y,0]),...cubes.map(o=>o.c),[0,0,1]]:cubes.map(o=>o.c);
+  const{s,T}=isoFit(fit,cw,ch,opt.maxS||52,12,14,10);
+  const same=(bi,x,y,z)=>S.occ.get(K(x,y,z+dz))===bi&&(!only||only.includes(bi));
+  const N=PAL('cube'),HL=PAL('hl'),HID=PAL('hid');
+  for(const{c:[x,y,z],bi}of cubes){const col=(opt.peek&&opt.peek.includes(bi))?HID:(opt.hot&&opt.hot.includes(bi))?HL:N;
+    const faces=[['top',[[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]],[[0,-1,0],[1,0,0],[0,1,0],[-1,0,0]],[0,0,1]],
+      ['l',[[x,y+1,z],[x+1,y+1,z],[x+1,y+1,z+1],[x,y+1,z+1]],[[0,0,-1],[1,0,0],[0,0,1],[-1,0,0]],[0,1,0]],
+      ['r',[[x+1,y,z],[x+1,y+1,z],[x+1,y+1,z+1],[x+1,y,z+1]],[[0,0,-1],[0,1,0],[0,0,1],[0,-1,0]],[1,0,0]]];
+    for(const[k,pts,nbr,out]of faces){if(same(bi,x+out[0],y+out[1],z+out[2]))continue;
+      const q=pts.map(p=>T(...p));ctx.beginPath();q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=col[k];ctx.fill();
+      ctx.lineJoin='round';
+      for(let e=0;e<4;e++){const d=nbr[e],inner=same(bi,x+d[0],y+d[1],z+d[2]);ctx.strokeStyle=inner?col[k]:tok('--cube-line');ctx.lineWidth=inner?2.4:1.8;
+        ctx.beginPath();ctx.moveTo(q[e][0],q[e][1]);ctx.lineTo(q[(e+1)%4][0],q[(e+1)%4][1]);ctx.stroke()}}}
+  if(opt.numbers){const r=Math.max(8,s*.22);
+    if(opt.layer!=null)S.blocks.forEach((b,bi)=>{if(!only.includes(bi))return;const top=Math.max(...b.map(p=>p[2]));const tc=b.filter(p=>p[2]===top);const cx=tc.reduce((a,p)=>a+p[0],0)/tc.length,cy=tc.reduce((a,p)=>a+p[1],0)/tc.length;
+      const[px,py]=T(cx+.5,cy+.5,top+1-dz);badge(ctx,px,py,r,bi+1)});
+    else{const vis=S.vis||brickSight(S),placed=[];S.blocks.forEach((b,bi)=>{const v=vis[bi];if(!v||!v.pts.length)return;
+      const cands=[...v.pts.filter(o=>o.fi===0),...v.pts.filter(o=>o.fi!==0)].map(o=>T(...o.p));
+      let best=cands[0],bd=-1;for(const c of cands){const d=Math.min(1e9,...placed.map(p=>Math.hypot(p[0]-c[0],p[1]-c[1])));if(d>bd){bd=d;best=c}if(d>r*2.6)break}
+      placed.push(best);badge(ctx,best[0],best[1],r,bi+1)})}}
+  return{s,T}}
+const brickLayers=S=>{const L=[];S.blocks.forEach((b,i)=>{const z=Math.min(...b.map(p=>p[2]));(L[z]=L[z]||[]).push(i)});return L.map(x=>x||[])};
+function brickNotes(S,{given=null,timeout=false}={}){const t=S.blocks.length,L=brickLayers(S),vis=S.vis||brickSight(S);
+  const peek=vis.map((v,i)=>v.n<=8?i:-1).filter(i=>i>=0),shapeName=BLOCK_SHAPES[S.shape]?BLOCK_SHAPES[S.shape].name:'blocks';
+  const what=`${timeout?'Time ran out.':`You said <b>${given}</b>.`} There are <b>${t}</b> blocks, all the same shape: ${shapeName}.${peek.length?` Block${peek.length>1?'s':''} ${peek.map(i=>`<b>${i+1}</b>`).join(', ')} only show${peek.length>1?'':'s'} a small part (yellow).`:''}`;
+  const trap=timeout?'<b>Counting at random is slow.</b> Go layer by layer and jot each layer’s count on paper.':
+    given<t?`<b>Missed blocks.</b> You were ${t-given} short. ${peek.length?'Some blocks only peek out from behind or under others. ':''}Go layer by layer and check every corner of each layer.`:
+    `<b>Counted a block twice.</b> You were ${given-t} over. A big block shows its top, front and side, and can look like two cubes. If there’s no line across a face, it’s still one block. Every block is the same size, so check each one is the full size.`;
+  const sum=`<ul class="rowsum">${L.map((ids,z)=>`<li><b>Layer ${z+1}${z===0?' (bottom)':z===L.length-1?' (top)':''}:</b> ${ids.length} block${ids.length===1?'':'s'} <span class="muted">(${ids.map(i=>i+1).join(', ')})</span></li>`).join('')}</ul><p><b>Total:</b> ${L.map(l=>l.length).join(' + ')} = <b>${t}</b></p>`;
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0"><canvas id="bA"></canvas><figcaption>Every block numbered once · yellow = only a small part shows</figcaption></figure>
+    <figure class="fig" style="margin:0"><div class="layers" id="bL">${L.map((ids,z)=>`<div class="layer"><canvas id="bL${z}"></canvas><span>Layer ${z+1}: ${ids.length}</span></div>`).join('')}</div><figcaption>The layers pulled apart, bottom to top</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: layer by layer, on paper</h4>${sum}<p><b>Know the block first:</b> every block in a stack is the same shape, just turned different ways. Work out its size from one block you can see clearly. <b>Spot each block’s ends:</b> a line across a face is where one block stops; no line means it’s still the same block.</p></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
+   draw:()=>{const a=$('#bA');if(a)drawBricks(a,S,{numbers:true,peek,maxH:300});L.forEach((ids,z)=>{const c=$('#bL'+z);if(c)drawBricks(c,S,{layer:z,numbers:true,ratio:.72,maxH:170,maxS:34})})}}}
+
+/* ============ Bonus round: rotated blocks ============ */
+/* A shape of joined cubes. The right answer is the same shape turned; traps are its mirror image, a shape with one cube moved,
+   and a shape with one cube more or less. Every cube in every picture shows at least a little, so the pictures can be trusted. */
+const ck=c=>c.join(',');
+const normC=cs=>{const m=[0,1,2].map(i=>Math.min(...cs.map(c=>c[i])));return cs.map(c=>c.map((v,i)=>v-m[i]+0))};
+const rotC=(R,cs)=>normC(cs.map(c=>mvec(R,c)));
+const keyC=cs=>normC(cs).map(ck).sort().join(';');
+const canonC=cs=>ROT24.map(R=>keyC(rotC(R,cs))).sort()[0];
+const mirrorC=cs=>normC(cs.map(([x,y,z])=>[-x,y,z]));
+const N6=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const nbrsC=(cs,c)=>N6.map(d=>[c[0]+d[0],c[1]+d[1],c[2]+d[2]]).filter(p=>cs.some(q=>ck(q)===ck(p)));
+function connectedC(cs){if(!cs.length)return false;const seen=new Set([ck(cs[0])]),q=[cs[0]];while(q.length){const c=q.pop();nbrsC(cs,c).forEach(p=>{if(!seen.has(ck(p))){seen.add(ck(p));q.push(p)}})}return seen.size===cs.length}
+function growC(n){const cs=[[0,0,0]];while(cs.length<n){const c=pick(cs),d=pick(N6),p=[c[0]+d[0],c[1]+d[1],c[2]+d[2]];if(!cs.some(q=>ck(q)===ck(p)))cs.push(p)}return normC(cs)}
+const span=cs=>[0,1,2].map(i=>Math.max(...cs.map(c=>c[i]))+1);
+/* cubes the viewer can see at least part of */
+function cubeSight(cs){const P=(x,y,z)=>[x-y,(x+y)/2-z],order=cs.map((c,i)=>({c,i})).sort((a,b)=>(a.c[0]+a.c[1]+a.c[2])-(b.c[0]+b.c[1]+b.c[2])||a.c[2]-b.c[2]);
+  const polys=order.map(({c})=>{const f=cubeFaces(...c);return[f.top,f.l,f.r].map(pts=>pts.map(p=>P(...p)))});
+  const inside=(q,poly)=>{let sgn=0;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],cr=(b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]);if(Math.abs(cr)<1e-9)continue;const s2=Math.sign(cr);if(sgn&&s2!==sgn)return false;sgn=s2}return true};
+  const seen=new Array(cs.length).fill(0),G=[.25,.5,.75];
+  order.forEach(({c:[x,y,z],i},k)=>{[u=>[x+u[0],y+u[1],z+1],u=>[x+u[0],y+1,z+u[1]],u=>[x+1,y+u[0],z+u[1]]].forEach(F=>G.forEach(u=>G.forEach(v=>{const q=P(...F([u,v]));
+    for(let j=k+1;j<order.length;j++)for(const poly of polys[j])if(inside(q,poly))return;seen[i]++})))});
+  return seen}
+const allSeen=cs=>cubeSight(cs).every(n=>n>=2);
+function showRot(cs,avoidKey){for(let t=0;t<40;t++){const R=pick(ROT24),v=rotC(R,cs);if(avoidKey&&keyC(v)===avoidKey)continue;if(allSeen(v))return v}return null}
+function genRot(level){const n=[5,6,7][level];
+  for(let t=0;t<400;t++){const S=growC(n),sp=span(S);if(level>0&&sp.filter(v=>v>1).length<3)continue;if(level===0&&sp.filter(v=>v>1).length<2)continue;
+    const cS=canonC(S),M=mirrorC(S);if(canonC(M)===cS)continue;
+    const leaves=S.map((c,i)=>i).filter(i=>nbrsC(S,S[i]).length===1);if(!leaves.length)continue;
+    const marker=leaves.reduce((b,i)=>{const cen=[0,1,2].map(k=>S.reduce((a,c)=>a+c[k],0)/S.length),d=c=>c.reduce((a,v,k)=>a+(v-cen[k])**2,0);return d(S[i])>d(S[b])?i:b},leaves[0]);
+    let moved=null;for(let k=0;k<60&&!moved;k++){const li=pick(leaves.filter(i=>i!==marker).length?leaves.filter(i=>i!==marker):leaves);const rest=S.filter((_,i)=>i!==li);
+      const c=pick(rest),d=pick(N6),p=[c[0]+d[0],c[1]+d[1],c[2]+d[2]];if(rest.some(q=>ck(q)===ck(p))||ck(p)===ck(S[li]))continue;const cand=S.map((q,i)=>i===li?p:q);
+      if(!connectedC(cand))continue;const cc=canonC(cand);if(cc===cS||cc===canonC(M))continue;moved={cs:normC(cand),li}}
+    if(!moved)continue;
+    let count=null;if(Math.random()<.5){const c=pick(S),d=pick(N6),p=[c[0]+d[0],c[1]+d[1],c[2]+d[2]];if(!S.some(q=>ck(q)===ck(p)))count={cs:normC([...S,p]),dir:'+'}}
+    if(!count){const li=leaves.find(i=>i!==marker);if(li!=null)count={cs:normC(S.filter((_,i)=>i!==li)),dir:'-'}}
+    if(!count)continue;
+    const shown=showRot(S);if(!shown)continue;const opt=[{kind:'ok',cs:showRot(S,keyC(shown))},{kind:'mirror',cs:showRot(M)},{kind:'moved',cs:showRot(moved.cs)},{kind:'count',cs:showRot(count.cs),dir:count.dir}];
+    if(opt.some(o=>!o.cs))continue;
+    /* where the marker cube is in each picture, found by matching the shape */
+    const findMarker=(target,src,mi)=>{for(const R of ROT24){const v=rotC(R,src);if(keyC(v)===keyC(target))return ck(v[mi])}return null};
+    const mk={shown:findMarker(shown,S,marker),ok:findMarker(opt[0].cs,S,marker),mirror:findMarker(opt[1].cs,M,marker)};
+    const sh=shuffle(opt.slice());return{S,n,shown,opts:sh,ans:sh.findIndex(o=>o.kind==='ok'),mk}}
+  return null}
+function drawCubesOn(canvas,cs,{hl=null,maxH=260,maxS=40,ratio=.8}={}){const cw=canvas.clientWidth||200,ch=Math.round(Math.min(cw*ratio,maxH)),ctx=setupCanvas(canvas,cw,ch);
+  const order=cs.slice().sort((a,b)=>(a[0]+a[1]+a[2])-(b[0]+b[1]+b[2])||a[2]-b[2]),{T}=isoFit(order,cw,ch,maxS,10,10,10),N=PAL('cube'),H=PAL('hid');
+  order.forEach(c=>paintCube(ctx,T,c,hl&&hl===ck(c)?H:N))}
+const ROT_WHY={mirror:'is a mirror image of the shape: the arm points the other way. Turning a shape round can never make its mirror image.',
+  moved:'has one cube in a different place, so it’s a different shape.',count:'has the wrong number of cubes.'};
+function rotNotes(Q,i){const o=Q.opts[i],okI=Q.ans,mI=Q.opts.findIndex(x=>x.kind==='mirror');
+  const what=i==null?'Time ran out.':`You picked <b>${LET[i]}</b>. It ${ROT_WHY[o.kind]}${o.kind==='count'?` The shape has ${Q.n} cubes; ${LET[i]} has ${o.cs.length}.`:''}`;
+  const trap={mirror:'<b>The mirror trap.</b> It looks just like the shape, so it fools almost everyone. Pick the yellow end cube and check which side it sticks out from. In a mirror image it’s on the opposite side.',
+    moved:'<b>A moved cube.</b> The count is right and most of it matches, so check every arm, not just the first one you see.',
+    count:'<b>Not counting first.</b> Counting the cubes takes a few seconds and rules this one out straight away.'}[o?o.kind:'mirror'];
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0"><canvas id="rA"></canvas><figcaption>The shape · yellow = the end cube to track</figcaption></figure>
+    <figure class="fig" style="margin:0"><canvas id="rB"></canvas><figcaption>${LET[okI]}: the same shape turned · yellow end in the matching place</figcaption></figure>
+    <figure class="fig" style="margin:0"><canvas id="rC"></canvas><figcaption>${LET[mI]}: the mirror image · the yellow end sticks out the other side</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: count, then track one end</h4><ol style="margin:0;padding-left:20px"><li><b>Count the cubes</b> (${Q.n}). Cross out any option with a different number.</li><li><b>Pick one end cube</b> you can easily spot, like the yellow one, and see what it’s joined to.</li><li><b>Find that end in each option.</b> Is it joined the same way, on the same side? If it sticks out the other side, it’s the mirror: cross it out.</li></ol></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
+   draw:()=>{const a=$('#rA'),b=$('#rB'),c=$('#rC');if(a)drawCubesOn(a,Q.shown,{hl:Q.mk.shown,maxH:200});if(b)drawCubesOn(b,Q.opts[okI].cs,{hl:Q.mk.ok,maxH:200});if(c)drawCubesOn(c,Q.opts[mI].cs,{hl:Q.mk.mirror,maxH:200})}}}
+
+/* Stacks come in many shapes: staircases, L, T, U, plus, zigzag, split blocks, lone towers.
+   Every tower's top must be clearly visible, so the Tower Method always works. */
+function stairStack(w,d,max){const H=[...Array(w)].map(()=>Array(d).fill(0));
+  for(let x=0;x<w;x++)for(let y=0;y<d;y++){if(!x&&!y){H[0][0]=max-rnd(2);continue}
+    const cap=Math.min(x?H[x-1][y]:9,y?H[x][y-1]:9);H[x][y]=Math.max(0,cap-pick([0,0,1,1,1,2]));if(x+y>=2&&Math.random()<.12)H[x][y]=0}return H}
+const FOOTPRINTS={
+  L:(w,d)=>(x,y)=>x===0||y===d-1,
+  L2:(w,d)=>(x,y)=>x<=1&&y<=1||x===0||y===0,
+  T:(w,d)=>(x,y)=>x===0||y===Math.floor(d/2),
+  U:(w,d)=>(x,y)=>x===0||y===0||y===d-1,
+  plus:(w,d)=>(x,y)=>x===Math.floor(w/2)||y===Math.floor(d/2),
+  zig:(w,d)=>(x,y)=>Math.abs(x-y)<=1,
+  split:(w,d)=>(x,y)=>y<Math.ceil(d/2)-1?x<2:y>Math.ceil(d/2)-1&&x>=w-2,
+  ring:(w,d)=>(x,y)=>x===0||y===0||x===w-1||y===d-1,
+  lone:(w,d)=>{const keep=new Set();while(keep.size<Math.min(w*d-1,5+rnd(3)))keep.add(rnd(w)+','+rnd(d));return(x,y)=>keep.has(x+','+y)},
+  blob:(w,d)=>{const keep=new Set(['0,0']);const cells=[[0,0]];while(keep.size<Math.ceil(w*d*.6)){const[c0,c1]=pick(cells),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]),n=[c0+dx,c1+dy];
+    if(n[0]>=0&&n[1]>=0&&n[0]<w&&n[1]<d&&!keep.has(n.join(','))){keep.add(n.join(','));cells.push(n)}}return(x,y)=>keep.has(x+','+y)}};
+function shapeStack(w,d,max){const kind=pick(Object.keys(FOOTPRINTS)),inside=FOOTPRINTS[kind](w,d);
+  const H=[...Array(w)].map((_,x)=>Array(d).fill(0).map((_,y)=>inside(x,y)?1+rnd(max):0));
+  if(Math.random()<.5){const cells=[];H.forEach((c,x)=>c.forEach((h,y)=>{if(h&&x+y>=w+d-4)cells.push([x,y])}));if(cells.length){const[x,y]=pick(cells);H[x][y]=max}}
+  return H}
+function transformH(H){let G=H.map(c=>c.slice());if(Math.random()<.5)G=G.reverse();if(Math.random()<.5)G=G.map(c=>c.slice().reverse());
+  if(Math.random()<.5&&G.length===G[0].length)G=G[0].map((_,y)=>G.map(c=>c[y]));return G}
+function trimH(H){const xs=[],ys=[];H.forEach((c,x)=>c.forEach((h,y)=>{if(h){xs.push(x);ys.push(y)}}));const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  return H.slice(x0,x1+1).map(c=>c.slice(y0,y1+1))}
+/* What the viewer can see: every tower top must show clearly; count cubes that are completely hidden */
+function stackSight(H,minFrac=.45){const P=(x,y,z)=>[x-y,(x+y)/2-z],cubes=stackCubes(H),idx=new Map(cubes.map((c,i)=>[c.join(','),i]));
+  const polys=cubes.map(c=>{const f=cubeFaces(...c);return[f.top,f.l,f.r].map(pts=>pts.map(p=>P(...p)))});
+  const inside=(q,poly)=>{let sgn=0;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],cr=(b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]);if(Math.abs(cr)<1e-9)continue;const s2=Math.sign(cr);if(sgn&&s2!==sgn)return false;sgn=s2}return true};
+  const covered=(q,me)=>{for(let j=me+1;j<cubes.length;j++)for(const poly of polys[j])if(inside(q,poly))return true;return false};
+  const S=[.2,.5,.8];
+  for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++){const h=H[x][y];if(!h)continue;const me=idx.get(`${x},${y},${h-1}`);let seen=0,tot=0;
+    for(let u=.15;u<1;u+=.175)for(let v=.15;v<1;v+=.175){tot++;if(!covered(P(x+u,y+v,h),me))seen++}
+    if(seen/tot<minFrac)return{ok:false,hidden:0}}
+  let hidden=0;cubes.forEach(([x,y,z],i)=>{let vis=false;
+    for(const u of S){for(const v of S){if(covered(P(x+u,y+v,z+1),i)&&covered(P(x+u,y+1,z+v),i)&&covered(P(x+1,y+u,z+v),i))continue;vis=true;break}if(vis)break}
+    if(!vis)hidden++});
+  return{ok:true,hidden}}
+const topsVisible=H=>stackSight(H).ok;
 function genStack(level){
-  const cfg=[{w:3,d:3,max:3,min:7,maxT:16},{w:4,d:3,max:4,min:12,maxT:26},{w:4,d:4,max:5,min:18,maxT:40}][level];
-  for(let t=0;t<500;t++){
-    const H=[...Array(cfg.w)].map(()=>Array(cfg.d).fill(0));
-    for(let x=0;x<cfg.w;x++)for(let y=0;y<cfg.d;y++){
-      if(!x&&!y){H[0][0]=cfg.max-rnd(2);continue}
-      const cap=Math.min(x?H[x-1][y]:9,y?H[x][y-1]:9);
-      H[x][y]=Math.max(0,cap-pick([0,0,1,1,1,2]));
-      if(x+y>=2&&Math.random()<.12)H[x][y]=0;
-    }
+  const cfg=[{w:3,d:3,max:3,min:8,maxT:16,hid:1,tall:1},{w:4,d:4,max:4,min:15,maxT:30,hid:3,tall:3},{w:5,d:4,max:6,min:25,maxT:46,hid:6,tall:4}][level];
+  let fallback=null;
+  for(let t=0;t<900;t++){
+    let H=Math.random()<.25?stairStack(cfg.w,cfg.d,cfg.max):shapeStack(cfg.w,cfg.d,cfg.max);H=trimH(transformH(H));
     let tot=0,foot=0,tall=0;for(const c of H)for(const h of c){tot+=h;if(h)foot++;if(h>=3)tall++}
-    if(tot>=cfg.min&&tot<=cfg.maxT&&foot>=4&&(level===0||tall>=2))return H;
-  }
-  return [[3,2,1],[2,1,1],[1,1,0]];
+    if(tot<cfg.min||tot>cfg.maxT||foot<4||tall<cfg.tall)continue;
+    const sight=stackSight(H);if(!sight.ok)continue;
+    if(sight.hidden>=cfg.hid)return H;if(!fallback)fallback=H}
+  return fallback||[[3,2,1],[2,1,1],[1,1,0]];
 }
 const total=H=>H.flat().reduce((a,b)=>a+b,0);
 
@@ -624,6 +824,20 @@ function droneNotes(D,i){
 function crossable(host){host.querySelectorAll('.xo').forEach(b=>b.onclick=e=>{e.stopPropagation();const c=b.closest('.copt');c.classList.toggle('out');b.setAttribute('aria-pressed',c.classList.contains('out'))})}
 function markOpts(host,ans,pickI){host.querySelectorAll('.copt').forEach((c,k)=>{c.querySelector('.pick').disabled=true;if(k===ans)c.classList.add('right');else if(k===pickI)c.classList.add('wrong')})}
 const QB={
+  rot(host,lvl=1){const Q=genRot(lvl);
+    host.innerHTML=`<p class="qtext">Which answer is the same shape, just turned? <span class="muted">Tap ✕ to cross an option out.</span></p><canvas class="stack" id="qcv"></canvas>
+      <div class="copts four">${Q.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span><canvas class="ocv" id="oc${i}"></canvas></button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+    crossable(host);const cv=host.querySelector('#qcv');const q={draw:()=>{drawCubesOn(cv,Q.shown,{maxH:240,maxS:44});Q.opts.forEach((o,i)=>{const c=host.querySelector('#oc'+i);if(c)drawCubesOn(c,o.cs,{maxH:130,maxS:26,ratio:.9})})}};q.draw();let done=false;
+    const fin=i=>{if(done)return;done=true;markOpts(host,Q.ans,i);const ok=i===Q.ans;q.onAnswer(ok,ok?null:rotNotes(Q,i),ok?'Same shape, just turned.':`The answer is ${LET[Q.ans]}.`)};
+    host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q},
+  brick(host,lvl=1,o={}){const S=genBricks(lvl),t=S.blocks.length,opts=shuffle([...new Set([t,t-1,t+1,t-2,t+2])].filter(v=>v>0)).slice(0,5);
+    host.innerHTML=`<p class="qtext">How many blocks are in this stack?</p><canvas class="stack" id="qcv"></canvas>${o.learn?'<div class="row"><button class="btn-ghost" id="hintL">Hint: show the layers</button></div><div class="layers" id="hintBox" hidden></div>':''}<div class="options">${opts.map(v=>`<button data-v="${v}">${v}</button>`).join('')}</div>`;
+    const cv=host.querySelector('#qcv'),L=brickLayers(S);let reveal=false,hintOn=false;
+    const q={draw:()=>{drawBricks(cv,S,{numbers:reveal,peek:reveal?S.peek:null,maxH:340});if(hintOn)L.forEach((ids,z)=>{const c=host.querySelector('#hL'+z);if(c)drawBricks(c,S,{layer:z,ratio:.72,maxH:160,maxS:32})})}};q.draw();
+    if(o.learn)host.querySelector('#hintL').onclick=()=>{hintOn=true;const b=host.querySelector('#hintBox');b.hidden=false;b.innerHTML=L.map((ids,z)=>`<div class="layer"><canvas id="hL${z}"></canvas><span>Layer ${z+1}</span></div>`).join('');host.querySelector('#hintL').hidden=true;q.draw()};
+    let done=false;const fin=v=>{if(done)return;done=true;reveal=true;q.draw();host.querySelectorAll('.options button').forEach(b=>{b.disabled=true;if(+b.dataset.v===t)b.classList.add('right');else if(+b.dataset.v===v)b.classList.add('wrong')});
+      q.onAnswer(v===t,v===t?null:brickNotes(S,{given:v,timeout:v==null}),`It’s ${t}.`)};
+    host.querySelectorAll('.options button').forEach(b=>b.onclick=()=>fin(+b.dataset.v));q.timeout=()=>fin(null);return q},
   count(host,lvl=1){const H=genStack(lvl),t=total(H),opts=shuffle([...new Set([t,t-1,t+1,t-2,t+2])].filter(v=>v>0)).slice(0,5);
     host.innerHTML=`<p class="qtext">How many cubes are in this stack?</p><canvas class="stack" id="qcv"></canvas><div class="options">${opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
     const cv=host.querySelector('#qcv');let labels=false;const q={draw:()=>drawStack(cv,H,{labels})};q.draw();let done=false;
@@ -654,8 +868,8 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={count:'Counting cubes',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
-const TYPE_CASE={count:'tower',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+const TYPE_NAME={rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_CASE={rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
 function runQuiz(cfg){
@@ -678,7 +892,7 @@ function runQuiz(cfg){
       $('#again').onclick=()=>runQuiz({...cfg,plan:cfg.remake?cfg.remake():plan});$('#hm').onclick=home;scrollTo(0,0);return}
     const type=plan[n];n++;
     g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${plan.length} · ${TYPE_NAME[type]}</span><span class="score">Score ${score}</span></div>${cfg.secs?'<div class="timer"><i id="bar"></i></div>':''}<div id="qh" class="qhost"></div><div id="fb"></div>`;
-    const q=QB[type]($('#qh'),cfg.level??1);QT.start();let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
+    const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn});QT.start();let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
     q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
       if(!ok)missed[type]=(missed[type]||0)+1;
       $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length?'See results':'Next →'}</button></div>`;
@@ -687,10 +901,38 @@ function runQuiz(cfg){
   };
   next()}
 const repeat=(t,k)=>Array(k).fill(t);
-function edgeCase(){runQuiz({id:'edge',tag:'Case 05 · Nets to cubes',title:'Edge Buddies',secs:60,level:1,
-  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together.</li><li><b>Edge buddies:</b> pick one symbol and check which neighbour its tip, foot or shaded corner points at.</li></ol>',
+function brickCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('brickLevel',1);
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 02 · Counting blocks</div><h2>The Odd Blocks</h2></div>
+      <div class="seg" id="blvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div></div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Every block in a stack is the same shape</strong>, like long bars or thick slabs, turned different ways. Count blocks, not cubes.
+      <ol><li><b>Know the block.</b> Find one block you can see clearly and work out its size, e.g. 2 cubes long.</li><li><b>Layer by layer.</b> Start at the bottom layer and count its blocks. Write the number down. Then the next layer up.</li>
+      <li><b>Find each block’s ends.</b> A line across a face is where one block stops. No line means it’s still the same long block, so count it once.</li>
+      <li><b>Check the corners.</b> Some blocks hide behind or under others. Look for a little end or top peeking out. Upright blocks span two layers: count them once, in the layer where they start.</li>
+      <li><b>Add the layers</b>, then pick your answer.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="bLearn">Learn: 8 questions, no timer, hints</button><button id="bExam">Exam mode: 8 timed questions</button></div></section>`;
+  const set=v=>view.querySelectorAll('#blvl button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v==String(v)));set(lv);
+  view.querySelectorAll('#blvl button').forEach(b=>b.onclick=()=>{store.set('brickLevel',+b.dataset.v);set(+b.dataset.v)});
+  const go=learn=>{const level=store.get('brickLevel',1);runQuiz({id:learn?null:'brick',tag:`Case 02 · ${learn?'Learn':'Exam mode'} · ${['Easy','Medium','Hard'][level]}`,title:'The Odd Blocks',secs:learn?0:[40,50,60][level],level,learn,
+    rule:'<span class="pp">✎ Pen and paper ready.</span><strong>Layer by layer.</strong> Count each layer’s blocks, write it down, then add. A line across a face is where one block ends.',plan:repeat('brick',8),remake:()=>repeat('brick',8)})};
+  $('#bLearn').onclick=()=>go(true);$('#bExam').onclick=()=>go(false);scrollTo(0,0)}
+function rotCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('rotLevel',1);
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 09 · Rotation</div><h2>Turn It Around</h2></div>
+      <div class="seg" id="rlvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div></div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Which answer is the same shape, just turned round?</strong>
+      <ol><li><b>Count the cubes.</b> Cross out any answer with a different number.</li>
+      <li><b>Pick one end cube</b> that’s easy to spot, and see what it’s joined to.</li>
+      <li><b>Find that end in each answer.</b> It must be joined the same way, on the same side.</li>
+      <li><b>Watch for the mirror.</b> One answer is always a mirror image. It looks right, but its arm sticks out the other side. Turning can never make a mirror image.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="rLearn">Learn: 8 questions, no timer</button><button id="rExam">Exam mode: 8 timed questions</button></div></section>`;
+  const set=v=>view.querySelectorAll('#rlvl button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v==String(v)));set(lv);
+  view.querySelectorAll('#rlvl button').forEach(b=>b.onclick=()=>{store.set('rotLevel',+b.dataset.v);set(+b.dataset.v)});
+  const go=learn=>{const level=store.get('rotLevel',1);runQuiz({id:learn?null:'rot',tag:`Bonus · Case 09 · ${learn?'Learn':'Exam mode'} · ${['Easy','Medium','Hard'][level]}`,title:'Turn It Around',secs:learn?0:45,level,learn,
+    rule:'<strong>Count, track one end, catch the mirror.</strong>',plan:repeat('rot',8),remake:()=>repeat('rot',8)})};
+  $('#rLearn').onclick=()=>go(true);$('#rExam').onclick=()=>go(false);scrollTo(0,0)}
+function edgeCase(){runQuiz({id:'edge',tag:'Case 06 · Nets to cubes',title:'Edge Buddies',secs:60,level:1,
+  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick one symbol and check which neighbour its tip, foot or shaded corner points at.</li></ol>',
   plan:repeat('edge',8),remake:()=>repeat('edge',8)})}
-function droneCase(){runQuiz({id:'drone',tag:'Case 06 · View from above',title:'Drone View',secs:45,level:1,
+function droneCase(){runQuiz({id:'drone',tag:'Case 07 · View from above',title:'Drone View',secs:45,level:1,
   rule:'<strong>Drone view.</strong><ol><li>Count width × depth. Cross out any answer that’s a different size.</li><li>One tower = one square. Heights don’t matter.</li><li>Check where the gaps are. A flipped shape is always wrong.</li></ol>',
   plan:repeat('drone',8),remake:()=>repeat('drone',8)})}
 
@@ -701,7 +943,7 @@ const REASON_WHY={dud:'it has a symbol that isn’t on the net, or a flipped one
 const TARGET={edge:40,drone:25};
 function elimCase(){
   stopTimer();$('#homeBtn').hidden=false;const ROUNDS=6,plan=shuffle([...repeat('edge',3),...repeat('drone',3)]);let n=0,clean=0;const times=[];
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 07 · Elimination</div><h2>Rule It Out</h2></div><span class="score" id="sc"></span></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 08 · Elimination</div><h2>Rule It Out</h2></div><span class="score" id="sc"></span></div>
     <div class="rule"><strong>Don’t look for the answer. Cross out the wrong ones.</strong> Tap an option, then say why it’s wrong. When only one is left, that’s your answer. Aim for no mistakes, then aim for speed: under ${TARGET.edge}s for cubes, under ${TARGET.drone}s for views from above.</div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{stopTimer();redraw=null;
@@ -735,9 +977,21 @@ function elimCase(){
 const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
 const DAILY_STAMPS=2,PLAY_CAP_MIN=40;
 const rwSettings=()=>({spc:6,limit:15,...store.get('rwset',{})});
-const MODULE_CARDS=[{key:'m1',name:'cases 01–02',items:()=>[GATES.w1[0],GATES.w1[1]]},{key:'m2',name:'cases 03–04',items:()=>[GATES.w1[2],GATES.w1[3]]},{key:'m3',name:'cases 05–07',items:()=>GATES.w2}];
+const MODULE_CARDS=[{key:'m1',name:'counting (cases 01–02)',items:()=>[GATES.w1[0],GATES.w1[1]]},{key:'m2',name:'nets (cases 03–05)',items:()=>[GATES.w1[2],GATES.w1[3],GATES.w1[4]]},{key:'m3',name:'turning, views and speed (cases 06–08)',items:()=>GATES.w2}];
 const groupDone=g=>g.items().every(c=>c.p()>=c.of);
-function checkModules(){MODULE_CARDS.forEach(g=>{if(groupDone(g))milestone(g.key,`Mastered ${g.name}`)})}
+function checkModules(){MODULE_CARDS.forEach(g=>{if(groupDone(g))milestone(g.key,`Mastered ${g.name}`)});
+  const C=challenge();if(C.done&&C.day<=10)milestone('speed10',`Bonus: learned all 8 cases in ${C.day} day${C.day===1?'':'s'}`)}
+/* The 10-day challenge: master all 8 case files within 10 days (day 1 = the start date) for a bonus card */
+function challenge(){let start=store.get('chStart',null);if(!start){const ds=Object.values(store.get('hist',{})).flat().map(r=>r.d).sort();start=ds[0]||today();store.set('chStart',start)}
+  const day=Math.floor((Date.parse(today()+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,deadline=dayStr(Date.parse(start+'T12:00:00Z')+9*864e5);
+  const items=[...GATES.w1,...GATES.w2],got=items.filter(c=>c.p()>=c.of).length;return{start,day,deadline,got,of:items.length,done:got===items.length,won:!!rewards().flags.speed10}}
+function challengeHTML(){const C=challenge(),dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}),left=10-C.day;
+  const pct=Math.round(C.got/C.of*100);
+  const msg=C.won?'<b>Challenge won!</b> All 8 cases learned. Bonus card earned.':C.done?'<b>All 8 cases learned.</b> Great work, now keep them sharp.':
+    left>=0?`<b>${left===0?'Last day!':`${left} day${left===1?'':'s'} left`}</b> to master all 8 case files by ${dl} and win a <b>bonus card</b>.`:`The 10 days have passed, but keep going: mastering all 8 cases still earns the three case cards.`;
+  return`<div class="challenge ${C.won?'won':''}"><div class="ch-day"><b>${C.day>10?'10+':C.day}</b><span>of 10 days</span></div>
+    <div class="ch-main"><div class="tag">10-day challenge</div><div class="ch-bar" role="img" aria-label="${C.got} of ${C.of} targets done"><i style="width:${pct}%"></i></div>
+      <p style="margin:6px 0 0">${C.got} of ${C.of} targets done. ${msg}</p></div></div>`}
 (function migrateRules2(){try{const raw=store.get('rw',null);if(!raw||raw.v>=2)return;
   const given=raw.given||0,keep=(raw.cards||[]).slice(0,given);
   store.set('rw',{...raw,v:2,stamps:[],cards:keep,day:{},flags:Object.fromEntries(Object.entries(raw.flags||{}).filter(([k])=>!k.startsWith('warm-')))})}catch(e){}})();
@@ -772,8 +1026,9 @@ function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.s
     <div class="col-cards"><span><b>${r.cards.length}</b> card${r.cards.length===1?'':'s'} earned of ${limit}</span><span><b>${r.given}</b> handed over</span>
       ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect! Ask a grown-up.</span>`:''}</div>
     <details><summary>How to earn cards</summary><ul class="howto">
-      <li><b>Week 1: three big cards.</b> Card 1: master cases 01–02. Card 2: master cases 03–04. Card 3: master cases 05–07. Mastered means quick and accurate on two different days; the targets are on the mastery test cards.</li>
-      <li><b>Weeks 2–3: stamps</b> (up to ${DAILY_STAMPS} a day): pass a mastery test · 17+ on the Mock Exam · a perfect 6/6 on the daily warm-up. Each can earn one stamp a day.</li>
+      <li><b>10-day challenge: master all 8 cases within 10 days for a bonus card.</b></li>
+      <li><b>Learning: three big cards.</b> Card 1: master counting (cases 01–02). Card 2: master nets (cases 03–05). Card 3: master cases 06–08. Mastered means quick and accurate on two different days; the targets are on the mastery test cards.</li>
+      <li><b>Practice: stamps</b> (up to ${DAILY_STAMPS} a day): pass a mastery test · 17+ on the Mock Exam · a perfect 6/6 on the daily warm-up. Each can earn one stamp a day.</li>
       <li><b>${spc} stamps = 1 card.</b></li>
       <li>Every finished round earns rank points. Fewer mistakes earn more. Rank is for glory: no stamps.</li></ul>
       <h4 class="tag" style="margin:8px 0 4px">Latest stamps</h4><ul class="howto">${log}</ul></details></section>`}
@@ -853,21 +1108,23 @@ const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
 /* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
-const MASTERY={tower:{min:7,of:8,secs:30,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+const MASTERY={rot:{min:7,of:8,secs:30,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
   edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
-const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=m.secs};
+const secsFor=(m,lvl)=>m.secsHard&&lvl>=2?m.secsHard:m.secs;
+const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=secsFor(m,r.lvl||0)};
 const readyDays=id=>new Set(hist(id).filter(r=>examReady(id,r)).map(r=>r.d)).size;
 const mastered=id=>readyDays(id)>=2;
 const lastRound=id=>hist(id).slice(-1)[0];
 function speedLine(id,n,of,avg,lvl=0){const m=MASTERY[id];if(!m||avg==null)return avg!=null?`<p class="muted">Average ${avg}s a question.</p>`:'';
-  const acc=n>=m.min&&lvl>=(m.lvl||0),fast=avg<=m.secs,days=readyDays(id);
+  const acc=n>=m.min&&lvl>=(m.lvl||0),tgt=secsFor(m,lvl),fast=avg<=tgt,days=readyDays(id);
   const msg=acc&&fast?(days>=2?'<b>Exam-ready: quick and accurate.</b> Case mastered. Keep it sharp in the warm-up.':`<b>Exam-ready round!</b> Do it again on another day to master this case (${days}/2 days).`):
     !acc&&!fast?`<b>Keep going.</b> Aim for ${m.label} first, then speed up.`:!acc?`<b>Fast enough. Now get ${m.label}.</b> ${m.lvl&&lvl<m.lvl?'Switch to Medium or Hard. ':''}Slow down a touch and use the trick every time.`:
-    `<b>Accurate! Now get quicker.</b> Target: ${m.secs}s or less a question.`;
+    `<b>Accurate! Now get quicker.</b> Target: ${tgt}s or less a question.`;
   return`<div class="speed ${acc&&fast?'ok':''}"><div class="sp-row"><span>Accuracy</span><b class="${acc?'y':'n'}">${n}/${of}</b><span class="muted">target ${m.label}</span></div>
-    <div class="sp-row"><span>Speed</span><b class="${fast?'y':'n'}">${avg}s</b><span class="muted">target ${m.secs}s or less a question</span></div><p style="margin:6px 0 0">${msg}</p></div>`}
+    <div class="sp-row"><span>Speed</span><b class="${fast?'y':'n'}">${avg}s</b><span class="muted">target ${tgt}s or less a question</span></div><p style="margin:6px 0 0">${msg}</p></div>`}
 const GATES={
-  w1:[{t:'Tower Count: quick and accurate (7+/8 on Medium or Hard, 30s or less a question) on 2 different days',p:()=>Math.min(2,readyDays('tower')),of:2},
+  w1:[{t:'Tower Count: 7+/8 on Medium (30s or less a question) or Hard (40s or less), on 2 different days',p:()=>Math.min(2,readyDays('tower')),of:2},
+      {t:'The Odd Blocks: 7+/8 on Medium (35s or less a question) or Hard (45s or less), on 2 different days',p:()=>Math.min(2,readyDays('brick')),of:2},
       {t:'Spot the Impostor: 9+/10 at 10s or less a shape, on 2 different days',p:()=>Math.min(2,readyDays('impostor')),of:2},
       {t:'The Missing Eleven: all 11 found',p:()=>Math.min(11,store.get('found',[]).length),of:11},
       {t:'Opposite Suspects: 7+/8 at 12s or less a question, on 2 different days',p:()=>Math.min(2,readyDays('opp')),of:2}],
@@ -877,27 +1134,29 @@ const GATES={
 const gateDone=g=>GATES[g].every(c=>c.p()>=c.of);
 const CHECKPOINTS={
   cp1:{title:'Mastery test 1: counting and nets',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
-    make:()=>shuffle([...repeat('count',4),...repeat('impostor',4),...repeat('opp',4)]),blurb:'12 mixed questions on counting, nets and opposites, timed like the exam. Pass mark 10. Earns a stamp each day you pass.'},
+    make:()=>shuffle([...repeat('count',3),...repeat('brick',3),...repeat('impostor',3),...repeat('opp',3)]),blurb:'12 mixed questions on counting cubes and blocks, nets and opposites, timed like the exam. Pass mark 10. Earns a stamp each day you pass.'},
   cp2:{title:'Mastery test 2: everything',gate:'w2',needs:null,pass:12,of:15,unlocks:'w3',secs:45,level:1,
-    make:()=>shuffle([...repeat('count',3),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',4)]),blurb:'15 mixed questions on all five question types. Pass mark 12. Earns a stamp each day you pass.'}};
+    make:()=>shuffle([...repeat('count',2),...repeat('brick',2),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',3)]),blurb:'15 mixed questions on all six question types. Pass mark 12. Earns a stamp each day you pass.'}};
 const CASES=[
-  {id:'tower',week:1,tab:'CASE 01',title:'The Tower Count',blurb:'Count stacks of cubes without missing the hidden ones. Learn the Tower Method, then race the clock.',go:()=>tower()},
-  {id:'impostor',week:1,tab:'CASE 02',title:'Spot the Impostor',blurb:'Real net or fake? Some shapes look right but can’t fold into a cube.',go:()=>impostor(),type:'impostor'},
-  {id:'hunt',week:1,tab:'CASE 03',title:'The Missing Eleven',blurb:'There are exactly 11 nets of a cube. Draw them and track them all down.',go:()=>hunt()},
-  {id:'opp',week:1,tab:'CASE 04',title:'Opposite Suspects',blurb:'Which square ends up opposite? Opposite faces can never be seen together.',go:()=>opposites()},
-  {id:'edge',week:2,tab:'CASE 05',title:'Edge Buddies',blurb:'Which cube can the net make? Rule out duds, opposites, then symbols turned the wrong way.',go:()=>edgeCase()},
-  {id:'drone',week:2,tab:'CASE 06',title:'Drone View',blurb:'What does the stack look like from above? Watch for flipped and missing squares.',go:()=>droneCase()},
-  {id:'elim',week:2,tab:'CASE 07',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option and name the reason. Quick and accurate.',go:()=>elimCase()}];
-const caseType={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+  {id:'tower',week:1,tab:'CASE 01',title:'The Tower Count',blurb:'Every block is a cube. Count the stack without missing hidden ones: learn the Tower Method, then race the clock.',go:()=>tower()},
+  {id:'brick',week:1,tab:'CASE 02',title:'The Odd Blocks',blurb:'Blocks that aren’t cubes: long bars or thick slabs, all the same shape, turned different ways. Count blocks, not cubes.',go:()=>brickCase()},
+  {id:'impostor',week:1,tab:'CASE 03',title:'Spot the Impostor',blurb:'Real net or fake? Some shapes look right but can’t fold into a cube.',go:()=>impostor(),type:'impostor'},
+  {id:'hunt',week:1,tab:'CASE 04',title:'The Missing Eleven',blurb:'There are exactly 11 nets of a cube. Draw them and track them all down.',go:()=>hunt()},
+  {id:'opp',week:1,tab:'CASE 05',title:'Opposite Suspects',blurb:'Which square ends up opposite? Opposite faces can never be seen together.',go:()=>opposites()},
+  {id:'edge',week:2,tab:'CASE 06',title:'Edge Buddies',blurb:'Which cube can the net make? Rule out duds, opposites, then symbols turned the wrong way.',go:()=>edgeCase()},
+  {id:'drone',week:2,tab:'CASE 07',title:'Drone View',blurb:'What does the stack look like from above? Watch for flipped and missing squares.',go:()=>droneCase()},
+  {id:'rot',week:3,bonus:true,tab:'BONUS · CASE 09',title:'Turn It Around',blurb:'Which answer is the same shape, just turned? Count the cubes, track one end, and catch the mirror trap.',go:()=>rotCase()},
+  {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option and name the reason. Quick and accurate.',go:()=>elimCase()}];
+const caseType={rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
   let meta;if(c.id==='hunt')meta=`${Math.min(11,store.get('found',[]).length)} of 11 found`;
   else{const L=lastRound(c.id),m=MASTERY[c.id];meta=!L?'Not started':mastered(c.id)?'<span class="mast">Mastered</span>':`Last: ${L.n}/${L.of}${L.a!=null?` · ${L.a}s`:''} · ready ${Math.min(2,readyDays(c.id))}/2 days`}
   return`<button class="folder" data-tab="${c.tab}" data-id="${c.id}">${weak?'<span class="chip">Refresh</span>':''}<h2>${c.title}</h2><p>${c.blurb}</p><div class="meta"><span>${c.tab}</span><span>${meta}</span></div></button>`}
-function nextUp(){const order=['tower','impostor','hunt','opp','edge','drone','elim'];const id=order.find(i=>i==='hunt'?store.get('found',[]).length<11:!mastered(i));
+function nextUp(){const order=['tower','brick','impostor','hunt','opp','edge','drone','elim'];const id=order.find(i=>i==='hunt'?store.get('found',[]).length<11:!mastered(i));
   if(!id)return'<div class="nextup"><b>Every case mastered.</b> Now keep it sharp: the daily warm-up and the Mock Exam every other day.</div>';
   const c=CASES.find(x=>x.id===id),L=id!=='hunt'&&lastRound(id),m=MASTERY[id];
   let why=id==='hunt'?`${store.get('found',[]).length} of 11 nets found so far.`:!L?'Not tried yet.':
-    (L.n<m.min||(L.lvl||0)<(m.lvl||0))?`Work on accuracy: aim for ${m.label}.`:L.a>m.secs?`Accurate! Now get quicker: last round ${L.a}s a question, target ${m.secs}s.`:`One more exam-ready round on another day.`;
+    (L.n<m.min||(L.lvl||0)<(m.lvl||0))?`Work on accuracy: aim for ${m.label}.`:L.a>secsFor(m,L.lvl||0)?`Accurate! Now get quicker: last round ${L.a}s a question, target ${secsFor(m,L.lvl||0)}s.`:`One more exam-ready round on another day.`;
   return`<div class="nextup"><div><div class="tag">Next case to crack</div><h3>${c.title}</h3><p class="muted" style="margin:0">${why}</p></div><button class="btn-primary" data-id="${c.id}" id="nxcase">Play</button></div>`}
 function gateHTML(k){const cp=CHECKPOINTS[k],ready=unlocked('force')||gateDone(cp.gate),passed=unlocked(cp.unlocks);
   const items=GATES[cp.gate].map(c=>{const ok=c.p()>=c.of;return`<li><span class="${ok?'y':'s'}">${ok?'✓':'○'}</span><span>${c.t}${c.of>1&&!ok?` <span class="muted">(${c.p()}/${c.of})</span>`:''}</span></li>`}).join('');
@@ -907,18 +1166,20 @@ function gateHTML(k){const cp=CHECKPOINTS[k],ready=unlocked('force')||gateDone(c
 function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
 function home(){
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
-  view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.</div>
+  view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.<br><b>Detective’s kit:</b> keep a pencil and scrap paper next to you every time you play. In the exam you can use them, so practise with them now.</div>
+  ${challengeHTML()}
   ${streakHTML()}
   ${nextUp()}
   ${collectionHTML()}
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
-  <section class="week"><h2 class="wk">Week 1 · Learn every question type</h2>
+  <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
-    <div class="folders">${CASES.map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Weeks 2–3 · Practise to exam standard</h2>
+    <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Bonus round</h2><p class="muted" style="margin:0">Extra practice for rotation questions. Not part of the 10-day challenge.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Day 11 onwards · Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
-    <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions at exam pace, 40 seconds each, with a skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Weeks 2–3</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
+    <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions at exam pace, 45 seconds each, with a skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -932,6 +1193,7 @@ function home(){
     <p style="margin:0">All case files are open. Each mastery test opens once its targets are ticked (pass marks 10/12 and 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
     <div class="row"><span><b>${rewards().cards.length}</b> cards earned · <b>${rewards().given}</b> handed over</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}</div>
     <div class="row"><label for="bonusWhy">Bonus card for</label><input id="bonusWhy" class="num" style="width:min(100%,260px);font-size:1rem" maxlength="60" placeholder="e.g. great effort this week"><button id="bonus">Give bonus card</button><span class="muted" id="bonusm"></span></div>
+    <div class="row"><label for="chs">10-day challenge started on</label><input id="chs" type="date" class="num" style="width:auto;font-size:1rem" value="${challenge().start}"></div>
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
     <div class="row"><button id="pu">Open both mastery tests now</button><span class="muted" id="puc"></span></div>
     <details><summary style="cursor:pointer;font-weight:600">Greta’s feedback (${store.get('feedback',[]).length})</summary>${feedbackHTML()}<p class="muted" style="font-size:.85rem;margin:6px 0 0">Her feedback is included in backup codes, so you can paste one to Claude to get changes made.</p></details>
@@ -940,6 +1202,7 @@ function home(){
   const nx=$('#nxcase');if(nx)nx.onclick=()=>{inCase=true;parentOpen=false;open(nx.dataset.id)};
   view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
   $('#warm').onclick=()=>{inCase=true;warmup()};
+  {const ch=$('#chs');if(ch)ch.onchange=()=>{if(/^\d{4}-\d{2}-\d{2}$/.test(ch.value)){store.set('chStart',ch.value);home()}}}
   wireBackup();
   const setRw=()=>{const spc=Math.max(1,Math.min(20,+$('#spc').value||6)),limit=Math.max(1,Math.min(99,+$('#lim').value||15));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
   {let armed=false;$('#bonus').onclick=()=>{const r=rewards();if(r.cards.length>=rwSettings().limit){$('#bonusm').textContent='Card limit reached. Raise it below first.';return}
@@ -957,21 +1220,25 @@ function home(){
 function open(id){parentOpen=false;const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
 function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',title:cp.title,secs:cp.secs,level:cp.level,pass:cp.pass,mixed:true,
   passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
-  rule:`<strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
-const CASE_TYPES={tower:['count'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
-const TRICK={count:'Tower Method: write each tower’s height on the floor plan, then add. The cubes you can see are the smallest possible answer.',
+  rule:`<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
+const CASE_TYPES={rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
+const TRICK={rot:'Count the cubes first. Then pick one end cube and check it’s joined the same way, on the same side. If it sticks out the other side, it’s the mirror image: turning can never make that.',
+  brick:'Know the block’s size first (all blocks match). Then go layer by layer on paper: count each layer’s blocks and write it down. A line across a face is where one block ends; no line means it’s the same block.',
+  count:'Tower Method: on scrap paper, write each tower’s height row by row, then add the rows. The cubes you can see are the smallest possible answer.',
   impostor:'Three checks: no line of 5, no 2×2 block, and four in a line needs one wing on each side.',
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
   edge:'Rule out in order: duds, then opposites shown together, then edge buddies (which way does the point face?).',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
-const WHY={count:'The answer options are usually just 1 or 2 apart, set to catch anyone who misses a hidden cube. The Tower Method counts every hidden cube, so it turns a close guess into a sure mark.',
+const WHY={rot:'Every rotation question hides a mirror image that looks exactly right at a glance. Tracking one end cube is the only quick way to catch it.',
+  brick:'A big block shows three faces, so it’s easy to count it twice, and blocks tucked behind others are easy to miss. Knowing the block size and counting layer by layer means every block is counted exactly once.',
+  count:'The answer options are usually just 1 or 2 apart, set to catch anyone who misses a hidden cube. The Tower Method counts every hidden cube, so it turns a close guess into a sure mark.',
   impostor:'Test-setters often put exactly the right symbols on a net that can’t fold. If you check the shape first, those options are gone in a few seconds, before you even look at the symbols.',
   opp:'Opposites are the fastest way to cut down a nets question: any cube showing an opposite pair together is wrong. Spot the pairs first and you can often cross out two options straight away.',
   edge:'The commonest trap shows three faces that really are neighbours, but with one symbol turned the wrong way. It looks right, so only checking an edge buddy catches it.',
   drone:'Wrong views are usually the right shape flipped, or with one square added, missing or moved. Counting width × depth and checking the gaps catches them in seconds.'};
 const ruleBox=(t,lead)=>`<div class="rulebox"><h4>${lead||'Rule to remember'}: ${TYPE_NAME[t]}</h4><p class="rb-rule">${TRICK[t]}</p><p class="rb-why"><b>Why it matters:</b> ${WHY[t]}</p></div>`;
 function learnedTypes(){const h=store.get('hist',{}),out=new Set();Object.entries(CASE_TYPES).forEach(([id,ts])=>{if((h[id]||[]).length||(id==='hunt'&&store.get('found',[]).length))ts.forEach(t=>out.add(t))});
-  return['count','impostor','opp','edge','drone'].filter(t=>out.has(t))}
+  return['count','brick','impostor','opp','edge','drone','rot'].filter(t=>out.has(t))}
 function lastDayTypes(){const h=store.get('hist',{}),t=today();let best=null;const by={};
   Object.entries(CASE_TYPES).forEach(([id,ts])=>(h[id]||[]).forEach(r=>{if(r.d<t){(by[r.d]=by[r.d]||new Set());ts.forEach(x=>by[r.d].add(x));if(!best||r.d>best)best=r.d}}));
   return best?[...by[best]]:[]}
@@ -987,10 +1254,10 @@ function warmup(){const types=learnedTypes();if(!types.length)return home();
   runQuiz({id:'warm',tag:'Daily warm-up',title:'Memory warm-up',secs:45,level:1,mixed:true,plan:make(),remake:make,
     rule:`<strong>Before you start, say ${recall.length>1?'these tricks':'this trick'} out loud. Then tap to check.</strong>
       ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
-      <p style="margin:8px 0 0">${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
-function mock(){const make=()=>shuffle([...repeat('count',5),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',5),...repeat('drone',4)]);
-  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Mock Exam',secs:40,level:2,mixed:true,plan:make(),remake:make,
-    rule:'<strong>20 questions at exam pace: 40 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'})}
+      <p style="margin:8px 0 0"><span class="pp">✎ Pen and paper ready, just like in the exam.</span> ${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
+function mock(){const make=()=>shuffle([...repeat('count',3),...repeat('brick',3),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',4),...repeat('drone',4)]);
+  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Mock Exam',secs:45,level:2,mixed:true,plan:make(),remake:make,
+    rule:'<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 questions at exam pace: 45 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'})}
 
 /* ============ Case 01: Tower Count ============ */
 function tower(){
@@ -1000,7 +1267,7 @@ function tower(){
       <div class="row"><div class="seg" id="mode"><button data-v="learn">Learn</button><button data-v="exam">Exam mode</button></div>
       <div class="seg" id="lvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div></div></div>
     <div class="rule"><strong>The Tower Method.</strong> Don’t count cubes, count towers.
-      <ol><li>Every floor square has one tower on it. Find each tower’s top.</li><li>Write how many cubes high it is. Cubes can’t float, so the hidden ones underneath count too.</li><li>Add up the tower numbers.</li></ol><p style="margin:6px 0 0"><b>Exam shortcut:</b> the cubes you can see are the smallest possible answer. Cross out any option below that first.</p></div>
+      <p style="margin:0 0 6px"><b>Use pen and paper.</b> Holding lots of numbers in your head is how mistakes happen. Jot each row’s numbers as you go, then add them up on paper.</p><ol><li>Every floor square has one tower on it. Find each tower’s top.</li><li>Write how many cubes high it is. Cubes can’t float, so the hidden ones underneath count too.</li><li>Add up one row at a time, then add the row totals.</li></ol><p style="margin:6px 0 0"><b>Odd shapes (L, U, gaps):</b> the method is the same. Find every tower top. A gap in the floor is a tower of 0. Watch for tall towers at the front: they hide whole cubes behind them.</p><p style="margin:6px 0 0"><b>Exam shortcut:</b> the cubes you can see are the smallest possible answer. Cross out any option below that first.</p></div>
     <div id="game"></div></section>`;
   const setSeg=(sel,v)=>view.querySelectorAll(sel+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v==String(v)));
   setSeg('#mode',mode);setSeg('#lvl',level);
@@ -1058,7 +1325,7 @@ function towerLearn(level){
     else $('#fb').innerHTML=`<div class="feedback no">Not quite. Add the numbers on the floor plan again, one row at a time.</div>`};
 }
 function towerExam(level){
-  const ROUNDS=8,SECS=45;let n=0,score=0;const g=$('#game');QT.reset();
+  const ROUNDS=8,SECS=[40,45,60][level];let n=0,score=0;const g=$('#game');QT.reset();
   const next=()=>{
     if(n===ROUNDS){stopTimer();redraw=null;const avg=QT.avg();record('tower',score,ROUNDS,level,avg);
       g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div>${speedLine('tower',score,ROUNDS,avg,level)}<p>${score>=7?'Sharp detective work.':score>=5?'Good. Use the Tower Method on every stack, even easy-looking ones.':'Switch to Learn for a few stacks, then try again.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=()=>towerExam(level);return}
@@ -1088,7 +1355,7 @@ function towerExam(level){
 /* ============ Case 02: Impostor ============ */
 function impostor(){
   const ROUNDS=10;let n=0,score=0;QT.reset();
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 02 · Nets of cubes</div><h2>Spot the Impostor</h2></div><span class="score" id="sc"></span></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 03 · Nets of cubes</div><h2>Spot the Impostor</h2></div><span class="score" id="sc"></span></div>
     <div class="rule"><strong>Check the shape before the symbols.</strong><ul><li><b>Four in a line?</b> One wing on each side. Both wings on the same side = fake.</li><li><b>No 2×2 block</b> of squares.</li><li><b>No line of 5</b> or more.</li></ul></div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{
@@ -1112,7 +1379,7 @@ function impostor(){
 /* ============ Case 03: The Missing Eleven ============ */
 function hunt(){
   let found=store.get('found',[]).filter(k=>NET_KEYS.includes(k));const on=new Set();
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 03 · Nets of cubes</div><h2>The Missing Eleven</h2></div><span class="score" id="cnt"></span></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 04 · Nets of cubes</div><h2>The Missing Eleven</h2></div><span class="score" id="cnt"></span></div>
     <div class="rule">Tap 6 squares to draw a net, then check it. A net that’s the same as one you’ve found, just turned or flipped, doesn’t count twice. <strong>Families:</strong> 6 × 1-4-1, 3 × 1-3-2, 1 × 2-2-2 staircase, 1 × 3-3.</div>
     <div class="stage"><div class="panel"><div class="hunt" id="grid">${[...Array(25)].map((_,i)=>`<button class="cell" id="c${i}" data-i="${i}" aria-pressed="false" aria-label="Square ${i+1}"></button>`).join('')}</div>
       <div class="row"><button class="btn-primary" id="chk" disabled>Check net</button><button class="btn-ghost" id="clr">Clear</button><span class="muted" id="n6">0 / 6 squares</span></div><div id="fb"></div></div>
@@ -1140,7 +1407,7 @@ function hunt(){
 /* ============ Case 04: Opposites ============ */
 function opposites(){
   const ROUNDS=8;let n=0,score=0;QT.reset();
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 04 · Nets of cubes</div><h2>Opposite Suspects</h2></div><span class="score" id="sc"></span></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 05 · Nets of cubes</div><h2>Opposite Suspects</h2></div><span class="score" id="sc"></span></div>
     <div class="rule"><strong>Tap the square that ends up opposite the ★.</strong><ul><li>In a straight line of three, the 1st and 3rd are opposite.</li><li>In a Z shape, the two ends are opposite, however long the middle of the Z is.</li><li>Opposite faces can never be seen together on a cube.</li></ul></div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{
