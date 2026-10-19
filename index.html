@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cube Detective</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Lexend:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+/* Layout: a detective's desk. Case-file folders on the home screen; each case is one focused working sheet. */
+:root{
+  --bg:#E9ECF2; --surface:#FFFFFF; --ink:#1B2333; --muted:#596579; --line:#D3D9E4;
+  --folder:#E3C07E; --folder-ink:#4A3510; --accent:#2B57D0; --accent-soft:#E3EAFB;
+  --good:#17804A; --good-soft:#DDF2E6; --bad:#C33227; --bad-soft:#FBE3E0;
+  --cube-top:#FBFCFE; --cube-l:#CBD3E2; --cube-r:#A8B4CA; --cube-line:#1B2333;
+  --hl-top:#BFD0FA; --hl-l:#8EA9EF; --hl-r:#6E8EE3;
+  --hid-top:#FFD970; --hid-l:#EDB93F; --hid-r:#CC9524;
+  --p1:#F5C542; --p2:#6CC4A1; --p3:#F08A7E;
+  --font-display:"Special Elite","Courier New",monospace;
+  --font-body:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151D; --surface:#1A202C; --ink:#E5E9F1; --muted:#9AA4B6; --line:#2C3445;
+  --folder:#B38E4B; --folder-ink:#1E1607; --accent:#86A6FF; --accent-soft:#222E4D;
+  --good:#4CC985; --good-soft:#163526; --bad:#FF7468; --bad-soft:#3C1D1B;
+  --cube-top:#3B4661; --cube-l:#2B3449; --cube-r:#212939; --cube-line:#C7D0E2;
+  --hl-top:#4E6AB8; --hl-l:#3A549A; --hl-r:#2E4580;
+  --hid-top:#C49A2E; --hid-l:#9C7820; --hid-r:#7A5D17;
+  --p1:#C99C24; --p2:#3E9C78; --p3:#C8645A;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151D; --surface:#1A202C; --ink:#E5E9F1; --muted:#9AA4B6; --line:#2C3445;
+  --folder:#B38E4B; --folder-ink:#1E1607; --accent:#86A6FF; --accent-soft:#222E4D;
+  --good:#4CC985; --good-soft:#163526; --bad:#FF7468; --bad-soft:#3C1D1B;
+  --cube-top:#3B4661; --cube-l:#2B3449; --cube-r:#212939; --cube-line:#C7D0E2;
+  --hl-top:#4E6AB8; --hl-l:#3A549A; --hl-r:#2E4580;
+  --hid-top:#C49A2E; --hid-l:#9C7820; --hid-r:#7A5D17;
+  --p1:#C99C24; --p2:#3E9C78; --p3:#C8645A;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.app{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.7rem,5vw,2.3rem);margin:0;letter-spacing:.02em;line-height:1.1}
+.brand p{margin:0;color:var(--muted);font-size:.92rem}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;font-weight:500}
+button:hover{border-color:var(--accent)}
+button:focus-visible,.cell:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.btn-ghost{background:transparent}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+/* home */
+.folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:22px;margin-top:8px}
+.folder{position:relative;text-align:left;background:var(--folder);color:var(--folder-ink);border:none;border-radius:4px 12px 12px 12px;padding:22px 20px 18px;display:flex;flex-direction:column;gap:8px;min-height:170px}
+.folder::before{content:attr(data-tab);position:absolute;top:-20px;left:0;background:var(--folder);border-radius:8px 8px 0 0;padding:2px 14px;font-family:var(--font-display);font-size:.85rem;letter-spacing:.06em}
+.folder:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.15)}
+.folder h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.45rem}
+.folder p{margin:0;font-size:.93rem}
+.folder .meta{margin-top:auto;font-size:.82rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px}
+.motto{background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--r);padding:14px 16px;font-size:.95rem}
+.motto b{font-family:var(--font-display);font-weight:400;font-size:1.05rem}
+/* case sheet */
+.sheet{background:var(--surface);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:16px;border:1px solid var(--line)}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.sheet-head h2{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.6rem;line-height:1.15}
+.tag{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rule{background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:.95rem}
+.rule ol,.rule ul{margin:6px 0 0;padding-left:20px}
+.rule strong{color:var(--accent)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:8px 14px;background:transparent}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.stage{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:680px){.stage{grid-template-columns:minmax(0,1fr)}}
+canvas.stack{width:100%;display:block;background:var(--bg);border-radius:10px}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h3{margin:0;font-size:1rem}
+svg{display:block;max-width:100%}
+.plan .cellp{cursor:pointer}
+.keypad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.keypad button{padding:10px 0;font-weight:600;font-variant-numeric:tabular-nums}
+input.num{font-family:inherit;font-size:1.3rem;width:110px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.feedback{border-radius:10px;padding:12px 14px;font-size:.95rem}
+.feedback.ok{background:var(--good-soft);color:var(--ink);border-left:5px solid var(--good)}
+.feedback.no{background:var(--bad-soft);color:var(--ink);border-left:5px solid var(--bad)}
+.options{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.options button{font-size:1.25rem;font-weight:600;padding:14px 0;font-variant-numeric:tabular-nums}
+.options button.right{background:var(--good-soft);border-color:var(--good)}
+.options button.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.timer{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.timer i{display:block;height:100%;background:var(--accent);width:100%}
+.score{font-variant-numeric:tabular-nums;font-weight:600}
+.stamps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stamp{font-family:var(--font-display);font-size:1.6rem;padding:16px 0;border-width:3px;letter-spacing:.12em}
+.stamp.real{color:var(--good);border-color:var(--good)}
+.stamp.fake{color:var(--bad);border-color:var(--bad)}
+.netbox{display:flex;justify-content:center;padding:16px;background:var(--bg);border-radius:10px;min-height:220px;align-items:center;position:relative}
+.verdict{position:absolute;top:12px;right:12px;font-family:var(--font-display);font-size:1.5rem;padding:4px 12px;border:3px solid currentColor;border-radius:6px;transform:rotate(-8deg);background:var(--surface)}
+.verdict.real{color:var(--good)}.verdict.fake{color:var(--bad)}
+.hunt{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:min(100%,300px);aspect-ratio:1;max-width:100%}
+.cell{border:1.5px dashed var(--line);background:var(--bg);border-radius:4px;padding:0}
+.cell[aria-pressed="true"]{background:var(--accent);border:1.5px solid var(--accent)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.slot{border:1.5px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:118px;justify-content:center;background:var(--bg)}
+.slot.found{background:var(--surface);border-color:var(--good)}
+.slot small{font-size:.72rem;font-weight:600;letter-spacing:.05em;color:var(--muted)}
+.slot .q{font-family:var(--font-display);font-size:1.8rem;color:var(--muted)}
+.slot.flash{animation:flash 1s ease}
+@keyframes flash{0%{transform:scale(1.12);box-shadow:0 0 0 4px var(--good)}100%{transform:none}}
+.done{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;padding:18px 0}
+.done .big{font-family:var(--font-display);font-size:2.4rem}
+.notes{border:1.5px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--surface)}
+.notes>h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.3rem}
+.nb{display:flex;flex-direction:column;gap:6px}
+.nb h4{margin:0;font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.nb p{margin:0}
+.nb.trick{border-left:4px solid var(--accent);padding-left:12px}
+.nb.trap{border-left:4px solid var(--bad);padding-left:12px}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.fig{background:var(--bg);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0}
+.fig canvas{width:100%;display:block}
+.fig figcaption{font-size:.82rem;color:var(--muted);text-align:center}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.checks li{display:flex;gap:8px;align-items:baseline}
+.checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
+.key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
+.qtext{margin:0;font-weight:600}
+.copts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.copts.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:620px){.copts,.copts.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.copt{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
+.copt .pick{width:100%;padding:24px 6px 8px;position:relative;min-height:110px;display:flex;align-items:center;justify-content:center}
+.copt .lbl{position:absolute;top:5px;left:8px;font-weight:700;font-size:.85rem;color:var(--muted)}
+.copt .xo{position:absolute;top:4px;right:4px;padding:2px 8px;font-size:.8rem;border-radius:8px}
+.copt.out .pick{opacity:.35}
+.copt.out .pick::after{content:"";position:absolute;inset:10% 10%;background:linear-gradient(to top right,transparent calc(50% - 2px),var(--bad) calc(50% - 2px),var(--bad) calc(50% + 2px),transparent calc(50% + 2px))}
+.copt.right .pick{border-color:var(--good);background:var(--good-soft);opacity:1}
+.copt.wrong .pick{border-color:var(--bad);background:var(--bad-soft)}
+.why{display:flex;flex-wrap:wrap;gap:4px}
+.why button{padding:6px 8px;font-size:.82rem;flex:1 1 auto}
+.tagr{font-size:.78rem;font-weight:700;color:var(--bad);text-align:center;min-height:1em}
+.tablewrap{overflow-x:auto}
+table.res{border-collapse:collapse;width:100%;font-size:.92rem}
+table.res th,table.res td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.res td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.y{color:var(--good);font-weight:700}.n{color:var(--bad);font-weight:700}.s{color:var(--muted);font-weight:700}
+.week{display:flex;flex-direction:column;gap:14px}
+.wk{font-family:var(--font-display);font-weight:400;font-size:1.35rem;margin:10px 0 0;border-bottom:1.5px solid var(--line);padding-bottom:6px}
+.folder.sealed{background:var(--line);color:var(--muted);cursor:default}
+.folder.sealed::before{background:var(--line)}
+.folder.sealed:hover{transform:none;box-shadow:none}
+.classified{align-self:flex-start;font-family:var(--font-display);color:var(--bad);border:2.5px solid var(--bad);padding:2px 10px;transform:rotate(-4deg);letter-spacing:.12em}
+.chip{position:absolute;top:12px;right:12px;background:var(--bad);color:var(--surface);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.gate{background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.gate.ready{border:2px solid var(--accent)}.gate.passed{border:1.5px solid var(--good)}
+.gate-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.gate h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.3rem}
+.warm{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.warm h3{margin:0 0 2px;font-size:1.05rem}
+.warm>div{flex:1 1 260px;min-width:0}
+.parent{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.parent summary{cursor:pointer;font-weight:600}
+.parent .row{margin-top:8px}
+.collection{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.col-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.col-head>div{flex:1 1 220px;min-width:0}
+.collection h3{margin:2px 0 6px;font-family:var(--font-display);font-weight:400;font-size:1.4rem}
+.rankbar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.rankbar i{display:block;height:100%;background:var(--folder)}
+.stampmeter{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stampmeter p{flex-basis:100%}
+.st{width:34px;height:34px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;color:var(--line);font-size:1.1rem}
+.st.on{border:2px solid var(--bad);color:var(--bad);transform:rotate(-8deg)}
+.col-cards{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-variant-numeric:tabular-nums}
+.owed{background:var(--folder);color:var(--folder-ink);font-weight:700;padding:4px 10px;border-radius:999px}
+.collection summary{cursor:pointer;font-weight:600;font-size:.92rem}
+.howto{margin:6px 0 0;padding-left:18px;font-size:.9rem;display:flex;flex-direction:column;gap:4px}
+input.num.small{width:70px;font-size:1rem;padding:6px 8px}
+#toasts{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none;z-index:20}
+.toast{background:var(--ink);color:var(--surface);padding:12px 16px;border-radius:12px;max-width:min(100%,460px);box-shadow:0 8px 24px rgba(0,0,0,.25);animation:pop .3s ease}
+.toast span{opacity:.8}
+.toast.card{background:var(--folder);color:var(--folder-ink);font-size:1.05rem}
+.toast.rank{background:var(--accent);color:var(--surface)}
+@keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Cube Detective</h1>
+      <p>Rule options out. Then pick.</p>
+    </div>
+    <button id="homeBtn" class="btn-ghost" hidden>← All case files</button>
+  </header>
+  <main id="view"></main>
+</div>
+
+<script>
+const $=(s,el=document)=>el.querySelector(s);
+const view=$('#view');
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const store={get(k,d){try{const v=localStorage.getItem('cd_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('cd_'+k,JSON.stringify(v))}catch(e){}}};
+let redraw=null, timerId=null;
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>redraw&&redraw())}catch(e){}
+new MutationObserver(()=>redraw&&redraw()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+addEventListener('resize',()=>redraw&&redraw());
+$('#homeBtn').onclick=()=>home();
+
+/* ============ 3D stack drawing ============ */
+const P3=(x,y,z)=>[x-y,(x+y)/2-z];
+function cubeFaces(x,y,z){return{top:[[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]],l:[[x,y+1,z],[x+1,y+1,z],[x+1,y+1,z+1],[x,y+1,z+1]],r:[[x+1,y,z],[x+1,y+1,z],[x+1,y+1,z+1],[x+1,y,z+1]]}}
+function stackCubes(H){const c=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)for(let z=0;z<H[x][y];z++)c.push([x,y,z]);
+  return c.sort((a,b)=>(a[0]+a[1]+a[2])-(b[0]+b[1]+b[2])||a[2]-b[2])}
+function isoFit(cubes,cw,ch,maxS,padX=20,padTop=20,padBot=20){
+  let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
+  for(const[x,y,z]of cubes)for(const a of[0,1])for(const b of[0,1])for(const c of[0,1]){const[px,py]=P3(x+a,y+b,z+c);mnX=Math.min(mnX,px);mxX=Math.max(mxX,px);mnY=Math.min(mnY,py);mxY=Math.max(mxY,py)}
+  const s=Math.min((cw-2*padX)/(mxX-mnX),(ch-padTop-padBot)/(mxY-mnY),maxS);
+  const ox=(cw-s*(mxX-mnX))/2-s*mnX,oy=padTop+((ch-padTop-padBot)-s*(mxY-mnY))/2-s*mnY;
+  return{s,T:(x,y,z)=>{const[px,py]=P3(x,y,z);return[ox+px*s,oy+py*s]}}}
+function setupCanvas(canvas,cw,ch){const dpr=window.devicePixelRatio||1;canvas.width=cw*dpr;canvas.height=ch*dpr;canvas.style.height=ch+'px';
+  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cw,ch);return ctx}
+const PAL=k=>({top:tok(`--${k}-top`),l:tok(`--${k}-l`),r:tok(`--${k}-r`)});
+function paintCube(ctx,T,cube,col){const f=cubeFaces(...cube);ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.strokeStyle=tok('--cube-line');
+  for(const[k,pts]of[['top',f.top],['l',f.l],['r',f.r]]){ctx.beginPath();pts.forEach((p,i)=>{const q=T(...p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.fillStyle=col[k];ctx.fill();ctx.stroke()}}
+function badge(ctx,cx,cy,r,text,fill){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=fill||tok('--accent');ctx.fill();
+  ctx.fillStyle=tok('--surface');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 ${Math.round(r*1.15)}px Lexend, system-ui, sans-serif`;ctx.fillText(text,cx,cy+1)}
+function drawStack(canvas,H,opt={}){
+  const cubes=stackCubes(H),cw=canvas.clientWidth||400,ch=Math.round(Math.min(cw*0.8,opt.maxH||380));
+  const ctx=setupCanvas(canvas,cw,ch),{s,T}=isoFit(cubes,cw,ch,58);
+  const N=PAL('cube'),HL=PAL('hl'),HID=PAL('hid');
+  for(const cb of cubes){const k=cb.join(',');
+    const col=(opt.hidden&&opt.hidden.has(k))?HID:(opt.highlight&&opt.highlight[0]===cb[0]&&opt.highlight[1]===cb[1])?HL:N;paintCube(ctx,T,cb,col)}
+  for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++){const h=H[x][y];if(!h)continue;const[cx,cy]=T(x+.5,y+.5,h),r=Math.max(9,s*.27);
+    if(opt.labels)badge(ctx,cx,cy,r,h);else if(opt.letters)badge(ctx,cx,cy,r,opt.letters[x+','+y])}
+}
+/* Which cubes can't be seen at all: paint each cube in its own colour off-screen and count pixels */
+function hiddenCubes(H){
+  const cubes=stackCubes(H),cw=560,ch=480,c=document.createElement('canvas');c.width=cw;c.height=ch;
+  const ctx=c.getContext('2d'),{T}=isoFit(cubes,cw,ch,64);
+  cubes.forEach((cb,i)=>{const id=i+1,f=cubeFaces(...cb);ctx.fillStyle=`rgb(${id&255},${(id>>8)&255},200)`;
+    for(const pts of[f.top,f.l,f.r]){ctx.beginPath();pts.forEach((p,j)=>{const q=T(...p);j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.fill()}});
+  const d=ctx.getImageData(0,0,cw,ch).data,cnt=new Array(cubes.length+1).fill(0);
+  for(let p=0;p<d.length;p+=4){if(d[p+2]!==200||d[p+3]!==255)continue;const id=d[p]+(d[p+1]<<8);if(id>0&&id<=cubes.length)cnt[id]++}
+  const hid=new Set();cubes.forEach((cb,i)=>{if(cnt[i+1]<14)hid.add(cb.join(','))});return hid}
+function towerOrder(H){const k=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])k.push([x,y]);
+  return k.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0])}
+function towerLetters(H){const m={};towerOrder(H).forEach(([x,y],i)=>m[x+','+y]='ABCDEFGHIJKLMNOP'[i]);return m}
+/* Towers pulled apart in a row, hidden cubes in yellow */
+function drawLineup(canvas,H,hidden,letters,only){
+  const cols=towerOrder(H).filter(([x,y])=>!only||only.includes(x+','+y)),cubes=[],g=1.55;
+  cols.forEach(([x,y],i)=>{for(let z=0;z<H[x][y];z++)cubes.push([i*g,-i*g,z])});
+  const cw=canvas.clientWidth||300,ch=Math.round(Math.min(cw*0.62,240));
+  const ctx=setupCanvas(canvas,cw,ch),{s,T}=isoFit(cubes,cw,ch,46,16,30,30);
+  const N=PAL('cube'),HID=PAL('hid');
+  cols.forEach(([x,y],i)=>{for(let z=0;z<H[x][y];z++)paintCube(ctx,T,[i*g,-i*g,z],hidden.has(x+','+y+','+z)?HID:N);
+    const[tx,ty]=T(i*g+.5,-i*g+.5,H[x][y]);ctx.fillStyle=tok('--ink');ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.font=`700 ${Math.round(Math.max(13,s*.42))}px Lexend, system-ui, sans-serif`;ctx.fillText(H[x][y],tx,ty-s*.55);
+    const[bx,by]=T(i*g+1,-i*g+1,0);badge(ctx,bx,by+Math.max(12,s*.35),Math.max(9,s*.26),letters[x+','+y])})}
+function towerNotes(H,{given=null,timeout=false,wrong=null}={}){
+  const hid=hiddenCubes(H),t=total(H),letters=towerLetters(H),order=towerOrder(H);
+  const per=order.map(([x,y])=>{let n=0;for(let z=0;z<H[x][y];z++)if(hid.has(`${x},${y},${z}`))n++;return{k:x+','+y,L:letters[x+','+y],h:H[x][y],n}});
+  const worst=per.slice().sort((a,b)=>b.n-a.n)[0],seen=t-hid.size;
+  const sum=per.map(p=>`${p.L}&nbsp;${p.h}`).join(' + ')+` = <b>${t}</b>`;
+  let what,trap;
+  if(wrong){const w=per.filter(p=>wrong.includes(p.k));
+    what=`Look at tower${w.length>1?'s':''} ${w.map(p=>`<b>${p.L}</b> (${p.h} high${p.n?`, ${p.n} hidden`:''})`).join(', ')}. In the picture on the right, the towers are pulled apart so you can see every cube.`;
+    trap=w.some(p=>p.n)?`<b>Hidden supporters.</b> The yellow cubes are covered by towers in front. You can’t see them, but the cube on top can’t float, so they must be there.`:`<b>Counting levels.</b> Find the tower’s top face, then count each level down to the floor. Use a neighbouring tower to help line up the levels.`}
+  else{
+    what=`${timeout?'Time ran out.':`You said <b>${given}</b>.`} There are <b>${t}</b> cubes. You can see ${seen} of them${hid.size?`; the other <b>${hid.size}</b> are hidden (yellow <span class="key"></span> in the pictures)`:', nothing is hidden in this one'}.${worst&&worst.n?` Tower <b>${worst.L}</b> is ${worst.h} high, but only ${worst.h-worst.n} of its cubes show.`:''}`;
+    trap=timeout?`<b>Counting one by one is slow.</b> Tower numbers are quicker: one number per floor square, then add.`:
+      given<t?(hid.size?`<b>Hidden supporters.</b> You were ${t-given} short. Cubes under tall towers are covered by the towers in front. The top cube can’t float, so the ones underneath must be there.`:`<b>Adding slip.</b> You were ${t-given} short. Add the tower numbers again, one row at a time.`):
+      `<b>Counting twice.</b> You were ${given-t} over. A cube seen from the front and again from the side gets counted twice. Counting each tower once, by its height, stops this.`}
+  return{html:`<div class="notes"><h3>Case notes</h3>
+    <div class="figs"><figure class="fig" style="margin:0"><canvas id="nA"></canvas><figcaption>Each tower gets a letter</figcaption></figure>
+    <figure class="fig" style="margin:0"><canvas id="nB"></canvas><figcaption>Towers pulled apart: hidden cubes in yellow</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: Tower Method</h4><p>${sum}</p><p><b>Quick elimination:</b> the cubes you can see (${seen}) are the smallest possible answer, so cross out anything lower straight away.</p></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
+   draw:()=>{const a=$('#nA'),b=$('#nB');if(a)drawStack(a,H,{letters,hidden:hid,maxH:260});if(b)drawLineup(b,H,hid,letters,wrong)}}}
+function genStack(level){
+  const cfg=[{w:3,d:3,max:3,min:7,maxT:16},{w:4,d:3,max:4,min:12,maxT:26},{w:4,d:4,max:5,min:18,maxT:40}][level];
+  for(let t=0;t<500;t++){
+    const H=[...Array(cfg.w)].map(()=>Array(cfg.d).fill(0));
+    for(let x=0;x<cfg.w;x++)for(let y=0;y<cfg.d;y++){
+      if(!x&&!y){H[0][0]=cfg.max-rnd(2);continue}
+      const cap=Math.min(x?H[x-1][y]:9,y?H[x][y-1]:9);
+      H[x][y]=Math.max(0,cap-pick([0,0,1,1,1,2]));
+      if(x+y>=2&&Math.random()<.12)H[x][y]=0;
+    }
+    let tot=0,foot=0,tall=0;for(const c of H)for(const h of c){tot+=h;if(h)foot++;if(h>=3)tall++}
+    if(tot>=cfg.min&&tot<=cfg.maxT&&foot>=4&&(level===0||tall>=2))return H;
+  }
+  return [[3,2,1],[2,1,1],[1,1,0]];
+}
+const total=H=>H.flat().reduce((a,b)=>a+b,0);
+
+/* ============ Net maths ============ */
+const DIRS=[[0,1,'E'],[0,-1,'W'],[1,0,'S'],[-1,0,'N']];
+const T8=[(r,c)=>[r,c],(r,c)=>[c,-r],(r,c)=>[-r,-c],(r,c)=>[-c,r],(r,c)=>[r,-c],(r,c)=>[-c,-r],(r,c)=>[-r,c],(r,c)=>[c,r]];
+function norm(cells){const mr=Math.min(...cells.map(p=>p[0])),mc=Math.min(...cells.map(p=>p[1]));return cells.map(([r,c])=>[r-mr,c-mc]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])}
+const keyOf=cells=>norm(cells).map(p=>p.join(',')).join(';');
+function canon(cells){let b=null;for(const t of T8){const k=keyOf(cells.map(([r,c])=>t(r,c)));if(b===null||k<b)b=k}return b}
+const fromKey=k=>k.split(';').map(s=>s.split(',').map(Number));
+const randomPose=cells=>{const t=pick(T8);return norm(cells.map(([r,c])=>t(r,c)))};
+function enumerate(n){
+  let set=new Map([['0,0',[[0,0]]]]);
+  for(let s=1;s<n;s++){const next=new Map();
+    for(const cells of set.values()){const has=new Set(cells.map(p=>p.join(',')));
+      for(const[r,c]of cells)for(const[dr,dc]of DIRS){const q=[r+dr,c+dc];if(has.has(q.join(',')))continue;
+        const k=canon([...cells,q]);if(!next.has(k))next.set(k,fromKey(k))}}
+    set=next}
+  return[...set.values()];
+}
+function roll(S,d){const{D,U,N,So,E,W}=S;switch(d){
+  case'E':return{D:E,E:U,U:W,W:D,N,So};case'W':return{D:W,W:U,U:E,E:D,N,So};
+  case'S':return{D:So,So:U,U:N,N:D,E,W};case'N':return{D:N,N:U,U:So,So:D,E,W}}}
+function fold(cells){
+  const idx=new Map(cells.map((p,i)=>[p.join(','),i]));const st=Array(cells.length);const face=Array(cells.length).fill(-1);
+  st[0]={D:0,U:1,N:2,So:3,E:4,W:5};face[0]=0;const q=[0];
+  while(q.length){const i=q.shift();const[r,c]=cells[i];
+    for(const[dr,dc,d]of DIRS){const j=idx.get((r+dr)+','+(c+dc));if(j===undefined||st[j])continue;st[j]=roll(st[i],d);face[j]=st[j].D;q.push(j)}}
+  return{face,valid:new Set(face).size===6};
+}
+function runs(cells){const has=new Set(cells.map(p=>p.join(',')));const out=[];
+  for(const[r,c]of cells)for(const[dr,dc]of[[0,1],[1,0]]){if(has.has((r-dr)+','+(c-dc)))continue;const line=[];let k=0;
+    while(has.has((r+dr*k)+','+(c+dc*k))){line.push([r+dr*k,c+dc*k]);k++}out.push({line,horiz:dr===0})}
+  return out}
+function block2x2(cells){const has=new Set(cells.map(p=>p.join(',')));
+  for(const[r,c]of cells)if(has.has(r+','+(c+1))&&has.has((r+1)+','+c)&&has.has((r+1)+','+(c+1)))return[[r,c],[r,c+1],[r+1,c],[r+1,c+1]];return null}
+function sameSideWings(cells){
+  const four=runs(cells).find(o=>o.line.length===4);if(!four)return null;
+  const inLine=new Set(four.line.map(p=>p.join(',')));const others=cells.filter(p=>!inLine.has(p.join(',')));
+  const lr=four.horiz?four.line[0][0]:four.line[0][1];const side=others.map(p=>Math.sign((four.horiz?p[0]:p[1])-lr));
+  return side.every(s=>s===side[0])?others:null}
+function family(cells){const rs=runs(cells);const mx=Math.max(...rs.map(o=>o.line.length));
+  if(mx===4)return'1-4-1';if(mx===2)return'2-2-2';
+  const h=rs.filter(o=>o.horiz&&o.line.length===3).length,v=rs.filter(o=>!o.horiz&&o.line.length===3).length;
+  return(h>=2||v>=2)?'3-3':'1-3-2'}
+function diagnose(cells){
+  const b=block2x2(cells);if(b)return{why:'There’s a 2×2 block. Four squares can’t all meet at one corner of a cube, so it can’t fold.',hot:b};
+  const long=runs(cells).find(o=>o.line.length>=5);if(long)return{why:`A line of ${long.line.length} squares goes all the way round the cube and overlaps itself.`,hot:long.line};
+  const f=fold(cells).face;const cnt={};f.forEach((x,i)=>(cnt[x]=cnt[x]||[]).push(i));
+  const clash=Object.values(cnt).find(a=>a.length>1)||[];const hot=clash.map(i=>cells[i]);
+  if(sameSideWings(cells))return{why:'Four in a line, but both wings are on the same side. One of them folds onto a face that’s already taken, leaving a hole on the other side.',hot};
+  return{why:'When you fold it, the two red squares land on the same face of the cube, so one face is left as a hole.',hot}}
+const ALL=enumerate(6);
+const NETS=ALL.filter(c=>fold(c).valid);
+const FAKES=ALL.filter(c=>!fold(c).valid);
+const TRAPS=FAKES.filter(c=>!block2x2(c)&&!runs(c).some(o=>o.line.length>=5)&&sameSideWings(c));
+const FAM_ORDER=['1-4-1','1-3-2','2-2-2','3-3'];
+NETS.sort((a,b)=>FAM_ORDER.indexOf(family(a))-FAM_ORDER.indexOf(family(b)));
+const NET_KEYS=NETS.map(canon);
+
+function netSVG(cells,{size=44,fill={},stroke={},marks={},click=false,markSize=0}={}){
+  const R=Math.max(...cells.map(p=>p[0]))+1,C=Math.max(...cells.map(p=>p[1]))+1,pad=3;
+  let out=`<svg viewBox="0 0 ${C*size+pad*2} ${R*size+pad*2}" width="${C*size+pad*2}" style="max-width:100%">`;
+  cells.forEach(([r,c],i)=>{const k=r+','+c;
+    out+=`<rect ${click?`data-i="${i}" style="cursor:pointer"`:''} x="${pad+c*size}" y="${pad+r*size}" width="${size}" height="${size}" fill="${fill[k]||'var(--surface)'}" stroke="${stroke[k]||'var(--ink)'}" stroke-width="${stroke[k]?3:1.6}"/>`;
+    if(marks[k])out+=`<text x="${pad+c*size+size/2}" y="${pad+r*size+size/2+1}" text-anchor="middle" dominant-baseline="middle" font-size="${markSize||size*.5}" font-weight="${markSize?600:400}" fill="var(--ink)" style="pointer-events:none;font-family:${markSize?'var(--font-body)':'var(--font-display)'}">${marks[k]}</text>`});
+  return out+'</svg>'}
+
+const FACE=['Bottom','Top','Back','Front','Right','Left'];
+const PAIRCOL=['var(--p1)','var(--p1)','var(--p2)','var(--p2)','var(--p3)','var(--p3)'],PAIRNAME=['yellow','yellow','green','green','red','red'];
+function netChecks(cells){
+  const rs=runs(cells),five=rs.find(o=>o.line.length>=5),blk=block2x2(cells),four=rs.find(o=>o.line.length===4),same=four?sameSideWings(cells):null;
+  return[{q:'Any line of 5 or more?',bad:!!five,ans:five?'Yes, so it’s fake':'No'},
+    {q:'Any 2×2 block?',bad:!!blk,ans:blk?'Yes, so it’s fake':'No'},
+    {q:'Four in a line: one wing each side?',bad:!!same,skip:!four,ans:!four?'No line of 4, so this check doesn’t apply':same?'Both wings on the same side, so it’s fake':'Yes, one each side'}]}
+function netNotes(cells,{real}){
+  const face=fold(cells).face,names={},fill={},stroke={},checks=netChecks(cells);
+  cells.forEach(([r,c],i)=>names[r+','+c]=FACE[face[i]]);
+  let what,trap;
+  if(real){cells.forEach(([r,c],i)=>fill[r+','+c]=PAIRCOL[face[i]]);
+    what=`This one <b>does</b> fold into a cube. Fold the net up around the square marked Bottom: every square lands on a different face. Same colours are opposite faces. It’s a <b>${family(cells)}</b> net, one of the 11.`;
+    trap=`<b>Looks odd, but it’s real.</b> Don’t judge by how neat a shape looks. Run the three checks below. If none of them catches it, it’s almost certainly real. The case board in The Missing Eleven shows all 11.`}
+  else{const cnt={};face.forEach((x,i)=>(cnt[x]=cnt[x]||[]).push(i));const dup=Object.entries(cnt).filter(([k,a])=>a.length>1);
+    const missing=[0,1,2,3,4,5].filter(x=>!cnt[x]).map(x=>FACE[x]);
+    dup.forEach(([k,a])=>a.forEach(i=>{const key=cells[i].join(',');fill[key]='var(--bad-soft)';stroke[key]='var(--bad)'}));
+    what=`Fold the net up around the square marked Bottom. ${dup.map(([k,a])=>`<b>${a.length} squares</b> land on the <b>${FACE[k]}</b>`).join(' and ')} (in red), so nothing covers the <b>${missing.join(' and ')}</b>. That leaves a hole, so it can’t be a cube.`;
+    trap=`<b>Six squares, but the wrong shape.</b> It has the right number of squares and looks tidy, which is why it fools people. ${checks.some(c=>c.bad)?'A quick check below catches it, so always run the checks before deciding.':'None of the quick checks catches this one, so fold it in your head: two squares on one face means fake.'}`}
+  const list=checks.map(c=>`<li><span class="${c.skip?'s':c.bad?'n':'y'}">${c.skip?'–':c.bad?'✗':'✓'}</span><span>${c.q} <span class="muted">${c.ans}</span></span></li>`).join('');
+  return`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${netSVG(cells,{size:62,fill,stroke,marks:names,markSize:12})}<figcaption>Where each square lands when you fold it</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: three quick checks</h4><ul class="checks">${list}</ul></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`}
+function oppNotes(cells,f,s,ans,clicked){
+  const idx=new Map(cells.map((p,i)=>[p.join(','),i])),prev=Array(cells.length).fill(-1),seen=new Set([s]),q=[s];
+  while(q.length){const i=q.shift();const[r,c]=cells[i];for(const[dr,dc]of DIRS){const j=idx.get((r+dr)+','+(c+dc));if(j!==undefined&&!seen.has(j)){seen.add(j);prev[j]=i;q.push(j)}}}
+  const path=[];for(let i=ans;i!==-1;i=prev[i])path.unshift(i);const pc=path.map(i=>cells[i]);
+  const straight=pc.every(p=>p[0]===pc[0][0])||pc.every(p=>p[1]===pc[0][1]);
+  const mv=[];for(let i=1;i<pc.length;i++)mv.push((pc[i][0]-pc[i-1][0])+','+(pc[i][1]-pc[i-1][1]));
+  const zig=pc.length===4&&mv[0]===mv[2]&&mv[1]!==mv[0];
+  const four=runs(cells).find(o=>o.line.length===4),inFour=k=>four&&four.line.some(p=>p.join(',')===k);
+  const wings=four&&!inFour(cells[s].join(','))&&!inFour(cells[ans].join(','));
+  let rule;
+  if(straight&&pc.length===3)rule='<b>Line of three.</b> The ★ and its opposite sit in a straight line with one square between them (blue outline). Skip the middle one.';
+  else if(zig)rule='<b>Zigzag.</b> The ★ and its opposite are the two ends of a zigzag of four squares: step, across, step (blue outline).';
+  else if(wings)rule='<b>Wings of a line of four.</b> When a net has a line of four, the two wings sticking out are always opposite. They become the top and bottom of the cube.';
+  else rule='<b>Follow the path.</b> Trace from the ★ square by square (blue outline). Its opposite is never a square it touches.';
+  const touch=Math.abs(cells[clicked][0]-cells[s][0])+Math.abs(cells[clicked][1]-cells[s][1])===1;
+  const trap=touch?'<b>Picked a neighbour.</b> Squares that touch the ★ on the net end up next to it on the cube, so they can never be opposite. Cross out every touching square first.':
+    `<b>Wrong pair.</b> The square you picked is opposite a different square (the other ${PAIRNAME[f[clicked]]} one). Always start your line or zigzag from the ★ itself.`;
+  const fill={},stroke={},marks={};cells.forEach(([r,c],j)=>fill[r+','+c]=PAIRCOL[f[j]]);
+  path.forEach(i=>stroke[cells[i].join(',')]='var(--accent)');stroke[cells[clicked].join(',')]='var(--bad)';
+  marks[cells[s].join(',')]='★';marks[cells[ans].join(',')]='✓';marks[cells[clicked].join(',')]='✗';
+  return`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${netSVG(cells,{size:54,fill,stroke,marks})}<figcaption>✓ the real opposite · ✗ your pick · same colour = opposite pair</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>You picked ✗. The square opposite the ★ is ✓.</p></div>
+    <div class="nb trick"><h4>The trick</h4><p>${rule}</p></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`}
+
+/* ============ Week 2 maths: folding nets with symbols ============ */
+function rotM(axis,q){const k=((q%4)+4)%4,c=[1,0,-1,0][k],s=[0,1,0,-1][k];
+  if(axis==='x')return[[1,0,0],[0,c,-s],[0,s,c]];if(axis==='y')return[[c,0,s],[0,1,0],[-s,0,c]];return[[c,-s,0],[s,c,0],[0,0,1]]}
+const mm=(A,B)=>A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+const tp=A=>[0,1,2].map(j=>A.map(r=>r[j]));
+const mvec=(A,v)=>A.map(r=>r[0]*v[0]+r[1]*v[1]+r[2]*v[2]+0);
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1]+0,a[2]*b[0]-a[0]*b[2]+0,a[0]*b[1]-a[1]*b[0]+0];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const neg=a=>a.map(x=>-x+0);
+const veq=(a,b)=>a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
+const ROT24=(()=>{const m=new Map();for(let a=0;a<4;a++)for(let b=0;b<4;b++)for(let c=0;c<4;c++){const M=mm(rotM('x',a),mm(rotM('y',b),rotM('z',c))).map(r=>r.map(x=>x+0));m.set(JSON.stringify(M),M)}return[...m.values()]})();
+function foldFrames(cells){const idx=new Map(cells.map((p,i)=>[p.join(','),i])),R=Array(cells.length),q=[0];R[0]=[[1,0,0],[0,1,0],[0,0,1]];
+  const step={E:rotM('y',1),W:rotM('y',-1),S:rotM('x',-1),N:rotM('x',1)};
+  while(q.length){const i=q.shift();const[r,c]=cells[i];for(const[dr,dc,d]of DIRS){const j=idx.get((r+dr)+','+(c+dc));if(j===undefined||R[j])continue;R[j]=mm(step[d],R[i]);q.push(j)}}
+  return cells.map((_,i)=>{const T=tp(R[i]);return{n:mvec(T,[0,0,-1]),right:mvec(T,[1,0,0]),down:mvec(T,[0,1,0])}})}
+const SYM={
+  arrow:{name:'arrow',feat:'tip',m:[0,-1],parts:[{p:[[0,-.36],[.27,-.02],[.1,-.02],[.1,.34],[-.1,.34],[-.1,-.02],[-.27,-.02]]}]},
+  half:{name:'half-shaded square',feat:'shaded corner',m:[-.71,-.71],parts:[{p:[[-.5,-.5],[.5,-.5],[-.5,.5]]}]},
+  ell:{name:'L shape',feat:'foot',m:[1,0],chiral:true,parts:[{p:[[-.24,-.32],[-.06,-.32],[-.06,.14],[.26,.14],[.26,.32],[-.24,.32]]}]},
+  flag:{name:'flag',feat:'flag',m:[1,0],chiral:true,parts:[{p:[[-.22,-.34],[-.12,-.34],[-.12,.34],[-.22,.34]]},{p:[[-.12,-.34],[.3,-.2],[-.12,-.06]]}]},
+  circle:{name:'circle',symm:true,parts:[{ring:.27}]},
+  plus:{name:'cross',symm:true,parts:[{p:[[-.06,-.3],[.06,-.3],[.06,.3],[-.06,.3]]},{p:[[-.3,-.06],[.3,-.06],[.3,.06],[-.3,.06]]}]},
+  tri:{name:'triangle',feat:'point',m:[0,-1],parts:[{p:[[0,-.3],[.28,.24],[-.28,.24]]}]}};
+const DN=[[0,0,1],[0,1,0],[1,0,0]];
+function trueView(F,symOf,Q){return DN.map(d=>{const n=mvec(tp(Q),d),i=F.findIndex(f=>veq(f.n,n));return{sym:symOf[i],mir:false,right:mvec(Q,F[i].right),down:mvec(Q,F[i].down),d,cell:i}})}
+const sigE=e=>SYM[e.sym].symm?e.sym:`${e.sym}${e.mir?'*':''}:${e.down.join(',')};${e.right.join(',')}`;
+const viewSig=v=>v.map(sigE).join('|');
+const inPlane=d=>[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]].filter(a=>dot(a,d)===0);
+function randBasis(d){const right=pick(inPlane(d));return{right,down:cross(right,d)}}
+function makeOption(kind,F,symOf){
+  const Q=pick(ROT24),base=trueView(F,symOf,Q),v=base.map(e=>({...e}));let info={};
+  if(kind==='orient'){const js=[0,1,2].filter(j=>!SYM[v[j].sym].symm);if(!js.length)return null;const j=pick(js),k=1+rnd(3);
+    for(let t=0;t<k;t++){const r=v[j].right;v[j].right=v[j].down;v[j].down=neg(r)}info={face:j}}
+  else if(kind==='opposite'){const a=rnd(3),b=pick([0,1,2].filter(x=>x!==a)),o=F.findIndex(f=>veq(f.n,neg(F[v[a].cell].n)));
+    v[b]={sym:symOf[o],mir:false,...randBasis(v[b].d),d:v[b].d,cell:o};info={a,b}}
+  else if(kind==='dud-mirror'){const js=[0,1,2].filter(j=>SYM[v[j].sym].chiral);if(!js.length)return null;const j=pick(js);v[j].right=neg(v[j].right);v[j].mir=true;info={face:j}}
+  else if(kind==='dud-new'){const j=rnd(3);v[j]={sym:'tri',mir:false,...randBasis(v[j].d),d:v[j].d,cell:null};info={face:j}}
+  return{view:v,base,kind,info}}
+function genEdge(){
+  for(let t=0;t<50;t++){
+    const cells=randomPose(pick(NETS)),symOf=shuffle(['arrow','half','ell','flag','circle','plus']),F=foldFrames(cells);
+    const TS=new Set(ROT24.map(Q=>viewSig(trueView(F,symOf,Q))));
+    const correct={view:trueView(F,symOf,pick(ROT24)),kind:'ok'};const seen=new Set([viewSig(correct.view)]),opts=[correct];
+    for(const kind of shuffle(['orient','orient','opposite',pick(['dud-mirror','dud-new'])])){
+      for(let k=0;k<40;k++){const o=makeOption(Math.random()<.85?kind:pick(['orient','opposite','dud-new']),F,symOf);if(!o)continue;const s=viewSig(o.view);
+        if(TS.has(s)||seen.has(s))continue;seen.add(s);opts.push(o);break}}
+    if(opts.length===5){const sh=shuffle(opts);return{cells,symOf,F,options:sh,ans:sh.indexOf(correct)}}}
+  return null}
+function symShapes(sym,map,ink='var(--ink)'){return SYM[sym].parts.map(pt=>{
+  if(pt.ring){const ps=Array.from({length:28},(_,i)=>{const a=i/28*Math.PI*2;return map([pt.ring*Math.cos(a),pt.ring*Math.sin(a)])});
+    return`<polygon points="${ps.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${ink}" stroke-width="2.4"/>`}
+  return`<polygon points="${pt.p.map(q=>map(q).map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${ink}"/>`}).join('')}
+const CUBEFACE={'0,0,1':[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],'0,1,0':[[0,1,0],[1,1,0],[1,1,1],[0,1,1]],'1,0,0':[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]};
+function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)'}={}){
+  const P=([x,y,z])=>[(x-y)*s,(x+y)*s/2-z*s];
+  let o=`<svg viewBox="${-s-6} ${-s-6} ${2*s+12} ${2*s+12}" width="${2*s+12}" style="max-width:100%;display:block;margin:0 auto">`;
+  view.forEach((e,j)=>{const pts=CUBEFACE[e.d.join(',')].map(P);
+    o+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round"/>`;
+    const c=e.d.map(x=>.5+.5*x);o+=symShapes(e.sym,([u,v])=>P([0,1,2].map(i=>c[i]+u*e.right[i]+v*e.down[i])))});
+  if(hot>=0){const pts=CUBEFACE[view[hot].d.join(',')].map(P);o+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${hotCol}" stroke-width="3.5" stroke-linejoin="round"/>`}
+  return o+'</svg>'}
+function netSymSVG(cells,symOf,{size=50,fill={},stroke={}}={}){
+  const R=Math.max(...cells.map(p=>p[0]))+1,C=Math.max(...cells.map(p=>p[1]))+1,pad=3;
+  let o=`<svg viewBox="0 0 ${C*size+pad*2} ${R*size+pad*2}" width="${C*size+pad*2}" style="max-width:100%">`;
+  cells.forEach(([r,c],i)=>{const k=r+','+c,x0=pad+c*size,y0=pad+r*size;
+    o+=`<rect x="${x0}" y="${y0}" width="${size}" height="${size}" fill="${fill[k]||'var(--surface)'}" stroke="${stroke[k]||'var(--ink)'}" stroke-width="${stroke[k]?3:1.6}"/>`;
+    o+=symShapes(symOf[i],([u,v])=>[x0+(u+.5)*size,y0+(v+.5)*size])});
+  return o+'</svg>'}
+const relE=(e,g)=>{const m=SYM[e.sym].m,M=[0,1,2].map(i=>m[0]*e.right[i]+m[1]*e.down[i]),t=dot(M,g.d);return t>.6?'toward':t<-.6?'away':'side'};
+const relText={toward:'points toward',away:'points away from',side:'runs alongside'};
+
+/* ============ Drone view maths ============ */
+function genDrone(lvl){
+  for(let t=0;t<300;t++){
+    const H=genStack(lvl),fp=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])fp.push([y,x]);
+    const rotK=new Set([0,1,2,3].map(k=>{let c=fp;for(let i=0;i<k;i++)c=c.map(([r,cc])=>[cc,-r]);return keyOf(c)}));
+    const has=(c,p)=>c.some(q=>q[0]===p[0]&&q[1]===p[1]);
+    const R=Math.max(...fp.map(p=>p[0])),C=Math.max(...fp.map(p=>p[1]));
+    const extras=()=>{const out=[];fp.forEach(([r,c])=>DIRS.forEach(([dr,dc])=>{const p=[r+dr,c+dc];if(p[0]>=0&&p[1]>=0&&p[0]<=R+1&&p[1]<=C+1&&!has(fp,p)&&!has(out,p))out.push(p)}));return out};
+    const make={mirror:()=>fp.map(([r,c])=>[r,C-c]),
+      extra:()=>{const e=extras();return e.length?[...fp,pick(e)]:null},
+      missing:()=>{if(fp.length<4)return null;const minH=Math.min(...fp.map(([r,c])=>H[c][r]));const k=pick(fp.filter(([r,c])=>H[c][r]===minH));return fp.filter(p=>p!==k)},
+      shift:()=>{const e=extras();if(!e.length||fp.length<4)return null;const k=pick(fp);return[...fp.filter(p=>p!==k),pick(e)]}};
+    const correct={cells:fp,kind:'ok'},seen=new Set([keyOf(fp)]),opts=[correct];
+    for(const kind of shuffle(['mirror','extra','missing','shift'])){if(opts.length===4)break;
+      for(let k=0;k<20;k++){const c=make[kind]();if(!c)break;const key=keyOf(c);if(rotK.has(key)||seen.has(key))continue;seen.add(key);opts.push({cells:c,kind});break}}
+    if(opts.length===4){const sh=shuffle(opts);return{H,fp,opts:sh,ans:sh.indexOf(correct),W:C+1,D:R+1}}}
+  return null}
+function gridSVG(cells,{g=24,extra=[],missing=[],letters=null,H=null}={}){
+  const all=[...cells,...missing],R=Math.max(...all.map(p=>p[0]))+1,C=Math.max(...all.map(p=>p[1]))+1,pad=3;
+  const isIn=(arr,p)=>arr.some(q=>q[0]===p[0]&&q[1]===p[1]);
+  let o=`<svg viewBox="0 0 ${C*g+pad*2} ${R*g+pad*2}" width="${C*g+pad*2}" style="max-width:100%;display:block;margin:0 auto">`;
+  cells.forEach(([r,c])=>{const bad=isIn(extra,[r,c]);o+=`<rect x="${pad+c*g}" y="${pad+r*g}" width="${g}" height="${g}" fill="${bad?'var(--bad-soft)':'var(--cube-l)'}" stroke="${bad?'var(--bad)':'var(--ink)'}" stroke-width="${bad?3:1.4}"/>`;
+    if(letters)o+=`<text x="${pad+c*g+g/2}" y="${pad+r*g+g/2+1}" text-anchor="middle" dominant-baseline="middle" font-size="${g*.42}" font-weight="700" fill="var(--ink)">${letters[c+','+r]||''}</text>`});
+  missing.forEach(([r,c])=>{o+=`<rect x="${pad+c*g+2}" y="${pad+r*g+2}" width="${g-4}" height="${g-4}" fill="none" stroke="var(--bad)" stroke-width="2.5" stroke-dasharray="5 4"/>`});
+  return o+'</svg>'}
+/* ============ Week 2 case notes ============ */
+const LET='ABCDE';
+function edgeNotes(E,i){
+  const o=E.options[i],face=fold(E.cells).face,fill={},stroke={},nm=s=>SYM[s].name;
+  E.cells.forEach(([r,c],k)=>fill[r+','+c]=PAIRCOL[face[k]]);
+  let what,trap,hot=-1,fig2='';
+  if(o.kind==='orient'){const j=o.info.face;hot=j;const e=o.view[j],b=o.base[j];
+    const g=[0,1,2].filter(x=>x!==j).find(x=>relE(b,o.base[x])!==relE(e,o.view[x]));const gn=nm(o.view[g].sym);
+    what=`The ${nm(e.sym)} is turned the wrong way. On the real cube, the ${nm(e.sym)}’s ${SYM[e.sym].feat} ${relText[relE(b,o.base[g])]} the ${gn} face. In answer ${LET[i]} it ${relText[relE(e,o.view[g])]} it.`;
+    trap=`<b>Right faces, wrong turn.</b> All three faces really are neighbours, so it looks right. That’s why this is the commonest trap. Pick one edge buddy and check which way it points.`;
+    fig2=`<figure class="fig" style="margin:0">${cubeSVG(o.base,{hot:j,hotCol:'var(--good)'})}<figcaption>How it really looks</figcaption></figure>`}
+  else if(o.kind==='opposite'){const a=o.view[o.info.a],b=o.view[o.info.b];hot=o.info.b;
+    E.cells.forEach(([r,c],k)=>{if(k===a.cell||k===b.cell)stroke[r+','+c]='var(--bad)'});
+    what=`It shows the ${nm(a.sym)} and the ${nm(b.sym)} together, but on the net they are opposite each other (same colour, outlined in red). Opposite faces can never be seen at the same time.`;
+    trap=`<b>Two faces that can’t meet.</b> Find the three opposite pairs on the net before you look at the cubes. Then any cube showing a pair together is out straight away.`}
+  else if(o.kind==='dud-mirror'){const j=o.info.face;hot=j;const e=o.view[j];
+    what=`The ${nm(e.sym)} is a mirror image of the one on the net: its ${SYM[e.sym].feat} faces the other way. Folding can turn a symbol round, but never flip it over.`;
+    trap=`<b>A mirror image.</b> It looks like the right symbol at a glance. Check which side the ${SYM[e.sym].feat} is on.`}
+  else{const j=o.info.face;hot=j;
+    what=`There’s no triangle anywhere on the net.`;
+    trap=`<b>A dud.</b> A symbol that isn’t on the net. Duds are the quickest to spot, so always check for them first.`}
+  const step=(k,label)=>{const order=['dud','opp','way'],bad=o.kind.startsWith('dud')?'dud':o.kind==='opposite'?'opp':'way',bi=order.indexOf(bad),ki=order.indexOf(k);
+    return`<li><span class="${ki<bi?'y':ki===bi?'n':'s'}">${ki<bi?'✓':ki===bi?'✗':'–'}</span><span>${label} <span class="muted">${ki<bi?'passes':ki===bi?'caught it here':'no need: already ruled out'}</span></span></li>`};
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0">${netSymSVG(E.cells,E.symOf,{size:46,fill,stroke})}<figcaption>The net · same colour = opposite pair</figcaption></figure>
+    <figure class="fig" style="margin:0">${cubeSVG(o.view,{hot})}<figcaption>Your answer ${LET[i]}</figcaption></figure>${fig2}</div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: rule out in this order</h4><ul class="checks">${step('dud','1. Duds: any symbol not on the net, or flipped?')}${step('opp','2. Opposites: two same-colour faces together?')}${step('way','3. Edge buddies: is every symbol turned the right way?')}</ul></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`}}
+function droneNotes(D,i){
+  const o=D.opts[i],letters=towerLetters(D.H),isIn=(a,p)=>a.some(q=>q[0]===p[0]&&q[1]===p[1]);
+  const extra=o.cells.filter(p=>!isIn(D.fp,p)),missing=D.fp.filter(p=>!isIn(o.cells,p));
+  let what,trap,mine;
+  if(o.kind==='mirror'){mine=gridSVG(o.cells);
+    what=`Answer ${LET[i]} is the real view flipped, like seeing it in a mirror. It has the right number of squares, but the gaps are on the wrong side.`;
+    trap=`<b>A mirror image.</b> Turning a shape round can never give you its mirror image. Check which side the gap or step is on.`}
+  else{mine=gridSVG(o.cells.filter(p=>isIn(D.fp,p)||isIn(extra,p)),{extra,missing});
+    if(o.kind==='extra'){what=`Answer ${LET[i]} has an extra square (red). No tower stands there.`;
+      trap=`<b>An extra square.</b> Count the width and depth first: the real view is ${D.W} wide and ${D.D} deep. Then check every square has a tower.`}
+    else if(o.kind==='missing'){what=`Answer ${LET[i]} is missing a square (dashed). Every tower makes one square from above, even a short one.`;
+      trap=`<b>A forgotten short tower.</b> Low towers are easy to miss next to tall ones. From above, height doesn’t matter: one tower, one square.`}
+    else{what=`In answer ${LET[i]} one square has moved: red is a square with no tower, dashed is a tower with no square.`;
+      trap=`<b>A moved square.</b> The count is right, so it looks right. Check where each gap is, not just how many squares there are.`}}
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0"><canvas id="nA"></canvas><figcaption>Each tower has a letter</figcaption></figure>
+    <figure class="fig" style="margin:0">${gridSVG(D.fp,{g:34,letters})}<figcaption>The real view from above: one square per tower</figcaption></figure>
+    <figure class="fig" style="margin:0">${mine.replace('width="','data-w="')}<figcaption>Your answer ${LET[i]}</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: drone view</h4><p>1. Count width × depth: here ${D.W} × ${D.D}. Cross out any answer that’s a different size. 2. One tower = one square; heights don’t matter. 3. Check where the gaps are.</p></div>
+    <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
+    draw:()=>{const a=$('#nA');if(a)drawStack(a,D.H,{letters,maxH:240})}}}
+
+/* ============ Question builders (shared by cases, tests and drills) ============ */
+function crossable(host){host.querySelectorAll('.xo').forEach(b=>b.onclick=e=>{e.stopPropagation();const c=b.closest('.copt');c.classList.toggle('out');b.setAttribute('aria-pressed',c.classList.contains('out'))})}
+function markOpts(host,ans,pickI){host.querySelectorAll('.copt').forEach((c,k)=>{c.querySelector('.pick').disabled=true;if(k===ans)c.classList.add('right');else if(k===pickI)c.classList.add('wrong')})}
+const QB={
+  count(host,lvl=1){const H=genStack(lvl),t=total(H),opts=shuffle([...new Set([t,t-1,t+1,t-2,t+2])].filter(v=>v>0)).slice(0,5);
+    host.innerHTML=`<p class="qtext">How many cubes are in this stack?</p><canvas class="stack" id="qcv"></canvas><div class="options">${opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
+    const cv=host.querySelector('#qcv');let labels=false;const q={draw:()=>drawStack(cv,H,{labels})};q.draw();let done=false;
+    const fin=v=>{if(done)return;done=true;labels=true;q.draw();host.querySelectorAll('.options button').forEach(b=>{b.disabled=true;if(+b.dataset.v===t)b.classList.add('right');else if(+b.dataset.v===v)b.classList.add('wrong')});
+      q.onAnswer(v===t,v===t?null:towerNotes(H,{given:v,timeout:v==null}),`It’s ${t}.`)};
+    host.querySelectorAll('.options button').forEach(b=>b.onclick=()=>fin(+b.dataset.v));q.timeout=()=>fin(null);return q},
+  impostor(host){const real=Math.random()<.5,cells=randomPose(real?pick(NETS):(Math.random()<.6?pick(TRAPS):pick(FAKES)));
+    host.innerHTML=`<p class="qtext">Real net or fake?</p><div class="netbox">${netSVG(cells)}</div><div class="stamps"><button class="stamp real" data-v="1">REAL</button><button class="stamp fake" data-v="0">FAKE</button></div>`;
+    const q={};let done=false;const fin=said=>{if(done)return;done=true;host.querySelectorAll('.stamp').forEach(x=>x.disabled=true);const ok=said===real;
+      host.querySelector('.netbox').insertAdjacentHTML('beforeend',`<div class="verdict ${real?'real':'fake'}">${real?'REAL':'FAKE'}</div>`);
+      q.onAnswer(ok,ok?null:{html:netNotes(cells,{real})},real?'It folds into a cube.':'It can’t fold into a cube.')};
+    host.querySelectorAll('.stamp').forEach(b=>b.onclick=()=>fin(b.dataset.v==='1'));q.timeout=()=>fin(null);return q},
+  opp(host){const cells=randomPose(pick(NETS)),f=fold(cells).face,s=rnd(6),ans=f.findIndex(x=>x===(f[s]^1)),star={[cells[s].join(',')]:'★'};
+    host.innerHTML=`<p class="qtext">Tap the square opposite the ★.</p><div class="netbox">${netSVG(cells,{marks:star,click:true,size:54})}</div>`;
+    const q={};let done=false;const fin=i=>{if(done)return;done=true;const ok=i===ans,fill={},stroke={};cells.forEach(([r,c],j)=>fill[r+','+c]=PAIRCOL[f[j]]);if(i!=null&&!ok)stroke[cells[i].join(',')]='var(--bad)';
+      host.querySelector('.netbox').innerHTML=netSVG(cells,{marks:star,fill,stroke,size:54});q.onAnswer(ok,ok?null:{html:oppNotes(cells,f,s,ans,i)},'Same colours are opposite pairs.')};
+    host.querySelectorAll('rect[data-i]').forEach(r=>r.onclick=()=>{const i=+r.dataset.i;if(i!==s)fin(i)});q.timeout=()=>fin(null);return q},
+  edge(host){const E=genEdge();
+    host.innerHTML=`<p class="qtext">Which cube can be made from this net? <span class="muted">Tap ✕ to cross an option out.</span></p><div class="netbox">${netSymSVG(E.cells,E.symOf,{size:50})}</div>
+      <div class="copts">${E.options.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${cubeSVG(o.view,{s:40})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+    crossable(host);const q={};let done=false;
+    const fin=i=>{if(done)return;done=true;markOpts(host,E.ans,i);const ok=i===E.ans;q.onAnswer(ok,ok||i==null?(i==null?edgeNotes(E,E.options.findIndex(o=>o.kind==='orient')):null):edgeNotes(E,i),ok?'It’s the only one that passes all three checks.':`The answer is ${LET[E.ans]}.`)};
+    host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q},
+  drone(host,lvl=1){const D=genDrone(lvl);
+    host.innerHTML=`<p class="qtext">Which is the view from above? <span class="muted">Tap ✕ to cross an option out.</span></p><canvas class="stack" id="qcv"></canvas>
+      <div class="copts four">${D.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${gridSVG(o.cells,{g:22})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+    crossable(host);const cv=host.querySelector('#qcv'),q={draw:()=>drawStack(cv,D.H,{maxH:300})};q.draw();let done=false;
+    const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
+      q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
+    host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
+const TYPE_NAME={count:'Counting cubes',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_CASE={count:'tower',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+
+/* ============ Quiz runner ============ */
+function runQuiz(cfg){
+  stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}<div id="game"></div></section>`;
+  const g=$('#game'),plan=cfg.plan;let n=0,score=0;const tally={};
+  const next=()=>{stopTimer();redraw=null;
+    if(n===plan.length){
+      if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0);
+      if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);if(w[t]&&!now&&v.a>=2)stamp(`Fixed a weak spot: ${TYPE_NAME[t]}`);w[t]=now});store.set('weak',w)}
+      if(cfg.id==='warm'&&onceFlag('warm-'+today()))stamp('Daily warm-up done');
+      if(cfg.id==='mock'&&score>=17)milestone('mock17','17+ on the Final Mock');
+      const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
+      const rows=Object.entries(tally).map(([t,v])=>`<tr><td>${TYPE_NAME[t]}</td><td class="num">${v.r} / ${v.a}</td><td>${v.r===v.a?'<span class="y">Solid</span>':v.a-v.r>=2||v.r/v.a<.7?`<span class="n">Refresh: replay ${CASES.find(c=>c.id===TYPE_CASE[t]).title}</span>`:'<span class="s">Nearly</span>'}</td></tr>`).join('');
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
+        ${Object.keys(tally).length>1?`<div class="tablewrap"><table class="res"><thead><tr><th>Skill</th><th>Score</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
+        <div class="row" style="justify-content:center;margin-top:12px"><button class="btn-primary" id="again">Try again</button><button id="hm">Back to case files</button></div>`;
+      $('#again').onclick=()=>runQuiz({...cfg,plan:cfg.remake?cfg.remake():plan});$('#hm').onclick=home;scrollTo(0,0);return}
+    const type=plan[n];n++;
+    g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${plan.length} · ${TYPE_NAME[type]}</span><span class="score">Score ${score}</span></div>${cfg.secs?'<div class="timer"><i id="bar"></i></div>':''}<div id="qh" class="qhost"></div><div id="fb"></div>`;
+    const q=QB[type]($('#qh'),cfg.level??1);let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
+    q.onAnswer=(ok,nt,line)=>{stopTimer();(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
+      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length?'See results':'Next →'}</button></div>`;
+      nt&&nt.draw&&nt.draw();$('#nx').onclick=next};
+    if(cfg.secs){let left=cfg.secs;timerId=setInterval(()=>{left-=.25;const b=$('#bar');if(b)b.style.width=Math.max(0,left/cfg.secs*100)+'%';if(left<=0){stopTimer();q.timeout()}},250)}
+  };
+  next()}
+const repeat=(t,k)=>Array(k).fill(t);
+function edgeCase(){runQuiz({id:'edge',tag:'Case 05 · Nets to cubes',title:'Edge Buddies',secs:60,level:1,
+  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together.</li><li><b>Edge buddies:</b> pick one symbol and check which neighbour its tip, foot or shaded corner points at.</li></ol>',
+  plan:repeat('edge',8),remake:()=>repeat('edge',8)})}
+function droneCase(){runQuiz({id:'drone',tag:'Case 06 · View from above',title:'Drone View',secs:45,level:1,
+  rule:'<strong>Drone view.</strong><ol><li>Count width × depth. Cross out any answer that’s a different size.</li><li>One tower = one square. Heights don’t matter.</li><li>Check where the gaps are. A flipped shape is always wrong.</li></ol>',
+  plan:repeat('drone',8),remake:()=>repeat('drone',8)})}
+
+/* ============ Rule It Out: elimination drill ============ */
+const REASONS={edge:[['dud','Dud'],['opp','Opposites'],['way','Wrong way']],drone:[['flip','Flipped'],['extra','Extra square'],['miss','Missing square'],['moved','Moved square']]};
+const KIND_REASON={'dud-mirror':'dud','dud-new':'dud',opposite:'opp',orient:'way',mirror:'flip',extra:'extra',missing:'miss',shift:'moved'};
+const REASON_WHY={dud:'it has a symbol that isn’t on the net, or a flipped one',opp:'it shows two opposite faces together',way:'a symbol is turned the wrong way',flip:'it’s the real view flipped',extra:'it has a square where there’s no tower',miss:'it’s missing a tower’s square',moved:'one square is in the wrong place'};
+const TARGET={edge:40,drone:25};
+function elimCase(){
+  stopTimer();$('#homeBtn').hidden=false;const ROUNDS=6,plan=shuffle([...repeat('edge',3),...repeat('drone',3)]);let n=0,clean=0;const times=[];
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 07 · Elimination</div><h2>Rule It Out</h2></div><span class="score" id="sc"></span></div>
+    <div class="rule"><strong>Don’t look for the answer. Cross out the wrong ones.</strong> Tap an option, then say why it’s wrong. When only one is left, that’s your answer. Aim for no mistakes, then aim for speed: under ${TARGET.edge}s for cubes, under ${TARGET.drone}s for views from above.</div><div id="game"></div></section>`;
+  const g=$('#game');
+  const next=()=>{stopTimer();redraw=null;
+    if(n===ROUNDS){record('elim',clean,ROUNDS);const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+      g.innerHTML=`<div class="done"><div class="big">${clean} / ${ROUNDS}</div><p>clean solves (no mistakes) · average ${avg}s a question</p><p>${clean>=5?'Quick and accurate. That’s exam form.':'Slow down a little: accuracy first, speed comes with it.'}</p><div class="row" style="justify-content:center"><button class="btn-primary" id="again">Play again</button><button id="hm">Back to case files</button></div></div>`;
+      $('#again').onclick=elimCase;$('#hm').onclick=home;return}
+    const type=plan[n];n++;$('#sc').textContent=`Question ${n} of ${ROUNDS} · Clean ${clean}`;
+    const isE=type==='edge',X=isE?genEdge():genDrone(1),opts=isE?X.options:X.opts,ans=X.ans;let mistakes=0,t0=Date.now(),left=new Set(opts.map((_,i)=>i));
+    g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score" id="clock">0s</span><span class="score" id="mk">Mistakes 0</span></div>
+      <p class="qtext">${isE?'Which cube can be made from this net?':'Which is the view from above?'} <span class="muted">Tap an option to rule it out.</span></p>
+      ${isE?`<div class="netbox">${netSymSVG(X.cells,X.symOf,{size:50})}</div>`:'<canvas class="stack" id="qcv"></canvas>'}
+      <div class="copts ${isE?'':'four'}" id="ops">${opts.map((o,i)=>`<div class="copt" data-i="${i}"><button class="pick" data-i="${i}" aria-label="Rule out ${LET[i]}"><span class="lbl">${LET[i]}</span>${isE?cubeSVG(o.view,{s:40}):gridSVG(o.cells,{g:22})}</button><div class="why" hidden>${REASONS[type].map(([k,l])=>`<button data-r="${k}">${l}</button>`).join('')}</div><div class="tagr"></div></div>`).join('')}</div>
+      <div id="say" class="feedback" hidden></div><div id="fb"></div>`;
+    if(!isE){const cv=$('#qcv');redraw=()=>drawStack(cv,X.H,{maxH:300});redraw()}
+    timerId=setInterval(()=>{const c=$('#clock');if(c)c.textContent=Math.floor((Date.now()-t0)/1000)+'s'},250);
+    const say=(ok,msg)=>{const s=$('#say');s.hidden=false;s.className='feedback '+(ok?'ok':'no');s.innerHTML=msg};
+    const finish=()=>{stopTimer();const secs=Math.round((Date.now()-t0)/1000);times.push(secs);if(!mistakes)clean++;$('#sc').textContent=`Question ${n} of ${ROUNDS} · Clean ${clean}`;
+      const c=$('#ops').children[ans];c.classList.add('right');
+      $('#fb').innerHTML=`<div class="feedback ${mistakes?'no':'ok'}"><b>${LET[ans]} is the answer.</b> ${secs}s, ${mistakes} mistake${mistakes===1?'':'s'}. ${secs<=TARGET[type]&&!mistakes?'Exam speed!':secs>TARGET[type]?`Target is under ${TARGET[type]}s.`:''}</div><div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See results':'Next →'}</button></div>`;
+      $('#nx').onclick=next};
+    $('#ops').querySelectorAll('.copt').forEach(card=>{const i=+card.dataset.i;
+      card.querySelector('.pick').onclick=()=>{if(!left.has(i)||left.size===1)return;$('#ops').querySelectorAll('.why').forEach(w=>w.hidden=true);card.querySelector('.why').hidden=false};
+      card.querySelectorAll('.why button').forEach(b=>b.onclick=()=>{const r=b.dataset.r;card.querySelector('.why').hidden=true;
+        if(i===ans){mistakes++;$('#mk').textContent=`Mistakes ${mistakes}`;say(false,`<b>Careful: ${LET[i]} is possible.</b> Nothing is wrong with it. Never cross out an option unless you can name the reason.`);return}
+        const real=KIND_REASON[opts[i].kind];left.delete(i);card.classList.add('out');card.querySelector('.tagr').textContent=REASONS[type].find(x=>x[0]===real)[1];
+        if(r===real)say(true,`<b>Ruled out: ${b.textContent}.</b> ${LET[i]}: ${REASON_WHY[real]}.`);
+        else{mistakes++;$('#mk').textContent=`Mistakes ${mistakes}`;say(false,`<b>Out, but for a different reason.</b> ${LET[i]} isn’t “${b.textContent}”: ${REASON_WHY[real]}.`)}
+        if(left.size===1)finish()})})};
+  next()}
+/* ============ Rewards: stamps, cards and detective rank ============ */
+const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
+const DAILY_STAMPS=2,PLAY_CAP_MIN=40;
+const rwSettings=()=>({spc:3,limit:18,...store.get('rwset',{})});
+const rewards=()=>({stamps:[],cards:[],given:0,points:0,rank:0,day:{},flags:{},play:{},...store.get('rw',{})});
+const saveRw=r=>store.set('rw',r);
+function toast(html,kind=''){let box=$('#toasts');if(!box){box=document.createElement('div');box.id='toasts';box.setAttribute('aria-live','polite');document.body.appendChild(box)}
+  const t=document.createElement('div');t.className='toast '+kind;t.innerHTML=html;box.appendChild(t);setTimeout(()=>t.remove(),6500)}
+function cardCheck(r,d){const{spc,limit}=rwSettings(),fromStamps=Math.floor(r.stamps.length/spc),have=r.cards.filter(c=>c.from==='stamps').length;
+  if(fromStamps>have&&r.cards.length<limit){r.cards.push({d,from:'stamps',reason:`${spc} stamps collected`});return true}return false}
+function stamp(reason,{bonus=false}={}){const r=rewards(),d=today();r.day[d]=r.day[d]||0;
+  if(!bonus&&r.day[d]>=DAILY_STAMPS)return false;if(!bonus)r.day[d]++;
+  r.stamps.push({d,reason});const card=cardCheck(r,d);saveRw(r);
+  const{spc}=rwSettings(),toNext=spc-(r.stamps.length%spc||spc);
+  toast(card?`<b>CARD EARNED!</b> Ask for your card. <span>${reason}</span>`:`<b>Stamp earned:</b> ${reason}. <span>${toNext===spc?'':`${toNext} more for your next card`}</span>`,card?'card':'');return true}
+function milestone(key,reason){const r=rewards();if(r.flags[key])return;r.flags[key]=true;
+  if(r.cards.length<rwSettings().limit){r.cards.push({d:today(),from:key,reason});saveRw(r);toast(`<b>CARD EARNED!</b> ${reason}. Ask for your card.`,'card')}else saveRw(r)}
+function addPoints(p){const r=rewards();r.points+=Math.round(p);const nr=RANKS.filter(x=>r.points>=x[1]).length-1,up=nr>r.rank;if(up)r.rank=nr;saveRw(r);
+  if(up){toast(`<b>Promoted!</b> You are now a ${RANKS[nr][0]}.`,'rank');stamp(`Promoted to ${RANKS[nr][0]}`,{bonus:true})}}
+function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[key]=true;saveRw(r);return true}
+/* practice time: count minutes while a case is open */
+let inCase=false;
+setInterval(()=>{if(!inCase||document.visibilityState!=='visible')return;const r=rewards(),d=today();r.play[d]=(r.play[d]||0)+15;saveRw(r);
+  if(r.play[d]>=PLAY_CAP_MIN*60&&onceFlag('rest-'+d))toast(`<b>Case closed for today. Great work!</b> Rest helps your brain lock it in. You can keep going, but stamps for today are done.`,'rank')},15000);
+function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,owed=r.cards.length-r.given,full=r.cards.length>=limit;
+  const rk=RANKS[r.rank],nx=RANKS[r.rank+1],pct=nx?Math.round((r.points-rk[1])/(nx[1]-rk[1])*100):100,todayN=r.day[today()]||0;
+  const log=r.stamps.slice(-10).reverse().map(s=>`<li><span class="muted">${s.d.slice(5).replace('-','/')}</span> ${s.reason}</li>`).join('')||'<li class="muted">No stamps yet. Finish a daily warm-up to earn the first one.</li>';
+  return`<section class="collection"><div class="col-head"><div><div class="tag">Card Collection</div><h3>${rk[0]}</h3>
+      <div class="rankbar" role="img" aria-label="${pct}% of the way to ${nx?nx[0]:'top rank'}"><i style="width:${pct}%"></i></div>
+      <p class="muted" style="margin:4px 0 0;font-size:.85rem">${r.points} rank points${nx?` · ${nx[1]-r.points} to ${nx[0]}`:' · top rank reached'}</p></div>
+    <div class="stampmeter" aria-label="${inMeter} of ${spc} stamps toward the next card">${Array.from({length:spc},(_,i)=>`<span class="st ${i<inMeter?'on':''}">★</span>`).join('')}
+      <p class="muted" style="margin:4px 0 0;font-size:.85rem">${full?'All cards earned!':`${spc-inMeter} stamp${spc-inMeter===1?'':'s'} to the next card`} · today ${todayN}/${DAILY_STAMPS}</p></div></div>
+    <div class="col-cards"><span><b>${r.cards.length}</b> card${r.cards.length===1?'':'s'} earned of ${limit}</span><span><b>${r.given}</b> handed over</span>
+      ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect!</span><button id="gave">Card handed over</button>`:''}</div>
+    <details><summary>How to earn stamps and cards</summary><ul class="howto">
+      <li><b>Stamps</b> (up to ${DAILY_STAMPS} a day): finish the daily warm-up · a clean Rule It Out round · beat your best score on a case · fix a Refresh skill · find all 11 nets.</li>
+      <li><b>${spc} stamps = 1 card.</b> Promotions to a new rank give a bonus stamp.</li>
+      <li><b>Big cards:</b> pass Checkpoint 1 · pass Checkpoint 2 · score 17+ on the Final Mock.</li>
+      <li>Every finished round earns rank points. Fewer mistakes earn more. A case with a Refresh tag earns double.</li></ul>
+      <h4 class="tag" style="margin:8px 0 4px">Latest stamps</h4><ul class="howto">${log}</ul></details></section>`}
+
+/* ============ Progress, gates and home ============ */
+const today=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+function record(id,n,of,lvl=0){const ty={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'}[id],w=store.get('weak',{}),wasWeak=ty&&w[ty];
+  const prev=bestN(id);const h=store.get('hist',{});(h[id]=h[id]||[]).push({d:today(),n,of,lvl});store.set('hist',h);
+  const b=store.get('best',{}),cur=b[id]?parseInt(b[id]):-1;if(n>cur){b[id]=`${n}/${of}`;store.set('best',b)}
+  addPoints((n*10+(n/of>=.85?20:0))*(wasWeak?2:1));
+  const cname=(CASES.find(c=>c.id===id)||{}).title;
+  if(ty&&n/of>=.85&&wasWeak){w[ty]=false;store.set('weak',w);stamp(`Fixed a weak spot: ${TYPE_NAME[ty]}`)}
+  if(id==='elim'&&n===of)stamp('Clean Rule It Out round');
+  else if(cname&&prev>=0&&n>prev)stamp(`New best on ${cname}: ${n}/${of}`)}
+const saveBest=(id,s)=>record(id,s.n,s.of);
+const hist=id=>store.get('hist',{})[id]||[];
+const bestN=id=>Math.max(-1,...hist(id).map(r=>r.n));
+const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).map(r=>r.d)).size;
+const unlocked=k=>store.get('unlock',{})[k]===true;
+function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
+const GATES={
+  w1:[{t:'Tower Count, Exam mode (Medium or Hard): 7+ out of 8 on 2 different days',p:()=>Math.min(2,goodDays('tower',7,1)),of:2},
+      {t:'Spot the Impostor: 9+ out of 10',p:()=>bestN('impostor')>=9?1:0,of:1},
+      {t:'The Missing Eleven: all 11 found',p:()=>Math.min(11,store.get('found',[]).length),of:11},
+      {t:'Opposite Suspects: 7+ out of 8',p:()=>bestN('opp')>=7?1:0,of:1}],
+  w2:[{t:'Edge Buddies: 7+ out of 8 on 2 different days',p:()=>Math.min(2,goodDays('edge',7)),of:2},
+      {t:'Drone View: 7+ out of 8',p:()=>bestN('drone')>=7?1:0,of:1},
+      {t:'Rule It Out: 5+ clean solves out of 6',p:()=>bestN('elim')>=5?1:0,of:1}]};
+const gateDone=g=>GATES[g].every(c=>c.p()>=c.of);
+const CHECKPOINTS={
+  cp1:{title:'Checkpoint 1',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
+    make:()=>shuffle([...repeat('count',4),...repeat('impostor',4),...repeat('opp',4)]),blurb:'12 mixed Week 1 questions, timed like the exam. Pass mark 10.'},
+  cp2:{title:'Checkpoint 2',gate:'w2',needs:'w2',pass:12,of:15,unlocks:'w3',secs:45,level:1,
+    make:()=>shuffle([...repeat('count',3),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',4)]),blurb:'15 mixed questions from Weeks 1 and 2. Pass mark 12.'}};
+const CASES=[
+  {id:'tower',week:1,tab:'CASE 01',title:'The Tower Count',blurb:'Count stacks of cubes without missing the hidden ones. Learn the Tower Method, then race the clock.',go:()=>tower()},
+  {id:'impostor',week:1,tab:'CASE 02',title:'Spot the Impostor',blurb:'Real net or fake? Some shapes look right but can’t fold into a cube.',go:()=>impostor(),type:'impostor'},
+  {id:'hunt',week:1,tab:'CASE 03',title:'The Missing Eleven',blurb:'There are exactly 11 nets of a cube. Draw them and track them all down.',go:()=>hunt()},
+  {id:'opp',week:1,tab:'CASE 04',title:'Opposite Suspects',blurb:'Which square ends up opposite? Opposite faces can never be seen together.',go:()=>opposites()},
+  {id:'edge',week:2,tab:'CASE 05',title:'Edge Buddies',blurb:'Which cube can the net make? Rule out duds, opposites, then symbols turned the wrong way.',go:()=>edgeCase()},
+  {id:'drone',week:2,tab:'CASE 06',title:'Drone View',blurb:'What does the stack look like from above? Watch for flipped and missing squares.',go:()=>droneCase()},
+  {id:'elim',week:2,tab:'CASE 07',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option and name the reason. Quick and accurate.',go:()=>elimCase()}];
+const caseType={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
+  const meta=c.id==='hunt'?`${Math.min(11,store.get('found',[]).length)} of 11 found`:(b?`Best: ${b}`:'Not started');
+  return`<button class="folder" data-tab="${c.tab}" data-id="${c.id}">${weak?'<span class="chip">Refresh</span>':''}<h2>${c.title}</h2><p>${c.blurb}</p><div class="meta"><span>Week ${c.week}</span><span>${meta}</span></div></button>`}
+function gateHTML(k){const cp=CHECKPOINTS[k],ready=(!cp.needs||unlocked(cp.needs))&&gateDone(cp.gate),passed=unlocked(cp.unlocks);
+  const items=GATES[cp.gate].map(c=>{const ok=c.p()>=c.of;return`<li><span class="${ok?'y':'s'}">${ok?'✓':'○'}</span><span>${c.t}${c.of>1&&!ok?` <span class="muted">(${c.p()}/${c.of})</span>`:''}</span></li>`}).join('');
+  return`<div class="gate ${passed?'passed':ready?'ready':''}"><div class="gate-head"><div><div class="tag">${passed?'Passed':ready?'Ready to take':'Locked'}</div><h3>${cp.title}</h3></div>
+    <button class="${ready||passed?'btn-primary':''}" data-cp="${k}" ${ready||passed?'':'disabled'}>${passed?'Take again':'Start checkpoint'}</button></div>
+    <p class="muted" style="margin:0">${cp.blurb}${passed?'':` Passing it opens Week ${k==='cp1'?2:3}.`}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
+function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
+function home(){
+  stopTimer();redraw=null;inCase=false;$('#homeBtn').hidden=true;document.onkeydown=null;
+  const w2=unlocked('w2'),w3=unlocked('w3');
+  view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.</div>
+  ${collectionHTML()}
+  <div class="warm"><div><h3>Daily warm-up</h3><p class="muted" style="margin:0">6 quick mixed questions from everything unlocked so far. Do one every day so old skills stay sharp. Weak skills come up more often.</p></div><button class="btn-primary" id="warm">Start warm-up</button></div>
+  <section class="week"><h2 class="wk">Week 1 · Counting and nets</h2><div class="folders">${CASES.filter(c=>c.week===1).map(folderHTML).join('')}</div>${gateHTML('cp1')}</section>
+  <section class="week"><h2 class="wk">Week 2 · Turning, views and speed</h2><div class="folders">${w2?CASES.filter(c=>c.week===2).map(folderHTML).join(''):sealedHTML('CASES 05–07','Three sealed case files','Opens when Checkpoint 1 is passed.')}</div>${w2?gateHTML('cp2'):''}</section>
+  <section class="week"><h2 class="wk">Week 3 · Exam practice</h2><div class="folders">${w3?`<button class="folder" data-tab="FINAL" data-id="mock"><h2>The Final Mock</h2><p>20 mixed questions at exam pace, with a skill-by-skill report. Do it every other day.</p><div class="meta"><span>Week 3</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button>`:sealedHTML('FINAL','The Final Mock','Opens when Checkpoint 2 is passed.')}</div></section>
+  <details class="parent"><summary>For parents</summary>
+    <p>Each week’s case files open automatically. First she meets every target on the checkpoint card, then she passes the checkpoint test (10/12, then 12/15). After a mixed test, any skill she missed twice gets a <b>Refresh</b> tag on its case file, and the daily warm-up gives it more questions.</p>
+    <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="10" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
+    <div class="row"><button id="pu">Unlock next week now</button><span class="muted" id="puc"></span></div>
+    <div class="row"><button id="pr">Reset all progress</button><span class="muted" id="prc"></span></div></details>`;
+  view.querySelectorAll('.folder[data-id]').forEach(b=>b.onclick=()=>{inCase=true;if(b.dataset.id==='mock')return mock();const c=CASES.find(x=>x.id===b.dataset.id);$('#homeBtn').hidden=false;c.go();scrollTo(0,0)});
+  view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
+  $('#warm').onclick=()=>{inCase=true;warmup()};
+  const setRw=()=>{const spc=Math.max(1,Math.min(10,+$('#spc').value||3)),limit=Math.max(1,Math.min(99,+$('#lim').value||18));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
+  if($('#gave')){let armed=false;$('#gave').onclick=()=>{if(!armed){armed=true;$('#gave').textContent='Tap again to confirm';return}const r=rewards();r.given=Math.min(r.cards.length,r.given+1);saveRw(r);home()}}
+  const twoStep=(btn,msg,act)=>{let armed=false;$(btn).onclick=()=>{if(!armed){armed=true;$(btn).textContent='Tap again to confirm';$(msg).textContent=''}else act()}};
+  twoStep('#pu','#puc',()=>{if(!w2)unlock('w2');else unlock('w3');home()});
+  twoStep('#pr','#prc',()=>{['hist','best','found','unlock','weak','towerMode','towerLevel','rw'].forEach(k=>store.set(k,null));try{['hist','best','found','unlock','weak','towerMode','towerLevel','rw'].forEach(k=>localStorage.removeItem('cd_'+k))}catch(e){}home()});
+  scrollTo(0,0)}
+function open(id){const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
+function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',title:cp.title,secs:cp.secs,level:cp.level,pass:cp.pass,mixed:true,
+  passMsg:`Passed! Week ${k==='cp1'?2:3} is now open.`,onPass:()=>{unlock(cp.unlocks);milestone(k,`Passed ${cp.title}`)},plan:cp.make(),remake:cp.make,
+  rule:`<strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
+function warmup(){const types=['count','impostor','opp',...(unlocked('w2')?['edge','drone']:[])],weak=store.get('weak',{});
+  const make=()=>{const pool=[...types,...types.filter(t=>weak[t]),...types.filter(t=>weak[t])],out=shuffle(types.slice()).slice(0,Math.min(6,types.length));
+    while(out.length<6)out.push(pick(pool));return shuffle(out)};
+  runQuiz({id:'warm',tag:'Daily warm-up',title:'Warm-up',secs:45,level:1,mixed:true,plan:make(),remake:make,rule:'<strong>Six quick questions.</strong> A mix of everything unlocked so far.'})}
+function mock(){const make=()=>shuffle([...repeat('count',5),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',5),...repeat('drone',4)]);
+  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Final Mock',secs:40,level:2,mixed:true,plan:make(),remake:make,
+    rule:'<strong>20 questions at exam pace: 40 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'})}
+
+/* ============ Case 01: Tower Count ============ */
+function tower(){
+  let mode=store.get('towerMode','learn'),level=store.get('towerLevel',0);
+  view.innerHTML=`<section class="sheet">
+    <div class="sheet-head"><div><div class="tag">Case 01 · Counting cubes</div><h2>The Tower Count</h2></div>
+      <div class="row"><div class="seg" id="mode"><button data-v="learn">Learn</button><button data-v="exam">Exam mode</button></div>
+      <div class="seg" id="lvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div></div></div>
+    <div class="rule"><strong>The Tower Method.</strong> Don’t count cubes, count towers.
+      <ol><li>Every floor square has one tower on it. Find each tower’s top.</li><li>Write how many cubes high it is. Cubes can’t float, so the hidden ones underneath count too.</li><li>Add up the tower numbers.</li></ol><p style="margin:6px 0 0"><b>Exam shortcut:</b> the cubes you can see are the smallest possible answer. Cross out any option below that first.</p></div>
+    <div id="game"></div></section>`;
+  const setSeg=(sel,v)=>view.querySelectorAll(sel+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v==String(v)));
+  setSeg('#mode',mode);setSeg('#lvl',level);
+  view.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{mode=b.dataset.v;store.set('towerMode',mode);setSeg('#mode',mode);start()});
+  view.querySelectorAll('#lvl button').forEach(b=>b.onclick=()=>{level=+b.dataset.v;store.set('towerLevel',level);setSeg('#lvl',level);start()});
+  const start=()=>{stopTimer();mode==='learn'?towerLearn(level):towerExam(level)};
+  start();
+}
+function planSVG(H,vals,sel,marks){
+  const s=40,P=(x,y)=>[(x-y)*s,(x+y)*s/2];let pts=[];
+  for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])pts.push(P(x,y),P(x+1,y),P(x+1,y+1),P(x,y+1));
+  const mnX=Math.min(...pts.map(p=>p[0]))-4,mxX=Math.max(...pts.map(p=>p[0]))+4,mnY=Math.min(...pts.map(p=>p[1]))-4,mxY=Math.max(...pts.map(p=>p[1]))+4;
+  let o=`<svg class="plan" viewBox="${mnX} ${mnY} ${mxX-mnX} ${mxY-mnY}" width="${mxX-mnX}" style="max-width:100%;margin:0 auto">`;
+  for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++){if(!H[x][y])continue;const k=x+','+y;
+    const poly=[P(x,y),P(x+1,y),P(x+1,y+1),P(x,y+1)].map(p=>p.join(',')).join(' ');
+    const m=marks[k],fill=m==='ok'?'var(--good-soft)':m==='no'?'var(--bad-soft)':k===sel?'var(--hl-top)':'var(--surface)';
+    const[cx,cy]=P(x+.5,y+.5);
+    o+=`<polygon class="cellp" data-k="${k}" points="${poly}" fill="${fill}" stroke="${k===sel?'var(--accent)':'var(--ink)'}" stroke-width="${k===sel?3:1.4}"/>`;
+    o+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="700" fill="${m==='no'?'var(--bad)':'var(--ink)'}" style="pointer-events:none">${vals[k]??''}</text>`}
+  return o+'</svg>'}
+function towerLearn(level){
+  const H=genStack(level),keys=[];for(let x=0;x<H.length;x++)for(let y=0;y<H[0].length;y++)if(H[x][y])keys.push(x+','+y);
+  const vals={},marks={};let sel=keys[0],xray=false,stage=1;
+  const g=$('#game');
+  g.innerHTML=`<div class="stage"><div class="panel"><canvas class="stack" id="cv"></canvas>
+      <div class="row"><button id="xray" class="btn-ghost">Show tower numbers</button><button id="new" class="btn-ghost">New stack</button></div></div>
+    <div class="panel"><h3>Step 1 · Height of each tower</h3><p class="muted" style="margin:0;font-size:.9rem">This is the floor seen from above, same way round. Tap a square, then its height. The matching tower lights up.</p>
+      <div id="plan"></div><div class="keypad" id="kp">${[1,2,3,4,5,6].map(n=>`<button data-n="${n}">${n}</button>`).join('')}</div>
+      <button id="chk1" class="btn-primary">Check towers</button>
+      <div id="s2" hidden><h3>Step 2 · Add them up</h3><div class="row"><input id="tot" class="num" type="number" inputmode="numeric" min="0" aria-label="Total cubes"><button id="chk2" class="btn-primary">Check total</button></div></div>
+      <div id="fb"></div></div></div><div id="notes"></div>`;
+  const cv=$('#cv');
+  const paint=()=>{drawStack(cv,H,{highlight:stage===1&&sel?sel.split(',').map(Number):null,labels:xray});
+    $('#plan').innerHTML=planSVG(H,vals,stage===1?sel:null,marks);
+    $('#plan').querySelectorAll('.cellp').forEach(p=>p.onclick=()=>{sel=p.dataset.k;paint()})};
+  redraw=paint;paint();
+  const setVal=n=>{if(!sel||stage!==1)return;vals[sel]=n;delete marks[sel];const i=keys.indexOf(sel);const nxt=keys.slice(i+1).concat(keys.slice(0,i)).find(k=>vals[k]==null);if(nxt)sel=nxt;paint()};
+  $('#kp').querySelectorAll('button').forEach(b=>b.onclick=()=>setVal(+b.dataset.n));
+  g.onkeydown=e=>{if(stage===1&&/^[1-6]$/.test(e.key)&&e.target.tagName!=='INPUT')setVal(+e.key)};
+  document.onkeydown=g.onkeydown;
+  $('#xray').onclick=()=>{xray=!xray;$('#xray').textContent=xray?'Hide tower numbers':'Show tower numbers';paint()};
+  $('#new').onclick=()=>towerLearn(level);
+  $('#chk1').onclick=()=>{
+    const missing=keys.filter(k=>vals[k]==null);
+    if(missing.length){$('#fb').innerHTML=`<div class="feedback no">${missing.length} tower${missing.length>1?'s':''} still blank. Every floor square needs a number.</div>`;sel=missing[0];paint();return}
+    let wrong=0;keys.forEach(k=>{const[x,y]=k.split(',').map(Number);marks[k]=vals[k]===H[x][y]?'ok':'no';if(marks[k]==='no')wrong++});
+    if(wrong){sel=keys.find(k=>marks[k]==='no');paint();
+      const wk=keys.filter(k=>marks[k]==='no'),N=towerNotes(H,{wrong:wk});
+      $('#fb').innerHTML=`<div class="feedback no">${wrong} tower${wrong>1?'s are':' is'} off (in red). Read the case notes below, fix the red numbers, then check again.</div>`;
+      $('#notes').innerHTML=N.html;N.draw();redraw=()=>{paint();N.draw()}}
+    else{$('#notes').innerHTML='';redraw=paint;stage=2;paint();$('#chk1').hidden=true;$('#kp').hidden=true;$('#s2').hidden=false;$('#fb').innerHTML=`<div class="feedback ok">All towers right. Now add them.</div>`;$('#tot').focus()}};
+  $('#chk2').onclick=()=>{const t=total(H),v=+$('#tot').value;
+    const sum=keys.map(k=>{const[x,y]=k.split(',').map(Number);return H[x][y]}).join(' + ');
+    if(v===t){xray=true;paint();addPoints(15);$('#fb').innerHTML=`<div class="feedback ok"><b>Case closed: ${t} cubes.</b><br>${sum} = ${t}</div><div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">Next stack →</button></div>`;$('#nx').onclick=()=>towerLearn(level)}
+    else $('#fb').innerHTML=`<div class="feedback no">Not quite. Add the numbers on the floor plan again, one row at a time.</div>`};
+}
+function towerExam(level){
+  const ROUNDS=8,SECS=45;let n=0,score=0;const g=$('#game');
+  const next=()=>{
+    if(n===ROUNDS){stopTimer();redraw=null;record('tower',score,ROUNDS,level);
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=7?'Sharp detective work.':score>=5?'Good. Use the Tower Method on every stack, even easy-looking ones.':'Switch to Learn for a few stacks, then try again.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=()=>towerExam(level);return}
+    n++;const H=genStack(level),t=total(H);
+    const opts=shuffle([...new Set([t,t-1,t+1,t-2,t+2])].filter(v=>v>0)).slice(0,5);
+    let answered=false,labels=false,left=SECS;
+    g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${ROUNDS}</span><span class="score">Score ${score}</span></div>
+      <div class="timer"><i id="bar"></i></div>
+      <p style="margin:0;font-weight:600">How many cubes are in this stack?</p>
+      <canvas class="stack" id="cv"></canvas><div class="options">${opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div><div id="fb"></div>`;
+    const cv=$('#cv');redraw=()=>drawStack(cv,H,{labels});redraw();
+    const finish=v=>{if(answered)return;answered=true;stopTimer();labels=true;redraw();
+      g.querySelectorAll('.options button').forEach(b=>{b.disabled=true;if(+b.dataset.v===t)b.classList.add('right');else if(+b.dataset.v===v)b.classList.add('wrong')});
+      if(v===t)score++;
+      const nav=`<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See score':'Next →'}</button></div>`;
+      if(v===t){$('#fb').innerHTML=`<div class="feedback ok"><b>Correct: ${t}.</b> The numbers show each tower’s height.</div>`+nav}
+      else{const N=towerNotes(H,{given:v,timeout:v==null});
+        $('#fb').innerHTML=`<div class="feedback no"><b>${v==null?'Time’s up.':'Not quite.'}</b> It’s ${t}. Here’s what happened.</div>`+N.html+nav;
+        N.draw();redraw=()=>{drawStack(cv,H,{labels});N.draw()}}
+      $('#nx').onclick=next};
+    g.querySelectorAll('.options button').forEach(b=>b.onclick=()=>finish(+b.dataset.v));
+    timerId=setInterval(()=>{left-=.25;$('#bar').style.width=Math.max(0,left/SECS*100)+'%';if(left<=0)finish(null)},250);
+  };
+  next();
+}
+
+/* ============ Case 02: Impostor ============ */
+function impostor(){
+  const ROUNDS=10;let n=0,score=0;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 02 · Nets of cubes</div><h2>Spot the Impostor</h2></div><span class="score" id="sc"></span></div>
+    <div class="rule"><strong>Check the shape before the symbols.</strong><ul><li><b>Four in a line?</b> One wing on each side. Both wings on the same side = fake.</li><li><b>No 2×2 block</b> of squares.</li><li><b>No line of 5</b> or more.</li></ul></div><div id="game"></div></section>`;
+  const g=$('#game');
+  const next=()=>{
+    if(n===ROUNDS){saveBest('impostor',{n:score,of:ROUNDS});g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=9?'No impostor gets past you.':'Read the rule box again, then go for 10 out of 10.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=impostor;return}
+    n++;$('#sc').textContent=`Shape ${n} of ${ROUNDS} · Score ${score}`;
+    const real=Math.random()<.5;const base=real?pick(NETS):(Math.random()<.6?pick(TRAPS):pick(FAKES));const cells=randomPose(base);
+    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells)}</div><div class="stamps"><button class="stamp real" data-v="1">REAL</button><button class="stamp fake" data-v="0">FAKE</button></div><div id="fb"></div>`;
+    g.querySelectorAll('.stamp').forEach(b=>b.onclick=()=>{
+      const said=b.dataset.v==='1',right=said===real;if(right)score++;$('#sc').textContent=`Shape ${n} of ${ROUNDS} · Score ${score}`;
+      g.querySelectorAll('.stamp').forEach(x=>x.disabled=true);
+      let fill={},stroke={},why;
+      if(real){const f=fold(cells).face;const col=['var(--p1)','var(--p1)','var(--p2)','var(--p2)','var(--p3)','var(--p3)'];cells.forEach(([r,c],i)=>fill[r+','+c]=col[f[i]]);
+        why=`It folds into a cube. Same colours = opposite faces. This one is a <b>${family(cells)}</b> net.`}
+      else{const d=diagnose(cells);d.hot.forEach(([r,c])=>{fill[r+','+c]='var(--bad-soft)';stroke[r+','+c]='var(--bad)'});why=d.why}
+      $('#nb').innerHTML=netSVG(cells,{fill,stroke})+`<div class="verdict ${real?'real':'fake'}">${real?'REAL':'FAKE'}</div>`;
+      $('#fb').innerHTML=`<div class="feedback ${right?'ok':'no'}"><b>${right?'Correct.':'Caught you out.'}</b> ${why}</div>${right?'':netNotes(cells,{real})}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See score':'Next shape →'}</button></div>`;$('#nx').onclick=next});
+  };
+  next();
+}
+
+/* ============ Case 03: The Missing Eleven ============ */
+function hunt(){
+  let found=store.get('found',[]).filter(k=>NET_KEYS.includes(k));const on=new Set();
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 03 · Nets of cubes</div><h2>The Missing Eleven</h2></div><span class="score" id="cnt"></span></div>
+    <div class="rule">Tap 6 squares to draw a net, then check it. A net that’s the same as one you’ve found, just turned or flipped, doesn’t count twice. <strong>Families:</strong> 6 × 1-4-1, 3 × 1-3-2, 1 × 2-2-2 staircase, 1 × 3-3.</div>
+    <div class="stage"><div class="panel"><div class="hunt" id="grid">${[...Array(25)].map((_,i)=>`<button class="cell" id="c${i}" data-i="${i}" aria-pressed="false" aria-label="Square ${i+1}"></button>`).join('')}</div>
+      <div class="row"><button class="btn-primary" id="chk" disabled>Check net</button><button class="btn-ghost" id="clr">Clear</button><span class="muted" id="n6">0 / 6 squares</span></div><div id="fb"></div></div>
+      <div class="panel"><h3>Case board</h3><div class="gallery" id="gal"></div><div class="row"><button class="btn-ghost" id="rehunt">Start the hunt again</button><span class="muted" id="rehuntm"></span></div></div></div><div id="notes"></div></section>`;
+  const paintGal=(flash)=>{$('#cnt').textContent=`${found.length} of 11 found`;
+    $('#gal').innerHTML=NETS.map((c,i)=>{const k=NET_KEYS[i],has=found.includes(k);return`<div class="slot ${has?'found':''} ${k===flash?'flash':''}">${has?netSVG(c,{size:14}):'<span class="q">?</span>'}<small>${family(c)}</small></div>`}).join('')};
+  paintGal();
+  let armed=false;$('#rehunt').onclick=()=>{if(!armed){armed=true;$('#rehunt').textContent='Tap again to clear the board';$('#rehuntm').textContent='Her other progress is kept.';return}
+    found=[];store.set('found',found);armed=false;$('#rehunt').textContent='Start the hunt again';$('#rehuntm').textContent='Board cleared. Find all 11 again!';paintGal()};
+  const upd=()=>{$('#n6').textContent=`${on.size} / 6 squares`;$('#chk').disabled=on.size!==6};
+  $('#grid').querySelectorAll('.cell').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(on.has(i))on.delete(i);else{if(on.size>=6)return;on.add(i)}b.setAttribute('aria-pressed',on.has(i));upd()});
+  $('#clr').onclick=()=>{on.clear();$('#grid').querySelectorAll('.cell').forEach(b=>b.setAttribute('aria-pressed','false'));upd();$('#fb').innerHTML='';$('#notes').innerHTML=''};
+  $('#chk').onclick=()=>{
+    const cells=[...on].map(i=>[Math.floor(i/5),i%5]);const has=new Set(cells.map(p=>p.join(',')));
+    const seen=new Set([cells[0].join(',')]),q=[cells[0]];while(q.length){const[r,c]=q.pop();for(const[dr,dc]of DIRS){const k=(r+dr)+','+(c+dc);if(has.has(k)&&!seen.has(k)){seen.add(k);q.push([r+dr,c+dc])}}}
+    if(seen.size<6){$('#fb').innerHTML=`<div class="feedback no">The squares must all join edge to edge, in one piece.</div>`;return}
+    const k=canon(cells);
+    if(!NET_KEYS.includes(k)){$('#fb').innerHTML=`<div class="feedback no"><b>Impostor!</b> That shape can’t fold into a cube. See the case notes below.</div>`;$('#notes').innerHTML=netNotes(norm(cells),{real:false});return}
+    if(found.includes(k)){$('#fb').innerHTML=`<div class="feedback no">Real net, but you already have it on the case board. Turn it or flip it in your head and you’ll see it’s the same one.</div>`;paintGal(k);return}
+    found.push(k);store.set('found',found);paintGal(k);addPoints(20);if(found.length===11&&onceFlag('all11'))stamp('Found all 11 nets');
+    $('#clr').click();$('#fb').innerHTML=found.length===11?`<div class="feedback ok"><b>All 11 found. Case closed!</b></div>`:`<div class="feedback ok"><b>New net found!</b> It’s a ${family(norm(cells))}. ${11-found.length} to go.</div>`};
+  upd();
+}
+
+/* ============ Case 04: Opposites ============ */
+function opposites(){
+  const ROUNDS=8;let n=0,score=0;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 04 · Nets of cubes</div><h2>Opposite Suspects</h2></div><span class="score" id="sc"></span></div>
+    <div class="rule"><strong>Tap the square that ends up opposite the ★.</strong><ul><li>In a straight line of three, the 1st and 3rd are opposite.</li><li>In a zigzag, the two ends are opposite.</li><li>Opposite faces can never be seen together on a cube.</li></ul></div><div id="game"></div></section>`;
+  const g=$('#game');
+  const next=()=>{
+    if(n===ROUNDS){saveBest('opp',{n:score,of:ROUNDS});g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=7?'Opposites spotted every time.':'Look for straight lines of three first. They give the answer fastest.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=opposites;return}
+    n++;$('#sc').textContent=`Round ${n} of ${ROUNDS} · Score ${score}`;
+    const cells=randomPose(pick(NETS)),f=fold(cells).face,s=rnd(6),ans=f.findIndex(x=>x===(f[s]^1));
+    const star={[cells[s].join(',')]:'★'};
+    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells,{marks:star,click:true,size:54})}</div><div id="fb"></div>`;
+    $('#nb').querySelectorAll('rect[data-i]').forEach(r=>r.onclick=()=>{
+      const i=+r.dataset.i;if(i===s)return;const ok=i===ans;if(ok)score++;$('#sc').textContent=`Round ${n} of ${ROUNDS} · Score ${score}`;
+      const col=['var(--p1)','var(--p1)','var(--p2)','var(--p2)','var(--p3)','var(--p3)'],fill={},stroke={};cells.forEach(([r2,c2],j)=>fill[r2+','+c2]=col[f[j]]);
+      if(!ok)stroke[cells[i].join(',')]='var(--bad)';
+      $('#nb').innerHTML=netSVG(cells,{marks:star,fill,stroke,size:54});
+      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not that one.'}</b> Same colours are opposite pairs. Every net has exactly three pairs.</div>${ok?'':oppNotes(cells,f,s,ans,i)}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See score':'Next →'}</button></div>`;$('#nx').onclick=next});
+  };
+  next();
+}
+home();
+</script>
+
+</body>
+</html>
