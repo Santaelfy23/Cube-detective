@@ -12,10 +12,10 @@
 body{margin:0}
 /* Layout: a detective's desk. Case-file folders on the home screen; each case is one focused working sheet. */
 :root{
-  --bg:#E9ECF2; --surface:#FFFFFF; --ink:#1B2333; --muted:#596579; --line:#D3D9E4;
-  --folder:#E3C07E; --folder-ink:#4A3510; --accent:#2B57D0; --accent-soft:#E3EAFB;
+  --bg:#D9DDE5; --surface:#ECEEF2; --ink:#1B2333; --muted:#545F72; --line:#C4CBD7;
+  --folder:#E3C07E; --folder-ink:#4A3510; --accent:#2B57D0; --accent-soft:#D8E0F3;
   --good:#17804A; --good-soft:#DDF2E6; --bad:#C33227; --bad-soft:#FBE3E0;
-  --cube-top:#FBFCFE; --cube-l:#CBD3E2; --cube-r:#A8B4CA; --cube-line:#1B2333;
+  --cube-top:#F1F3F7; --cube-l:#C3CBDA; --cube-r:#A1ADC3; --cube-line:#1B2333;
   --hl-top:#BFD0FA; --hl-l:#8EA9EF; --hl-r:#6E8EE3;
   --hid-top:#FFD970; --hid-l:#EDB93F; --hid-r:#CC9524;
   --p1:#F5C542; --p2:#6CC4A1; --p3:#F08A7E;
@@ -195,6 +195,28 @@ input.num.small{width:70px;font-size:1rem;padding:6px 8px}
 @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 .backup{display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:12px;border:1px dashed var(--line);border-radius:10px}
 textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:8px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical;word-break:break-all}
+.fbpanel{position:fixed;inset:0;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:30}
+.fbcard{background:var(--surface);border-radius:var(--r);padding:18px;width:min(100%,520px);display:flex;flex-direction:column;gap:12px;max-height:100%;overflow:auto}
+.fbcard h3{font-family:var(--font-display);font-weight:400;font-size:1.35rem}
+.fblabel{font-weight:600;font-size:.92rem;margin-bottom:4px;display:block}
+.fbcard textarea{width:100%;font-family:inherit;font-size:1rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.fblist{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.fblist li{border-left:3px solid var(--folder);padding:2px 0 2px 10px}
+.speed{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;width:min(100%,460px);display:flex;flex-direction:column;gap:4px}
+.speed.ok{border-color:var(--good);background:var(--good-soft)}
+.sp-row{display:grid;grid-template-columns:80px 60px 1fr;gap:8px;align-items:baseline;font-variant-numeric:tabular-nums}
+.mast{background:var(--good);color:var(--surface);padding:1px 8px;border-radius:999px}
+.nextup{background:var(--accent-soft);border-radius:var(--r);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.nextup>div{flex:1 1 240px;min-width:0}
+.nextup h3{margin:2px 0;font-family:var(--font-display);font-weight:400;font-size:1.35rem}
+.recall{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:8px}
+.recall summary{cursor:pointer;font-weight:600}
+.recall p{margin:6px 0 0}
+.rulebox{background:var(--accent-soft);border-left:5px solid var(--accent);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.rulebox h4{margin:0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.rulebox p{margin:0}.rb-rule{font-weight:600;font-size:1.02rem}
+.revise{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.revise h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.3rem}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
 </style>
 </head>
@@ -207,9 +229,17 @@ textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-
       <h1>Cube Detective</h1>
       <p>Rule options out. Then pick.</p>
     </div>
-    <button id="homeBtn" class="btn-ghost" hidden>← All case files</button>
+    <div class="row"><button id="themeBtn" class="btn-ghost" aria-label="Switch colours">Light mode</button><button id="fbBtn" class="btn-ghost">Feedback</button><button id="homeBtn" class="btn-ghost" hidden>← All case files</button></div>
   </header>
   <main id="view"></main>
+  <div id="fbPanel" class="fbpanel" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle"><div class="fbcard">
+    <div class="gate-head"><h3 id="fbTitle" style="margin:0">Tell us what you think</h3><button class="btn-ghost" id="fbClose">Close</button></div>
+    <p class="muted" style="margin:0" id="fbWhere"></p>
+    <div><div class="fblabel">How hard was it?</div><div class="seg" id="fbHard"><button data-v="Too easy">Too easy</button><button data-v="Just right">Just right</button><button data-v="Too hard">Too hard</button></div></div>
+    <div><div class="fblabel">How fun was it?</div><div class="seg" id="fbFun"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div></div>
+    <label class="fblabel" for="fbText">Anything to change, fix or add?</label>
+    <textarea id="fbText" rows="4" placeholder="Something confusing, a bug, an idea for a new case file…"></textarea>
+    <div class="row"><button class="btn-primary" id="fbSend">Save feedback</button><span class="muted" id="fbMsg"></span></div></div></div>
 </div>
 
 <script>
@@ -222,6 +252,8 @@ const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim
 const store={get(k,d){try{const v=localStorage.getItem('cd_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem('cd_'+k,JSON.stringify(v))}catch(e){}}};
 let redraw=null, timerId=null;
+const QT={t0:0,ts:[],reset(){this.ts=[];this.t0=0},start(){this.t0=Date.now()},stop(){if(this.t0){this.ts.push((Date.now()-this.t0)/1000);this.t0=0}},
+  avg(){return this.ts.length?Math.round(this.ts.reduce((a,b)=>a+b,0)/this.ts.length):null}};
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null}}
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>redraw&&redraw())}catch(e){}
 new MutationObserver(()=>redraw&&redraw()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
@@ -411,12 +443,12 @@ function oppNotes(cells,f,s,ans,clicked){
   const path=[];for(let i=ans;i!==-1;i=prev[i])path.unshift(i);const pc=path.map(i=>cells[i]);
   const straight=pc.every(p=>p[0]===pc[0][0])||pc.every(p=>p[1]===pc[0][1]);
   const mv=[];for(let i=1;i<pc.length;i++)mv.push((pc[i][0]-pc[i-1][0])+','+(pc[i][1]-pc[i-1][1]));
-  const zig=pc.length===4&&mv[0]===mv[2]&&mv[1]!==mv[0];
+  const zig=pc.length>=4&&mv[0]===mv.at(-1)&&mv.slice(1,-1).every(m=>m===mv[1])&&mv[1]!==mv[0];
   const four=runs(cells).find(o=>o.line.length===4),inFour=k=>four&&four.line.some(p=>p.join(',')===k);
   const wings=four&&!inFour(cells[s].join(','))&&!inFour(cells[ans].join(','));
   let rule;
   if(straight&&pc.length===3)rule='<b>Line of three.</b> The ★ and its opposite sit in a straight line with one square between them (blue outline). Skip the middle one.';
-  else if(zig)rule='<b>Zigzag.</b> The ★ and its opposite are the two ends of a zigzag of four squares: step, across, step (blue outline).';
+  else if(zig)rule=`<b>Z shape.</b> The ★ and its opposite are the two ends of a Z (blue outline): step, across${pc.length>4?` ${pc.length-3} squares`:''}, step. The ends of a Z are always opposite, however long the middle is.`;
   else if(wings)rule='<b>Wings of a line of four.</b> When a net has a line of four, the two wings sticking out are always opposite. They become the top and bottom of the cube.';
   else rule='<b>Follow the path.</b> Trace from the ★ square by square (blue outline). Its opposite is never a square it touches.';
   const touch=Math.abs(cells[clicked][0]-cells[s][0])+Math.abs(cells[clicked][1]-cells[s][1])===1;
@@ -619,24 +651,26 @@ const TYPE_CASE={count:'tower',impostor:'impostor',opp:'opp',edge:'edge',drone:'
 function runQuiz(cfg){
   stopTimer();$('#homeBtn').hidden=false;
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}<div id="game"></div></section>`;
-  const g=$('#game'),plan=cfg.plan;let n=0,score=0;const tally={};
+  const g=$('#game'),plan=cfg.plan;let n=0,score=0;const tally={},missed={};QT.reset();
   const next=()=>{stopTimer();redraw=null;
     if(n===plan.length){
-      if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0);
-      if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);if(w[t]&&!now&&v.a>=2)stamp(`Fixed a weak spot: ${TYPE_NAME[t]}`);w[t]=now});store.set('weak',w)}
-      if(cfg.id==='warm'&&onceFlag('warm-'+today()))stamp('Daily warm-up done');
-      if(cfg.id==='mock'&&score>=17)milestone('mock17','17+ on the Final Mock');
+      const avg=QT.avg();if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0,avg);
+      if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);w[t]=now});store.set('weak',w)}
+      if(cfg.id==='warm'&&score===plan.length&&onceFlag('warm-'+today()))stamp(`Daily warm-up: ${score}/6`);
+      if(cfg.id==='mock'&&score>=17&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
       const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
       const rows=Object.entries(tally).map(([t,v])=>`<tr><td>${TYPE_NAME[t]}</td><td class="num">${v.r} / ${v.a}</td><td>${v.r===v.a?'<span class="y">Solid</span>':v.a-v.r>=2||v.r/v.a<.7?`<span class="n">Refresh: replay ${CASES.find(c=>c.id===TYPE_CASE[t]).title}</span>`:'<span class="s">Nearly</span>'}</td></tr>`).join('');
-      g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${speedLine(cfg.id,score,plan.length,avg)}${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
+        ${Object.keys(missed).length?`<div class="revise"><h3>Rules to revise</h3><p class="muted" style="margin:0">Say each one out loud, then try the case file again.</p>${Object.keys(missed).sort((a,b)=>missed[b]-missed[a]).map(t=>ruleBox(t,`Missed ${missed[t]}×`)).join('')}</div>`:''}
         ${Object.keys(tally).length>1?`<div class="tablewrap"><table class="res"><thead><tr><th>Skill</th><th>Score</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
         <div class="row" style="justify-content:center;margin-top:12px"><button class="btn-primary" id="again">Try again</button><button id="hm">Back to case files</button></div>`;
       $('#again').onclick=()=>runQuiz({...cfg,plan:cfg.remake?cfg.remake():plan});$('#hm').onclick=home;scrollTo(0,0);return}
     const type=plan[n];n++;
     g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${plan.length} · ${TYPE_NAME[type]}</span><span class="score">Score ${score}</span></div>${cfg.secs?'<div class="timer"><i id="bar"></i></div>':''}<div id="qh" class="qhost"></div><div id="fb"></div>`;
-    const q=QB[type]($('#qh'),cfg.level??1);let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
-    q.onAnswer=(ok,nt,line)=>{stopTimer();(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
-      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length?'See results':'Next →'}</button></div>`;
+    const q=QB[type]($('#qh'),cfg.level??1);QT.start();let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
+    q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
+      if(!ok)missed[type]=(missed[type]||0)+1;
+      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length?'See results':'Next →'}</button></div>`;
       nt&&nt.draw&&nt.draw();$('#nx').onclick=next};
     if(cfg.secs){let left=cfg.secs;timerId=setInterval(()=>{left-=.25;const b=$('#bar');if(b)b.style.width=Math.max(0,left/cfg.secs*100)+'%';if(left<=0){stopTimer();q.timeout()}},250)}
   };
@@ -660,7 +694,7 @@ function elimCase(){
     <div class="rule"><strong>Don’t look for the answer. Cross out the wrong ones.</strong> Tap an option, then say why it’s wrong. When only one is left, that’s your answer. Aim for no mistakes, then aim for speed: under ${TARGET.edge}s for cubes, under ${TARGET.drone}s for views from above.</div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{stopTimer();redraw=null;
-    if(n===ROUNDS){record('elim',clean,ROUNDS);const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+    if(n===ROUNDS){const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);record('elim',clean,ROUNDS,0,avg);
       g.innerHTML=`<div class="done"><div class="big">${clean} / ${ROUNDS}</div><p>clean solves (no mistakes) · average ${avg}s a question</p><p>${clean>=5?'Quick and accurate. That’s exam form.':'Slow down a little: accuracy first, speed comes with it.'}</p><div class="row" style="justify-content:center"><button class="btn-primary" id="again">Play again</button><button id="hm">Back to case files</button></div></div>`;
       $('#again').onclick=elimCase;$('#hm').onclick=home;return}
     const type=plan[n];n++;$('#sc').textContent=`Question ${n} of ${ROUNDS} · Clean ${clean}`;
@@ -689,8 +723,14 @@ function elimCase(){
 /* ============ Rewards: stamps, cards and detective rank ============ */
 const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
 const DAILY_STAMPS=2,PLAY_CAP_MIN=40;
-const rwSettings=()=>({spc:3,limit:18,...store.get('rwset',{})});
-const rewards=()=>({stamps:[],cards:[],given:0,points:0,rank:0,day:{},flags:{},play:{},...store.get('rw',{})});
+const rwSettings=()=>({spc:6,limit:15,...store.get('rwset',{})});
+const MODULE_CARDS=[{key:'m1',name:'cases 01–02',items:()=>[GATES.w1[0],GATES.w1[1]]},{key:'m2',name:'cases 03–04',items:()=>[GATES.w1[2],GATES.w1[3]]},{key:'m3',name:'cases 05–07',items:()=>GATES.w2}];
+const groupDone=g=>g.items().every(c=>c.p()>=c.of);
+function checkModules(){MODULE_CARDS.forEach(g=>{if(groupDone(g))milestone(g.key,`Mastered ${g.name}`)})}
+(function migrateRules2(){try{const raw=store.get('rw',null);if(!raw||raw.v>=2)return;
+  const given=raw.given||0,keep=(raw.cards||[]).slice(0,given);
+  store.set('rw',{...raw,v:2,stamps:[],cards:keep,day:{},flags:Object.fromEntries(Object.entries(raw.flags||{}).filter(([k])=>!k.startsWith('warm-')))})}catch(e){}})();
+const rewards=()=>({v:2,stamps:[],cards:[],given:0,points:0,rank:0,day:{},flags:{},play:{},...store.get('rw',{})});
 const saveRw=r=>store.set('rw',r);
 function toast(html,kind=''){let box=$('#toasts');if(!box){box=document.createElement('div');box.id='toasts';box.setAttribute('aria-live','polite');document.body.appendChild(box)}
   const t=document.createElement('div');t.className='toast '+kind;t.innerHTML=html;box.appendChild(t);setTimeout(()=>t.remove(),6500)}
@@ -704,7 +744,7 @@ function stamp(reason,{bonus=false}={}){const r=rewards(),d=today();r.day[d]=r.d
 function milestone(key,reason){const r=rewards();if(r.flags[key])return;r.flags[key]=true;
   if(r.cards.length<rwSettings().limit){r.cards.push({d:today(),from:key,reason});saveRw(r);toast(`<b>CARD EARNED!</b> ${reason}. Ask for your card.`,'card')}else saveRw(r)}
 function addPoints(p){const r=rewards();r.points+=Math.round(p);const nr=RANKS.filter(x=>r.points>=x[1]).length-1,up=nr>r.rank;if(up)r.rank=nr;saveRw(r);
-  if(up){toast(`<b>Promoted!</b> You are now a ${RANKS[nr][0]}.`,'rank');stamp(`Promoted to ${RANKS[nr][0]}`,{bonus:true})}}
+  if(up)toast(`<b>Promoted!</b> You are now a ${RANKS[nr][0]}.`,'rank')}
 function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[key]=true;saveRw(r);return true}
 /* practice time: count minutes while a case is open */
 let inCase=false;
@@ -720,12 +760,31 @@ function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.s
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${full?'All cards earned!':`${spc-inMeter} stamp${spc-inMeter===1?'':'s'} to the next card`} · today ${todayN}/${DAILY_STAMPS}</p></div></div>
     <div class="col-cards"><span><b>${r.cards.length}</b> card${r.cards.length===1?'':'s'} earned of ${limit}</span><span><b>${r.given}</b> handed over</span>
       ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect! Ask a grown-up.</span>`:''}</div>
-    <details><summary>How to earn stamps and cards</summary><ul class="howto">
-      <li><b>Stamps</b> (up to ${DAILY_STAMPS} a day): finish the daily warm-up · a clean Rule It Out round · beat your best score on a case · fix a Refresh skill · find all 11 nets.</li>
-      <li><b>${spc} stamps = 1 card.</b> Promotions to a new rank give a bonus stamp.</li>
-      <li><b>Big cards:</b> pass Checkpoint 1 · pass Checkpoint 2 · score 17+ on the Final Mock.</li>
-      <li>Every finished round earns rank points. Fewer mistakes earn more. A case with a Refresh tag earns double.</li></ul>
+    <details><summary>How to earn cards</summary><ul class="howto">
+      <li><b>Week 1: three big cards.</b> Card 1: master cases 01–02. Card 2: master cases 03–04. Card 3: master cases 05–07. Mastered means quick and accurate on two different days; the targets are on the mastery test cards.</li>
+      <li><b>Weeks 2–3: stamps</b> (up to ${DAILY_STAMPS} a day): pass a mastery test · 17+ on the Mock Exam · a perfect 6/6 on the daily warm-up. Each can earn one stamp a day.</li>
+      <li><b>${spc} stamps = 1 card.</b></li>
+      <li>Every finished round earns rank points. Fewer mistakes earn more. Rank is for glory: no stamps.</li></ul>
       <h4 class="tag" style="margin:8px 0 4px">Latest stamps</h4><ul class="howto">${log}</ul></details></section>`}
+
+/* ============ Colours: dark by default, her choice remembered ============ */
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);const b=$('#themeBtn');if(b)b.textContent=t==='dark'?'Light mode':'Dark mode'}
+applyTheme(store.get('theme','dark'));
+$('#themeBtn').onclick=()=>{const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';store.set('theme',t);applyTheme(t)};
+/* ============ Feedback ============ */
+let fbState={};
+function screenName(){const h=view.querySelector('.sheet-head h2');return h?h.textContent:'Home screen'}
+$('#fbBtn').onclick=()=>{fbState={where:screenName()};$('#fbWhere').textContent=`About: ${fbState.where}`;$('#fbText').value='';$('#fbMsg').textContent='';
+  document.querySelectorAll('#fbPanel .seg button').forEach(b=>b.setAttribute('aria-pressed','false'));$('#fbPanel').hidden=false;$('#fbText').focus()};
+$('#fbClose').onclick=()=>{$('#fbPanel').hidden=true};
+$('#fbPanel').onclick=e=>{if(e.target.id==='fbPanel')$('#fbPanel').hidden=true};
+document.querySelectorAll('#fbPanel .seg').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));fbState[seg.id==='fbHard'?'hard':'fun']=b.dataset.v}));
+$('#fbSend').onclick=()=>{const text=$('#fbText').value.trim();if(!text&&!fbState.hard&&!fbState.fun){$('#fbMsg').textContent='Pick an answer or write something first.';return}
+  const list=store.get('feedback',[]);list.push({d:new Date().toISOString(),where:fbState.where,hard:fbState.hard||'',fun:fbState.fun||'',text});store.set('feedback',list.slice(-60));
+  $('#fbPanel').hidden=true;toast('<b>Thanks, Detective!</b> Your feedback is saved.','rank');if(view.querySelector('#fbList'))home()};
+function feedbackHTML(){const list=store.get('feedback',[]).slice().reverse();if(!list.length)return'<p class="muted" style="margin:0">No feedback yet.</p>';
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return`<ul class="fblist" id="fbList">${list.map(f=>`<li><div class="muted" style="font-size:.8rem">${new Date(f.d).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${esc(f.where)}${f.hard?` · ${esc(f.hard)}`:''}${f.fun?` · fun ${esc(f.fun)}/5`:''}</div>${f.text?`<div>${esc(f.text)}</div>`:''}</li>`).join('')}</ul>`}
 
 /* ============ Parent area: tap the title 5 times ============ */
 let parentOpen=false,taps=[];
@@ -750,38 +809,52 @@ function wireBackup(){
     try{const cur=rewards();try{const bk=JSON.parse(o.data.cd_rw||'null');if(bk){bk.given=Math.max(bk.given||0,cur.given||0);o.data.cd_rw=JSON.stringify(bk)}}catch(e){}
       const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('cd_'))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));
       Object.entries(o.data).forEach(([k,v])=>{if(k.startsWith('cd_'))localStorage.setItem(k,v)})}catch(e){$('#rsm').textContent='This browser blocked saving. Try a normal (not private) window.';return}
+    try{const raw=store.get('rw',null);if(raw&&!(raw.v>=2)){const g=raw.given||0;store.set('rw',{...raw,v:2,stamps:[],cards:(raw.cards||[]).slice(0,g),day:{}})}}catch(e){}
     home();toast(`<b>Progress restored</b> from ${when}.`,'rank')}}
 
 /* ============ Progress, gates and home ============ */
 const today=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-function record(id,n,of,lvl=0){const ty={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'}[id],w=store.get('weak',{}),wasWeak=ty&&w[ty];
-  const prev=bestN(id);const h=store.get('hist',{});(h[id]=h[id]||[]).push({d:today(),n,of,lvl});store.set('hist',h);
+function record(id,n,of,lvl=0,avg=null){const ty={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'}[id],w=store.get('weak',{}),wasWeak=ty&&w[ty];
+  const prev=bestN(id);const h=store.get('hist',{});(h[id]=h[id]||[]).push({d:today(),n,of,lvl,a:avg});store.set('hist',h);
   const b=store.get('best',{}),cur=b[id]?parseInt(b[id]):-1;if(n>cur){b[id]=`${n}/${of}`;store.set('best',b)}
   addPoints((n*10+(n/of>=.85?20:0))*(wasWeak?2:1));
   const cname=(CASES.find(c=>c.id===id)||{}).title;
-  if(ty&&n/of>=.85&&wasWeak){w[ty]=false;store.set('weak',w);stamp(`Fixed a weak spot: ${TYPE_NAME[ty]}`)}
-  if(id==='elim'&&n===of)stamp('Clean Rule It Out round');
-  else if(cname&&prev>=0&&n>prev)stamp(`New best on ${cname}: ${n}/${of}`)}
+  if(ty&&n/of>=.85&&wasWeak){w[ty]=false;store.set('weak',w)}
+  checkModules()}
 const saveBest=(id,s)=>record(id,s.n,s.of);
 const hist=id=>store.get('hist',{})[id]||[];
 const bestN=id=>Math.max(-1,...hist(id).map(r=>r.n));
 const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).map(r=>r.d)).size;
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
+/* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
+const MASTERY={tower:{min:7,of:8,secs:30,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+  edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
+const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=m.secs};
+const readyDays=id=>new Set(hist(id).filter(r=>examReady(id,r)).map(r=>r.d)).size;
+const mastered=id=>readyDays(id)>=2;
+const lastRound=id=>hist(id).slice(-1)[0];
+function speedLine(id,n,of,avg,lvl=0){const m=MASTERY[id];if(!m||avg==null)return avg!=null?`<p class="muted">Average ${avg}s a question.</p>`:'';
+  const acc=n>=m.min&&lvl>=(m.lvl||0),fast=avg<=m.secs,days=readyDays(id);
+  const msg=acc&&fast?(days>=2?'<b>Exam-ready: quick and accurate.</b> Case mastered. Keep it sharp in the warm-up.':`<b>Exam-ready round!</b> Do it again on another day to master this case (${days}/2 days).`):
+    !acc&&!fast?`<b>Keep going.</b> Aim for ${m.label} first, then speed up.`:!acc?`<b>Fast enough. Now get ${m.label}.</b> ${m.lvl&&lvl<m.lvl?'Switch to Medium or Hard. ':''}Slow down a touch and use the trick every time.`:
+    `<b>Accurate! Now get quicker.</b> Target: ${m.secs}s or less a question.`;
+  return`<div class="speed ${acc&&fast?'ok':''}"><div class="sp-row"><span>Accuracy</span><b class="${acc?'y':'n'}">${n}/${of}</b><span class="muted">target ${m.label}</span></div>
+    <div class="sp-row"><span>Speed</span><b class="${fast?'y':'n'}">${avg}s</b><span class="muted">target ${m.secs}s or less a question</span></div><p style="margin:6px 0 0">${msg}</p></div>`}
 const GATES={
-  w1:[{t:'Tower Count, Exam mode (Medium or Hard): 7+ out of 8 on 2 different days',p:()=>Math.min(2,goodDays('tower',7,1)),of:2},
-      {t:'Spot the Impostor: 9+ out of 10',p:()=>bestN('impostor')>=9?1:0,of:1},
+  w1:[{t:'Tower Count: quick and accurate (7+/8 on Medium or Hard, 30s or less a question) on 2 different days',p:()=>Math.min(2,readyDays('tower')),of:2},
+      {t:'Spot the Impostor: 9+/10 at 10s or less a shape, on 2 different days',p:()=>Math.min(2,readyDays('impostor')),of:2},
       {t:'The Missing Eleven: all 11 found',p:()=>Math.min(11,store.get('found',[]).length),of:11},
-      {t:'Opposite Suspects: 7+ out of 8',p:()=>bestN('opp')>=7?1:0,of:1}],
-  w2:[{t:'Edge Buddies: 7+ out of 8 on 2 different days',p:()=>Math.min(2,goodDays('edge',7)),of:2},
-      {t:'Drone View: 7+ out of 8',p:()=>bestN('drone')>=7?1:0,of:1},
-      {t:'Rule It Out: 5+ clean solves out of 6',p:()=>bestN('elim')>=5?1:0,of:1}]};
+      {t:'Opposite Suspects: 7+/8 at 12s or less a question, on 2 different days',p:()=>Math.min(2,readyDays('opp')),of:2}],
+  w2:[{t:'Edge Buddies: 7+/8 at 35s or less a question, on 2 different days',p:()=>Math.min(2,readyDays('edge')),of:2},
+      {t:'Drone View: 7+/8 at 25s or less a question, on 2 different days',p:()=>Math.min(2,readyDays('drone')),of:2},
+      {t:'Rule It Out: 5+ clean solves out of 6 at 35s or less, on 2 different days',p:()=>Math.min(2,readyDays('elim')),of:2}]};
 const gateDone=g=>GATES[g].every(c=>c.p()>=c.of);
 const CHECKPOINTS={
-  cp1:{title:'Checkpoint 1',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
-    make:()=>shuffle([...repeat('count',4),...repeat('impostor',4),...repeat('opp',4)]),blurb:'12 mixed Week 1 questions, timed like the exam. Pass mark 10.'},
-  cp2:{title:'Checkpoint 2',gate:'w2',needs:'w2',pass:12,of:15,unlocks:'w3',secs:45,level:1,
-    make:()=>shuffle([...repeat('count',3),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',4)]),blurb:'15 mixed questions from Weeks 1 and 2. Pass mark 12.'}};
+  cp1:{title:'Mastery test 1: counting and nets',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
+    make:()=>shuffle([...repeat('count',4),...repeat('impostor',4),...repeat('opp',4)]),blurb:'12 mixed questions on counting, nets and opposites, timed like the exam. Pass mark 10. Earns a stamp each day you pass.'},
+  cp2:{title:'Mastery test 2: everything',gate:'w2',needs:null,pass:12,of:15,unlocks:'w3',secs:45,level:1,
+    make:()=>shuffle([...repeat('count',3),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',4)]),blurb:'15 mixed questions on all five question types. Pass mark 12. Earns a stamp each day you pass.'}};
 const CASES=[
   {id:'tower',week:1,tab:'CASE 01',title:'The Tower Count',blurb:'Count stacks of cubes without missing the hidden ones. Learn the Tower Method, then race the clock.',go:()=>tower()},
   {id:'impostor',week:1,tab:'CASE 02',title:'Spot the Impostor',blurb:'Real net or fake? Some shapes look right but can’t fold into a cube.',go:()=>impostor(),type:'impostor'},
@@ -792,23 +865,34 @@ const CASES=[
   {id:'elim',week:2,tab:'CASE 07',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option and name the reason. Quick and accurate.',go:()=>elimCase()}];
 const caseType={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
-  const meta=c.id==='hunt'?`${Math.min(11,store.get('found',[]).length)} of 11 found`:(b?`Best: ${b}`:'Not started');
-  return`<button class="folder" data-tab="${c.tab}" data-id="${c.id}">${weak?'<span class="chip">Refresh</span>':''}<h2>${c.title}</h2><p>${c.blurb}</p><div class="meta"><span>Week ${c.week}</span><span>${meta}</span></div></button>`}
-function gateHTML(k){const cp=CHECKPOINTS[k],ready=(!cp.needs||unlocked(cp.needs))&&gateDone(cp.gate),passed=unlocked(cp.unlocks);
+  let meta;if(c.id==='hunt')meta=`${Math.min(11,store.get('found',[]).length)} of 11 found`;
+  else{const L=lastRound(c.id),m=MASTERY[c.id];meta=!L?'Not started':mastered(c.id)?'<span class="mast">Mastered</span>':`Last: ${L.n}/${L.of}${L.a!=null?` · ${L.a}s`:''} · ready ${Math.min(2,readyDays(c.id))}/2 days`}
+  return`<button class="folder" data-tab="${c.tab}" data-id="${c.id}">${weak?'<span class="chip">Refresh</span>':''}<h2>${c.title}</h2><p>${c.blurb}</p><div class="meta"><span>${c.tab}</span><span>${meta}</span></div></button>`}
+function nextUp(){const order=['tower','impostor','hunt','opp','edge','drone','elim'];const id=order.find(i=>i==='hunt'?store.get('found',[]).length<11:!mastered(i));
+  if(!id)return'<div class="nextup"><b>Every case mastered.</b> Now keep it sharp: the daily warm-up and the Mock Exam every other day.</div>';
+  const c=CASES.find(x=>x.id===id),L=id!=='hunt'&&lastRound(id),m=MASTERY[id];
+  let why=id==='hunt'?`${store.get('found',[]).length} of 11 nets found so far.`:!L?'Not tried yet.':
+    (L.n<m.min||(L.lvl||0)<(m.lvl||0))?`Work on accuracy: aim for ${m.label}.`:L.a>m.secs?`Accurate! Now get quicker: last round ${L.a}s a question, target ${m.secs}s.`:`One more exam-ready round on another day.`;
+  return`<div class="nextup"><div><div class="tag">Next case to crack</div><h3>${c.title}</h3><p class="muted" style="margin:0">${why}</p></div><button class="btn-primary" data-id="${c.id}" id="nxcase">Play</button></div>`}
+function gateHTML(k){const cp=CHECKPOINTS[k],ready=unlocked('force')||gateDone(cp.gate),passed=unlocked(cp.unlocks);
   const items=GATES[cp.gate].map(c=>{const ok=c.p()>=c.of;return`<li><span class="${ok?'y':'s'}">${ok?'✓':'○'}</span><span>${c.t}${c.of>1&&!ok?` <span class="muted">(${c.p()}/${c.of})</span>`:''}</span></li>`}).join('');
   return`<div class="gate ${passed?'passed':ready?'ready':''}"><div class="gate-head"><div><div class="tag">${passed?'Passed':ready?'Ready to take':'Locked'}</div><h3>${cp.title}</h3></div>
-    <button class="${ready||passed?'btn-primary':''}" data-cp="${k}" ${ready||passed?'':'disabled'}>${passed?'Take again':'Start checkpoint'}</button></div>
-    <p class="muted" style="margin:0">${cp.blurb}${passed?'':` Passing it opens Week ${k==='cp1'?2:3}.`}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
+    <button class="${ready||passed?'btn-primary':''}" data-cp="${k}" ${ready||passed?'':'disabled'}>${passed?'Take again':'Start test'}</button></div>
+    <p class="muted" style="margin:0">${cp.blurb}${passed?'':' Opens when every target below is ticked.'}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
 function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
 function home(){
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
-  const w2=unlocked('w2'),w3=unlocked('w3');
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.</div>
+  ${nextUp()}
   ${collectionHTML()}
-  <div class="warm"><div><h3>Daily warm-up</h3><p class="muted" style="margin:0">6 quick mixed questions from everything unlocked so far. Do one every day so old skills stay sharp. Weak skills come up more often.</p></div><button class="btn-primary" id="warm">Start warm-up</button></div>
-  <section class="week"><h2 class="wk">Week 1 · Counting and nets</h2><div class="folders">${CASES.filter(c=>c.week===1).map(folderHTML).join('')}</div>${gateHTML('cp1')}</section>
-  <section class="week"><h2 class="wk">Week 2 · Turning, views and speed</h2><div class="folders">${w2?CASES.filter(c=>c.week===2).map(folderHTML).join(''):sealedHTML('CASES 05–07','Three sealed case files','Opens when Checkpoint 1 is passed.')}</div>${w2?gateHTML('cp2'):''}</section>
-  <section class="week"><h2 class="wk">Week 3 · Exam practice</h2><div class="folders">${w3?`<button class="folder" data-tab="FINAL" data-id="mock"><h2>The Final Mock</h2><p>20 mixed questions at exam pace, with a skill-by-skill report. Do it every other day.</p><div class="meta"><span>Week 3</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button>`:sealedHTML('FINAL','The Final Mock','Opens when Checkpoint 2 is passed.')}</div></section>
+  <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
+  <section class="week"><h2 class="wk">Week 1 · Learn every question type</h2>
+    <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
+    <div class="folders">${CASES.map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Weeks 2–3 · Practise to exam standard</h2>
+    <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
+    ${gateHTML('cp1')}${gateHTML('cp2')}
+    <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions at exam pace, 40 seconds each, with a skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Weeks 2–3</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -819,19 +903,21 @@ function home(){
       <div class="row">${location.hostname.endsWith('github.io')?'<input type="file" id="rsfile" accept=".txt,text/plain">':''}<button id="rs">Restore progress</button><span class="muted" id="rsm"></span></div></div>
     <div class="row"><button id="pr">Start again from scratch</button><span class="muted" id="prc">Clears scores and unlocked weeks. Stamps and cards stay.</span></div></details>
   <section class="parent" id="parent" ${parentOpen?'':'hidden'}><div class="gate-head"><h3 style="margin:0">For parents</h3><button class="btn-ghost" id="pclose">Close</button></div>
-    <p style="margin:0">Each week opens automatically: first every target on the checkpoint card, then the checkpoint test (10/12, then 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
+    <p style="margin:0">All case files are open. Each mastery test opens once its targets are ticked (pass marks 10/12 and 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
     <div class="row"><span><b>${rewards().cards.length}</b> cards earned · <b>${rewards().given}</b> handed over</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}</div>
-    <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="10" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
-    <div class="row"><button id="pu">Unlock next week now</button><span class="muted" id="puc"></span></div>
+    <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
+    <div class="row"><button id="pu">Open both mastery tests now</button><span class="muted" id="puc"></span></div>
+    <details><summary style="cursor:pointer;font-weight:600">Greta’s feedback (${store.get('feedback',[]).length})</summary>${feedbackHTML()}<p class="muted" style="font-size:.85rem;margin:6px 0 0">Her feedback is included in backup codes, so you can paste one to Claude to get changes made.</p></details>
     <div class="row"><button id="pfull">Full reset, including stamps and cards</button><span class="muted" id="pfullc"></span></div></section>`;
   view.querySelectorAll('.folder[data-id]').forEach(b=>b.onclick=()=>{inCase=true;parentOpen=false;if(b.dataset.id==='mock')return mock();const c=CASES.find(x=>x.id===b.dataset.id);$('#homeBtn').hidden=false;c.go();scrollTo(0,0)});
+  const nx=$('#nxcase');if(nx)nx.onclick=()=>{inCase=true;parentOpen=false;open(nx.dataset.id)};
   view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
   $('#warm').onclick=()=>{inCase=true;warmup()};
   wireBackup();
-  const setRw=()=>{const spc=Math.max(1,Math.min(10,+$('#spc').value||3)),limit=Math.max(1,Math.min(99,+$('#lim').value||18));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
+  const setRw=()=>{const spc=Math.max(1,Math.min(20,+$('#spc').value||6)),limit=Math.max(1,Math.min(99,+$('#lim').value||15));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
   if($('#gave')){let armed=false;$('#gave').onclick=()=>{if(!armed){armed=true;$('#gave').textContent='Tap again to confirm';return}const r=rewards();r.given=Math.min(r.cards.length,r.given+1);saveRw(r);home()}}
   const twoStep=(btn,msg,act)=>{let armed=false;$(btn).onclick=()=>{if(!armed){armed=true;$(btn).textContent='Tap again to confirm';$(msg).textContent=''}else act()}};
-  twoStep('#pu','#puc',()=>{if(!w2)unlock('w2');else unlock('w3');home()});
+  twoStep('#pu','#puc',()=>{unlock('force');home()});
   const GAME_KEYS=['hist','best','found','unlock','weak','towerMode','towerLevel'];
   const wipe=keys=>{keys.forEach(k=>{try{localStorage.removeItem('cd_'+k)}catch(e){}})};
   twoStep('#pr','#prc',()=>{wipe(GAME_KEYS);home();toast('<b>Fresh start.</b> Your stamps and cards are safe.','rank')});
@@ -840,14 +926,40 @@ function home(){
   scrollTo(0,0)}
 function open(id){parentOpen=false;const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
 function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',title:cp.title,secs:cp.secs,level:cp.level,pass:cp.pass,mixed:true,
-  passMsg:`Passed! Week ${k==='cp1'?2:3} is now open.`,onPass:()=>{unlock(cp.unlocks);milestone(k,`Passed ${cp.title}`)},plan:cp.make(),remake:cp.make,
+  passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
   rule:`<strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
-function warmup(){const types=['count','impostor','opp',...(unlocked('w2')?['edge','drone']:[])],weak=store.get('weak',{});
-  const make=()=>{const pool=[...types,...types.filter(t=>weak[t]),...types.filter(t=>weak[t])],out=shuffle(types.slice()).slice(0,Math.min(6,types.length));
-    while(out.length<6)out.push(pick(pool));return shuffle(out)};
-  runQuiz({id:'warm',tag:'Daily warm-up',title:'Warm-up',secs:45,level:1,mixed:true,plan:make(),remake:make,rule:'<strong>Six quick questions.</strong> A mix of everything unlocked so far.'})}
+const CASE_TYPES={tower:['count'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
+const TRICK={count:'Tower Method: write each tower’s height on the floor plan, then add. The cubes you can see are the smallest possible answer.',
+  impostor:'Three checks: no line of 5, no 2×2 block, and four in a line needs one wing on each side.',
+  opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
+  edge:'Rule out in order: duds, then opposites shown together, then edge buddies (which way does the point face?).',
+  drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
+const WHY={count:'The answer options are usually just 1 or 2 apart, set to catch anyone who misses a hidden cube. The Tower Method counts every hidden cube, so it turns a close guess into a sure mark.',
+  impostor:'Test-setters often put exactly the right symbols on a net that can’t fold. If you check the shape first, those options are gone in a few seconds, before you even look at the symbols.',
+  opp:'Opposites are the fastest way to cut down a nets question: any cube showing an opposite pair together is wrong. Spot the pairs first and you can often cross out two options straight away.',
+  edge:'The commonest trap shows three faces that really are neighbours, but with one symbol turned the wrong way. It looks right, so only checking an edge buddy catches it.',
+  drone:'Wrong views are usually the right shape flipped, or with one square added, missing or moved. Counting width × depth and checking the gaps catches them in seconds.'};
+const ruleBox=(t,lead)=>`<div class="rulebox"><h4>${lead||'Rule to remember'}: ${TYPE_NAME[t]}</h4><p class="rb-rule">${TRICK[t]}</p><p class="rb-why"><b>Why it matters:</b> ${WHY[t]}</p></div>`;
+function learnedTypes(){const h=store.get('hist',{}),out=new Set();Object.entries(CASE_TYPES).forEach(([id,ts])=>{if((h[id]||[]).length||(id==='hunt'&&store.get('found',[]).length))ts.forEach(t=>out.add(t))});
+  return['count','impostor','opp','edge','drone'].filter(t=>out.has(t))}
+function lastDayTypes(){const h=store.get('hist',{}),t=today();let best=null;const by={};
+  Object.entries(CASE_TYPES).forEach(([id,ts])=>(h[id]||[]).forEach(r=>{if(r.d<t){(by[r.d]=by[r.d]||new Set());ts.forEach(x=>by[r.d].add(x));if(!best||r.d>best)best=r.d}}));
+  return best?[...by[best]]:[]}
+function staleTypes(types){const h=store.get('hist',{}),now=Date.parse(today());return types.filter(ty=>{let last=0;
+  Object.entries(CASE_TYPES).forEach(([id,ts])=>{if(ts.includes(ty))(h[id]||[]).forEach(r=>{last=Math.max(last,Date.parse(r.d))})});return now-last>=3*864e5})}
+function warmup(){const types=learnedTypes();if(!types.length)return home();
+  const weak=store.get('weak',{}),yday=lastDayTypes().filter(t=>types.includes(t)),stale=staleTypes(types);
+  const make=()=>{const out=[];yday.slice(0,2).forEach(t=>out.push(t));if(yday.length===1)out.push(yday[0]);
+    shuffle(types.slice()).forEach(t=>{if(out.length<6&&!out.includes(t))out.push(t)});
+    const older=types.filter(t=>!yday.includes(t)),base=older.length?older:types,pool=[...base,...base,...types,...types.filter(t=>weak[t]),...types.filter(t=>weak[t]),...stale.filter(t=>!yday.includes(t)),...stale.filter(t=>!yday.includes(t))];
+    while(out.length<6)out.push(pick(pool));const head=out.slice(0,Math.min(2,yday.length?2:0));return[...head,...shuffle(out.slice(head.length))]};
+  const recall=(yday.length?yday:types).slice(0,2);
+  runQuiz({id:'warm',tag:'Daily warm-up',title:'Memory warm-up',secs:45,level:1,mixed:true,plan:make(),remake:make,
+    rule:`<strong>Before you start, say ${recall.length>1?'these tricks':'this trick'} out loud. Then tap to check.</strong>
+      ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
+      <p style="margin:8px 0 0">${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
 function mock(){const make=()=>shuffle([...repeat('count',5),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',5),...repeat('drone',4)]);
-  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Final Mock',secs:40,level:2,mixed:true,plan:make(),remake:make,
+  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Mock Exam',secs:40,level:2,mixed:true,plan:make(),remake:make,
     rule:'<strong>20 questions at exam pace: 40 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'})}
 
 /* ============ Case 01: Tower Count ============ */
@@ -916,10 +1028,10 @@ function towerLearn(level){
     else $('#fb').innerHTML=`<div class="feedback no">Not quite. Add the numbers on the floor plan again, one row at a time.</div>`};
 }
 function towerExam(level){
-  const ROUNDS=8,SECS=45;let n=0,score=0;const g=$('#game');
+  const ROUNDS=8,SECS=45;let n=0,score=0;const g=$('#game');QT.reset();
   const next=()=>{
-    if(n===ROUNDS){stopTimer();redraw=null;record('tower',score,ROUNDS,level);
-      g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=7?'Sharp detective work.':score>=5?'Good. Use the Tower Method on every stack, even easy-looking ones.':'Switch to Learn for a few stacks, then try again.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=()=>towerExam(level);return}
+    if(n===ROUNDS){stopTimer();redraw=null;const avg=QT.avg();record('tower',score,ROUNDS,level,avg);
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div>${speedLine('tower',score,ROUNDS,avg,level)}<p>${score>=7?'Sharp detective work.':score>=5?'Good. Use the Tower Method on every stack, even easy-looking ones.':'Switch to Learn for a few stacks, then try again.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=()=>towerExam(level);return}
     n++;const H=genStack(level),t=total(H);
     const opts=shuffle([...new Set([t,t-1,t+1,t-2,t+2])].filter(v=>v>0)).slice(0,5);
     let answered=false,labels=false,left=SECS;
@@ -927,8 +1039,8 @@ function towerExam(level){
       <div class="timer"><i id="bar"></i></div>
       <p style="margin:0;font-weight:600">How many cubes are in this stack?</p>
       <canvas class="stack" id="cv"></canvas><div class="options">${opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div><div id="fb"></div>`;
-    const cv=$('#cv');redraw=()=>drawStack(cv,H,{labels});redraw();
-    const finish=v=>{if(answered)return;answered=true;stopTimer();labels=true;redraw();
+    const cv=$('#cv');redraw=()=>drawStack(cv,H,{labels});redraw();QT.start();
+    const finish=v=>{if(answered)return;answered=true;QT.stop();stopTimer();labels=true;redraw();
       g.querySelectorAll('.options button').forEach(b=>{b.disabled=true;if(+b.dataset.v===t)b.classList.add('right');else if(+b.dataset.v===v)b.classList.add('wrong')});
       if(v===t)score++;
       const nav=`<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See score':'Next →'}</button></div>`;
@@ -945,16 +1057,16 @@ function towerExam(level){
 
 /* ============ Case 02: Impostor ============ */
 function impostor(){
-  const ROUNDS=10;let n=0,score=0;
+  const ROUNDS=10;let n=0,score=0;QT.reset();
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 02 · Nets of cubes</div><h2>Spot the Impostor</h2></div><span class="score" id="sc"></span></div>
     <div class="rule"><strong>Check the shape before the symbols.</strong><ul><li><b>Four in a line?</b> One wing on each side. Both wings on the same side = fake.</li><li><b>No 2×2 block</b> of squares.</li><li><b>No line of 5</b> or more.</li></ul></div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{
-    if(n===ROUNDS){saveBest('impostor',{n:score,of:ROUNDS});g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=9?'No impostor gets past you.':'Read the rule box again, then go for 10 out of 10.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=impostor;return}
+    if(n===ROUNDS){const avg=QT.avg();record('impostor',score,ROUNDS,0,avg);g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div>${speedLine('impostor',score,ROUNDS,avg)}<p>${score>=9?'No impostor gets past you.':'Read the rule box again, then go for 10 out of 10.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=impostor;return}
     n++;$('#sc').textContent=`Shape ${n} of ${ROUNDS} · Score ${score}`;
     const real=Math.random()<.5;const base=real?pick(NETS):(Math.random()<.6?pick(TRAPS):pick(FAKES));const cells=randomPose(base);
-    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells)}</div><div class="stamps"><button class="stamp real" data-v="1">REAL</button><button class="stamp fake" data-v="0">FAKE</button></div><div id="fb"></div>`;
-    g.querySelectorAll('.stamp').forEach(b=>b.onclick=()=>{
+    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells)}</div><div class="stamps"><button class="stamp real" data-v="1">REAL</button><button class="stamp fake" data-v="0">FAKE</button></div><div id="fb"></div>`;QT.start();
+    g.querySelectorAll('.stamp').forEach(b=>b.onclick=()=>{QT.stop();
       const said=b.dataset.v==='1',right=said===real;if(right)score++;$('#sc').textContent=`Shape ${n} of ${ROUNDS} · Score ${score}`;
       g.querySelectorAll('.stamp').forEach(x=>x.disabled=true);
       let fill={},stroke={},why;
@@ -990,25 +1102,25 @@ function hunt(){
     const k=canon(cells);
     if(!NET_KEYS.includes(k)){$('#fb').innerHTML=`<div class="feedback no"><b>Impostor!</b> That shape can’t fold into a cube. See the case notes below.</div>`;$('#notes').innerHTML=netNotes(norm(cells),{real:false});return}
     if(found.includes(k)){$('#fb').innerHTML=`<div class="feedback no">Real net, but you already have it on the case board. Turn it or flip it in your head and you’ll see it’s the same one.</div>`;paintGal(k);return}
-    found.push(k);store.set('found',found);paintGal(k);addPoints(20);if(found.length===11&&onceFlag('all11'))stamp('Found all 11 nets');
+    found.push(k);store.set('found',found);paintGal(k);addPoints(20);checkModules();
     $('#clr').click();$('#fb').innerHTML=found.length===11?`<div class="feedback ok"><b>All 11 found. Case closed!</b></div>`:`<div class="feedback ok"><b>New net found!</b> It’s a ${family(norm(cells))}. ${11-found.length} to go.</div>`};
   upd();
 }
 
 /* ============ Case 04: Opposites ============ */
 function opposites(){
-  const ROUNDS=8;let n=0,score=0;
+  const ROUNDS=8;let n=0,score=0;QT.reset();
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 04 · Nets of cubes</div><h2>Opposite Suspects</h2></div><span class="score" id="sc"></span></div>
-    <div class="rule"><strong>Tap the square that ends up opposite the ★.</strong><ul><li>In a straight line of three, the 1st and 3rd are opposite.</li><li>In a zigzag, the two ends are opposite.</li><li>Opposite faces can never be seen together on a cube.</li></ul></div><div id="game"></div></section>`;
+    <div class="rule"><strong>Tap the square that ends up opposite the ★.</strong><ul><li>In a straight line of three, the 1st and 3rd are opposite.</li><li>In a Z shape, the two ends are opposite, however long the middle of the Z is.</li><li>Opposite faces can never be seen together on a cube.</li></ul></div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{
-    if(n===ROUNDS){saveBest('opp',{n:score,of:ROUNDS});g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div><p>${score>=7?'Opposites spotted every time.':'Look for straight lines of three first. They give the answer fastest.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=opposites;return}
+    if(n===ROUNDS){const avg=QT.avg();record('opp',score,ROUNDS,0,avg);g.innerHTML=`<div class="done"><div class="big">${score} / ${ROUNDS}</div>${speedLine('opp',score,ROUNDS,avg)}<p>${score>=7?'Opposites spotted every time.':'Look for straight lines of three first. They give the answer fastest.'}</p><button class="btn-primary" id="again">Play again</button></div>`;$('#again').onclick=opposites;return}
     n++;$('#sc').textContent=`Round ${n} of ${ROUNDS} · Score ${score}`;
     const cells=randomPose(pick(NETS)),f=fold(cells).face,s=rnd(6),ans=f.findIndex(x=>x===(f[s]^1));
     const star={[cells[s].join(',')]:'★'};
-    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells,{marks:star,click:true,size:54})}</div><div id="fb"></div>`;
+    g.innerHTML=`<div class="netbox" id="nb">${netSVG(cells,{marks:star,click:true,size:54})}</div><div id="fb"></div>`;QT.start();
     $('#nb').querySelectorAll('rect[data-i]').forEach(r=>r.onclick=()=>{
-      const i=+r.dataset.i;if(i===s)return;const ok=i===ans;if(ok)score++;$('#sc').textContent=`Round ${n} of ${ROUNDS} · Score ${score}`;
+      const i=+r.dataset.i;if(i===s)return;QT.stop();const ok=i===ans;if(ok)score++;$('#sc').textContent=`Round ${n} of ${ROUNDS} · Score ${score}`;
       const col=['var(--p1)','var(--p1)','var(--p2)','var(--p2)','var(--p3)','var(--p3)'],fill={},stroke={};cells.forEach(([r2,c2],j)=>fill[r2+','+c2]=col[f[j]]);
       if(!ok)stroke[cells[i].join(',')]='var(--bad)';
       $('#nb').innerHTML=netSVG(cells,{marks:star,fill,stroke,size:54});
