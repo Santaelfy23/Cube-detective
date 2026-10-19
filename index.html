@@ -217,6 +217,16 @@ textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-
 .rulebox p{margin:0}.rb-rule{font-weight:600;font-size:1.02rem}
 .revise{display:flex;flex-direction:column;gap:10px;margin:12px 0}
 .revise h3{margin:0;font-family:var(--font-display);font-weight:400;font-size:1.3rem}
+.streak{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.st-num{display:flex;flex-direction:column;align-items:center;min-width:72px}
+.st-num b{font-family:var(--font-display);font-weight:400;font-size:2.4rem;line-height:1;color:var(--folder)}
+.st-num span{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.st-main{flex:1 1 240px;min-width:0}
+.st-week{display:flex;gap:6px}
+.sd{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;color:var(--muted);flex:1;max-width:44px}
+.sd i{width:100%;max-width:30px;aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);display:block}
+.sd.on i{background:var(--folder);border:2px solid var(--folder)}
+.sd.today span,.sd.today{font-weight:700;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
 </style>
 </head>
@@ -656,6 +666,7 @@ function runQuiz(cfg){
     if(n===plan.length){
       const avg=QT.avg();if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0,avg);
       if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);w[t]=now});store.set('weak',w)}
+      if(cfg.id==='warm'){const S=streakInfo();if(S.doneToday&&onceFlag('streak-'+today())){addPoints(5*Math.min(S.n,10));if(STREAK_GOALS.includes(S.n))toast(`<b>${S.n}-day streak!</b> Keep it going.`,'rank')}}
       if(cfg.id==='warm'&&score===plan.length&&onceFlag('warm-'+today()))stamp(`Daily warm-up: ${score}/6`);
       if(cfg.id==='mock'&&score>=17&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
       const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
@@ -812,6 +823,20 @@ function wireBackup(){
     try{const raw=store.get('rw',null);if(raw&&!(raw.v>=2)){const g=raw.given||0;store.set('rw',{...raw,v:2,stamps:[],cards:(raw.cards||[]).slice(0,g),day:{}})}}catch(e){}
     home();toast(`<b>Progress restored</b> from ${when}.`,'rank')}}
 
+/* ============ Daily streak: days in a row with a finished memory warm-up ============ */
+const dayStr=t=>new Date(t).toISOString().slice(0,10);
+function streakInfo(){const days=new Set(hist('warm').map(r=>r.d)),t=today(),T=Date.parse(t+'T12:00:00Z'),has=k=>days.has(dayStr(T-k*864e5));
+  const doneToday=days.has(t);let k=doneToday?0:1,n=0;while(has(k)){n++;k++}
+  const all=[...days].sort();let best=0,run=0,prev=null;all.forEach(d=>{const x=Date.parse(d+'T12:00:00Z');run=prev!=null&&x-prev===864e5?run+1:1;best=Math.max(best,run);prev=x});
+  const week=Array.from({length:7},(_,i)=>{const d=dayStr(T-(6-i)*864e5);return{d,on:days.has(d),today:d===t}});
+  return{n,best,doneToday,week}}
+const STREAK_GOALS=[3,7,14,21];
+function streakHTML(){const S=streakInfo(),next=STREAK_GOALS.find(g=>g>S.n);
+  const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return`<div class="streak"><div class="st-num" aria-label="${S.n} day streak"><b>${S.n}</b><span>day streak</span></div>
+    <div class="st-main"><div class="st-week">${S.week.map(w=>`<span class="sd ${w.on?'on':''} ${w.today?'today':''}" title="${w.d}"><i></i>${dn[new Date(w.d+'T12:00:00Z').getUTCDay()].slice(0,2)}</span>`).join('')}</div>
+      <p class="muted" style="margin:4px 0 0;font-size:.88rem">${S.doneToday?'Today’s warm-up is done. ':S.n?'<b>Do today’s warm-up to keep your streak going.</b> ':'Finish a memory warm-up to start a streak. '}${next?`Next goal: ${next} days.`:'21 days: exam-ready habit!'}${S.best>S.n?` Best: ${S.best}.`:''}</p></div></div>`}
+
 /* ============ Progress, gates and home ============ */
 const today=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 function record(id,n,of,lvl=0,avg=null){const ty={tower:'count',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'}[id],w=store.get('weak',{}),wasWeak=ty&&w[ty];
@@ -883,6 +908,7 @@ function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="$
 function home(){
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.</div>
+  ${streakHTML()}
   ${nextUp()}
   ${collectionHTML()}
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
@@ -905,6 +931,7 @@ function home(){
   <section class="parent" id="parent" ${parentOpen?'':'hidden'}><div class="gate-head"><h3 style="margin:0">For parents</h3><button class="btn-ghost" id="pclose">Close</button></div>
     <p style="margin:0">All case files are open. Each mastery test opens once its targets are ticked (pass marks 10/12 and 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
     <div class="row"><span><b>${rewards().cards.length}</b> cards earned · <b>${rewards().given}</b> handed over</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}</div>
+    <div class="row"><label for="bonusWhy">Bonus card for</label><input id="bonusWhy" class="num" style="width:min(100%,260px);font-size:1rem" maxlength="60" placeholder="e.g. great effort this week"><button id="bonus">Give bonus card</button><span class="muted" id="bonusm"></span></div>
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
     <div class="row"><button id="pu">Open both mastery tests now</button><span class="muted" id="puc"></span></div>
     <details><summary style="cursor:pointer;font-weight:600">Greta’s feedback (${store.get('feedback',[]).length})</summary>${feedbackHTML()}<p class="muted" style="font-size:.85rem;margin:6px 0 0">Her feedback is included in backup codes, so you can paste one to Claude to get changes made.</p></details>
@@ -915,6 +942,9 @@ function home(){
   $('#warm').onclick=()=>{inCase=true;warmup()};
   wireBackup();
   const setRw=()=>{const spc=Math.max(1,Math.min(20,+$('#spc').value||6)),limit=Math.max(1,Math.min(99,+$('#lim').value||15));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
+  {let armed=false;$('#bonus').onclick=()=>{const r=rewards();if(r.cards.length>=rwSettings().limit){$('#bonusm').textContent='Card limit reached. Raise it below first.';return}
+    if(!armed){armed=true;$('#bonus').textContent='Tap again to give it';return}
+    const why=($('#bonusWhy').value||'').trim()||'Great effort';r.cards.push({d:today(),from:'bonus',reason:`Bonus: ${why}`});saveRw(r);home();toast(`<b>BONUS CARD!</b> ${why.replace(/[<>&]/g,'')}`,'card')}}
   if($('#gave')){let armed=false;$('#gave').onclick=()=>{if(!armed){armed=true;$('#gave').textContent='Tap again to confirm';return}const r=rewards();r.given=Math.min(r.cards.length,r.given+1);saveRw(r);home()}}
   const twoStep=(btn,msg,act)=>{let armed=false;$(btn).onclick=()=>{if(!armed){armed=true;$(btn).textContent='Tap again to confirm';$(msg).textContent=''}else act()}};
   twoStep('#pu','#puc',()=>{unlock('force');home()});
