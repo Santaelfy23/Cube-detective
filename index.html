@@ -42,6 +42,7 @@ body{margin:0}
   --p1:#C99C24; --p2:#3E9C78; --p3:#C8645A;
   color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
 .app{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
@@ -167,8 +168,11 @@ table.res td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .warm h3{margin:0 0 2px;font-size:1.05rem}
 .warm>div{flex:1 1 260px;min-width:0}
 .parent{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
-.parent summary{cursor:pointer;font-weight:600}
-.parent .row{margin-top:8px}
+.parent{display:flex;flex-direction:column;gap:10px;border:2px solid var(--folder)!important}
+.mine{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.mine summary{cursor:pointer;font-weight:600}
+.brand h1{cursor:default;user-select:none;-webkit-user-select:none}
+.mine .row,.mine .backup{margin-top:8px}
 .collection{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
 .col-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .col-head>div{flex:1 1 220px;min-width:0}
@@ -189,6 +193,8 @@ input.num.small{width:70px;font-size:1rem;padding:6px 8px}
 .toast.card{background:var(--folder);color:var(--folder-ink);font-size:1.05rem}
 .toast.rank{background:var(--accent);color:var(--surface)}
 @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.backup{display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:12px;border:1px dashed var(--line);border-radius:10px}
+textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:8px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical;word-break:break-all}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
 </style>
 </head>
@@ -704,7 +710,7 @@ function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[ke
 let inCase=false;
 setInterval(()=>{if(!inCase||document.visibilityState!=='visible')return;const r=rewards(),d=today();r.play[d]=(r.play[d]||0)+15;saveRw(r);
   if(r.play[d]>=PLAY_CAP_MIN*60&&onceFlag('rest-'+d))toast(`<b>Case closed for today. Great work!</b> Rest helps your brain lock it in. You can keep going, but stamps for today are done.`,'rank')},15000);
-function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,owed=r.cards.length-r.given,full=r.cards.length>=limit;
+function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,owed=Math.max(0,r.cards.length-r.given),full=r.cards.length>=limit;
   const rk=RANKS[r.rank],nx=RANKS[r.rank+1],pct=nx?Math.round((r.points-rk[1])/(nx[1]-rk[1])*100):100,todayN=r.day[today()]||0;
   const log=r.stamps.slice(-10).reverse().map(s=>`<li><span class="muted">${s.d.slice(5).replace('-','/')}</span> ${s.reason}</li>`).join('')||'<li class="muted">No stamps yet. Finish a daily warm-up to earn the first one.</li>';
   return`<section class="collection"><div class="col-head"><div><div class="tag">Card Collection</div><h3>${rk[0]}</h3>
@@ -713,13 +719,38 @@ function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.s
     <div class="stampmeter" aria-label="${inMeter} of ${spc} stamps toward the next card">${Array.from({length:spc},(_,i)=>`<span class="st ${i<inMeter?'on':''}">★</span>`).join('')}
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${full?'All cards earned!':`${spc-inMeter} stamp${spc-inMeter===1?'':'s'} to the next card`} · today ${todayN}/${DAILY_STAMPS}</p></div></div>
     <div class="col-cards"><span><b>${r.cards.length}</b> card${r.cards.length===1?'':'s'} earned of ${limit}</span><span><b>${r.given}</b> handed over</span>
-      ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect!</span><button id="gave">Card handed over</button>`:''}</div>
+      ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect! Ask a grown-up.</span>`:''}</div>
     <details><summary>How to earn stamps and cards</summary><ul class="howto">
       <li><b>Stamps</b> (up to ${DAILY_STAMPS} a day): finish the daily warm-up · a clean Rule It Out round · beat your best score on a case · fix a Refresh skill · find all 11 nets.</li>
       <li><b>${spc} stamps = 1 card.</b> Promotions to a new rank give a bonus stamp.</li>
       <li><b>Big cards:</b> pass Checkpoint 1 · pass Checkpoint 2 · score 17+ on the Final Mock.</li>
       <li>Every finished round earns rank points. Fewer mistakes earn more. A case with a Refresh tag earns double.</li></ul>
       <h4 class="tag" style="margin:8px 0 4px">Latest stamps</h4><ul class="howto">${log}</ul></details></section>`}
+
+/* ============ Parent area: tap the title 5 times ============ */
+let parentOpen=false,taps=[];
+$('.brand h1').addEventListener('click',()=>{const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);
+  if(taps.length>=5){taps=[];if(!view.querySelector('#parent'))home();parentOpen=true;const p=$('#parent');if(p){p.hidden=false;p.scrollIntoView({behavior:'smooth',block:'start'})}}});
+/* ============ Backup and restore ============ */
+const BK_PREFIX='CUBEDETECTIVE1:';
+function makeBackup(){const data={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('cd_'))data[k]=localStorage.getItem(k)}}catch(e){}
+  return BK_PREFIX+btoa(unescape(encodeURIComponent(JSON.stringify({v:1,saved:new Date().toISOString(),data}))))}
+function readBackup(code){code=(code||'').trim().replace(/\s+/g,'');if(!code.startsWith(BK_PREFIX))throw new Error('That isn’t a Cube Detective backup code. It should start with CUBEDETECTIVE1:');
+  const o=JSON.parse(decodeURIComponent(escape(atob(code.slice(BK_PREFIX.length)))));if(!o||typeof o.data!=='object')throw new Error('The code is damaged. Copy the whole code and try again.');return o}
+function wireBackup(){
+  $('#bk').onclick=()=>{const code=makeBackup(),out=$('#bkout');out.value=code;out.hidden=false;$('#bkcopy').hidden=false;if(location.hostname.endsWith('github.io'))$('#bkfile').hidden=false;
+    $('#bkm').textContent='Backup made. Copy it somewhere safe, such as an email or note to yourself.';out.focus();out.select()};
+  $('#bkcopy').onclick=()=>{const out=$('#bkout');const fall=()=>{out.focus();out.select();$('#bkm').textContent='Selected. Press Ctrl+C to copy.'};
+    try{navigator.clipboard.writeText(out.value).then(()=>{$('#bkm').textContent='Copied.'},fall)}catch(e){fall()}};
+  $('#bkfile').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('#bkout').value],{type:'text/plain'}));a.download=`cube-detective-backup-${today()}.txt`;document.body.appendChild(a);a.click();a.remove()};
+  const f=$('#rsfile');if(f)f.onchange=()=>{const file=f.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{$('#rsin').value=String(rd.result||'');$('#rsm').textContent='File loaded. Tap Restore progress.'};rd.readAsText(file)};
+  let armed=null;$('#rs').onclick=()=>{let o;try{o=readBackup($('#rsin').value)}catch(e){$('#rsm').textContent=e.message;armed=null;return}
+    const when=new Date(o.saved).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    if(armed!==$('#rsin').value){armed=$('#rsin').value;$('#rs').textContent='Tap again to replace progress';$('#rsm').textContent=`Backup from ${when}. This replaces the progress in this browser.`;return}
+    try{const cur=rewards();try{const bk=JSON.parse(o.data.cd_rw||'null');if(bk){bk.given=Math.max(bk.given||0,cur.given||0);o.data.cd_rw=JSON.stringify(bk)}}catch(e){}
+      const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('cd_'))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));
+      Object.entries(o.data).forEach(([k,v])=>{if(k.startsWith('cd_'))localStorage.setItem(k,v)})}catch(e){$('#rsm').textContent='This browser blocked saving. Try a normal (not private) window.';return}
+    home();toast(`<b>Progress restored</b> from ${when}.`,'rank')}}
 
 /* ============ Progress, gates and home ============ */
 const today=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -770,7 +801,7 @@ function gateHTML(k){const cp=CHECKPOINTS[k],ready=(!cp.needs||unlocked(cp.needs
     <p class="muted" style="margin:0">${cp.blurb}${passed?'':` Passing it opens Week ${k==='cp1'?2:3}.`}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
 function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
 function home(){
-  stopTimer();redraw=null;inCase=false;$('#homeBtn').hidden=true;document.onkeydown=null;
+  stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   const w2=unlocked('w2'),w3=unlocked('w3');
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.</div>
   ${collectionHTML()}
@@ -778,21 +809,36 @@ function home(){
   <section class="week"><h2 class="wk">Week 1 · Counting and nets</h2><div class="folders">${CASES.filter(c=>c.week===1).map(folderHTML).join('')}</div>${gateHTML('cp1')}</section>
   <section class="week"><h2 class="wk">Week 2 · Turning, views and speed</h2><div class="folders">${w2?CASES.filter(c=>c.week===2).map(folderHTML).join(''):sealedHTML('CASES 05–07','Three sealed case files','Opens when Checkpoint 1 is passed.')}</div>${w2?gateHTML('cp2'):''}</section>
   <section class="week"><h2 class="wk">Week 3 · Exam practice</h2><div class="folders">${w3?`<button class="folder" data-tab="FINAL" data-id="mock"><h2>The Final Mock</h2><p>20 mixed questions at exam pace, with a skill-by-skill report. Do it every other day.</p><div class="meta"><span>Week 3</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button>`:sealedHTML('FINAL','The Final Mock','Opens when Checkpoint 2 is passed.')}</div></section>
-  <details class="parent"><summary>For parents</summary>
-    <p>Each week’s case files open automatically. First she meets every target on the checkpoint card, then she passes the checkpoint test (10/12, then 12/15). After a mixed test, any skill she missed twice gets a <b>Refresh</b> tag on its case file, and the daily warm-up gives it more questions.</p>
+  <details class="mine"><summary>Save and restore</summary>
+    <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
+      <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
+      <div class="row"><button id="bk">Make backup code</button><button id="bkcopy" hidden>Copy code</button><button id="bkfile" hidden>Download backup file</button><span class="muted" id="bkm"></span></div>
+      <textarea id="bkout" class="code" rows="3" readonly hidden aria-label="Backup code"></textarea>
+      <label for="rsin" style="font-weight:600;font-size:.9rem">Restore: paste a backup code${location.hostname.endsWith('github.io')?' or choose a backup file':''}</label>
+      <textarea id="rsin" class="code" rows="3" placeholder="CUBEDETECTIVE1:…"></textarea>
+      <div class="row">${location.hostname.endsWith('github.io')?'<input type="file" id="rsfile" accept=".txt,text/plain">':''}<button id="rs">Restore progress</button><span class="muted" id="rsm"></span></div></div>
+    <div class="row"><button id="pr">Start again from scratch</button><span class="muted" id="prc">Clears scores and unlocked weeks. Stamps and cards stay.</span></div></details>
+  <section class="parent" id="parent" ${parentOpen?'':'hidden'}><div class="gate-head"><h3 style="margin:0">For parents</h3><button class="btn-ghost" id="pclose">Close</button></div>
+    <p style="margin:0">Each week opens automatically: first every target on the checkpoint card, then the checkpoint test (10/12, then 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
+    <div class="row"><span><b>${rewards().cards.length}</b> cards earned · <b>${rewards().given}</b> handed over</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}</div>
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="10" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
     <div class="row"><button id="pu">Unlock next week now</button><span class="muted" id="puc"></span></div>
-    <div class="row"><button id="pr">Reset all progress</button><span class="muted" id="prc"></span></div></details>`;
-  view.querySelectorAll('.folder[data-id]').forEach(b=>b.onclick=()=>{inCase=true;if(b.dataset.id==='mock')return mock();const c=CASES.find(x=>x.id===b.dataset.id);$('#homeBtn').hidden=false;c.go();scrollTo(0,0)});
+    <div class="row"><button id="pfull">Full reset, including stamps and cards</button><span class="muted" id="pfullc"></span></div></section>`;
+  view.querySelectorAll('.folder[data-id]').forEach(b=>b.onclick=()=>{inCase=true;parentOpen=false;if(b.dataset.id==='mock')return mock();const c=CASES.find(x=>x.id===b.dataset.id);$('#homeBtn').hidden=false;c.go();scrollTo(0,0)});
   view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
   $('#warm').onclick=()=>{inCase=true;warmup()};
+  wireBackup();
   const setRw=()=>{const spc=Math.max(1,Math.min(10,+$('#spc').value||3)),limit=Math.max(1,Math.min(99,+$('#lim').value||18));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
   if($('#gave')){let armed=false;$('#gave').onclick=()=>{if(!armed){armed=true;$('#gave').textContent='Tap again to confirm';return}const r=rewards();r.given=Math.min(r.cards.length,r.given+1);saveRw(r);home()}}
   const twoStep=(btn,msg,act)=>{let armed=false;$(btn).onclick=()=>{if(!armed){armed=true;$(btn).textContent='Tap again to confirm';$(msg).textContent=''}else act()}};
   twoStep('#pu','#puc',()=>{if(!w2)unlock('w2');else unlock('w3');home()});
-  twoStep('#pr','#prc',()=>{['hist','best','found','unlock','weak','towerMode','towerLevel','rw'].forEach(k=>store.set(k,null));try{['hist','best','found','unlock','weak','towerMode','towerLevel','rw'].forEach(k=>localStorage.removeItem('cd_'+k))}catch(e){}home()});
+  const GAME_KEYS=['hist','best','found','unlock','weak','towerMode','towerLevel'];
+  const wipe=keys=>{keys.forEach(k=>{try{localStorage.removeItem('cd_'+k)}catch(e){}})};
+  twoStep('#pr','#prc',()=>{wipe(GAME_KEYS);home();toast('<b>Fresh start.</b> Your stamps and cards are safe.','rank')});
+  twoStep('#pfull','#pfullc',()=>{wipe([...GAME_KEYS,'rw','rwset']);parentOpen=false;home()});
+  $('#pclose').onclick=()=>{parentOpen=false;$('#parent').hidden=true};
   scrollTo(0,0)}
-function open(id){const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
+function open(id){parentOpen=false;const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
 function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',title:cp.title,secs:cp.secs,level:cp.level,pass:cp.pass,mixed:true,
   passMsg:`Passed! Week ${k==='cp1'?2:3} is now open.`,onPass:()=>{unlock(cp.unlocks);milestone(k,`Passed ${cp.title}`)},plan:cp.make(),remake:cp.make,
   rule:`<strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
