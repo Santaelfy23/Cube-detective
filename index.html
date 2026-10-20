@@ -27,7 +27,7 @@ body{margin:0}
   --bg:#11151D; --surface:#1A202C; --ink:#E5E9F1; --muted:#9AA4B6; --line:#2C3445;
   --folder:#B38E4B; --folder-ink:#1E1607; --accent:#86A6FF; --accent-soft:#222E4D;
   --good:#4CC985; --good-soft:#163526; --bad:#FF7468; --bad-soft:#3C1D1B;
-  --cube-top:#3B4661; --cube-l:#2B3449; --cube-r:#212939; --cube-line:#C7D0E2;
+  --cube-top:#7383A8; --cube-l:#48546F; --cube-r:#2C3447; --cube-line:#C7D0E2;
   --hl-top:#4E6AB8; --hl-l:#3A549A; --hl-r:#2E4580;
   --hid-top:#C49A2E; --hid-l:#9C7820; --hid-r:#7A5D17;
   --p1:#C99C24; --p2:#3E9C78; --p3:#C8645A;
@@ -36,7 +36,7 @@ body{margin:0}
   --bg:#11151D; --surface:#1A202C; --ink:#E5E9F1; --muted:#9AA4B6; --line:#2C3445;
   --folder:#B38E4B; --folder-ink:#1E1607; --accent:#86A6FF; --accent-soft:#222E4D;
   --good:#4CC985; --good-soft:#163526; --bad:#FF7468; --bad-soft:#3C1D1B;
-  --cube-top:#3B4661; --cube-l:#2B3449; --cube-r:#212939; --cube-line:#C7D0E2;
+  --cube-top:#7383A8; --cube-l:#48546F; --cube-r:#2C3447; --cube-line:#C7D0E2;
   --hl-top:#4E6AB8; --hl-l:#3A549A; --hl-r:#2E4580;
   --hid-top:#C49A2E; --hid-l:#9C7820; --hid-r:#7A5D17;
   --p1:#C99C24; --p2:#3E9C78; --p3:#C8645A;
@@ -132,6 +132,7 @@ input.num{font-family:inherit;font-size:1.3rem;width:110px;padding:8px 10px;bord
 .fig figcaption{font-size:.82rem;color:var(--muted);text-align:center}
 .checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .checks li{display:flex;gap:8px;align-items:baseline}
+ol.steps{margin:8px 0 8px 20px;padding:0}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
 .qtext{margin:0;font-weight:600}
@@ -403,15 +404,16 @@ function genBricks(level){const c=BRICK_CFG[level],shape=pick(Object.keys(c.shap
   if(best||alt)return best||alt;const F=genBrickRaw(level,shape);F.vis=brickSight(F);F.peek=[];return F}
 /* draw: each block drawn as one solid piece, only its outline edges stroked. opt.layer draws one layer on its own, set on the floor. */
 function drawBricks(canvas,S,opt={}){const P=(x,y,z)=>[x-y,(x+y)/2-z],K=(x,y,z)=>x+','+y+','+z,cubes=[],dz=opt.layer||0;
-  const only=opt.layer!=null?S.blocks.map((b,i)=>Math.min(...b.map(p=>p[2]))===opt.layer?i:-1).filter(i=>i>=0):null;
+  const lay=bi=>Math.min(...S.blocks[bi].map(p=>p[2]));
+  const only=opt.layer!=null?S.blocks.map((b,i)=>lay(i)===opt.layer?i:-1).filter(i=>i>=0):opt.upto!=null?S.blocks.map((b,i)=>lay(i)<=opt.upto?i:-1).filter(i=>i>=0):null;
   S.blocks.forEach((b,bi)=>{if(only&&!only.includes(bi))return;b.forEach(([x,y,z])=>cubes.push({c:[x,y,z-dz],bi}))});
   cubes.sort((a,b)=>(a.c[0]+a.c[1]+a.c[2])-(b.c[0]+b.c[1]+b.c[2])||a.c[2]-b.c[2]);
   const cw=canvas.clientWidth||400,ch=Math.round(Math.min(cw*(opt.ratio||.78),opt.maxH||380)),ctx=setupCanvas(canvas,cw,ch);
-  const fit=opt.layer!=null?[...S.blocks.flat().map(([x,y])=>[x,y,0]),...cubes.map(o=>o.c),[0,0,1]]:cubes.map(o=>o.c);
+  const fit=opt.layer!=null?[...S.blocks.flat().map(([x,y])=>[x,y,0]),...cubes.map(o=>o.c),[0,0,1]]:opt.upto!=null?S.blocks.flat():cubes.map(o=>o.c);
   const{s,T}=isoFit(fit,cw,ch,opt.maxS||52,12,14,10);
   const same=(bi,x,y,z)=>S.occ.get(K(x,y,z+dz))===bi&&(!only||only.includes(bi));
   const N=PAL('cube'),HL=PAL('hl'),HID=PAL('hid');
-  for(const{c:[x,y,z],bi}of cubes){const col=(opt.peek&&opt.peek.includes(bi))?HID:(opt.hot&&opt.hot.includes(bi))?HL:N;
+  for(const{c:[x,y,z],bi}of cubes){const col=(opt.peek&&opt.peek.includes(bi))?HID:(opt.hot&&opt.hot.includes(bi))?HL:(opt.upto!=null&&lay(bi)<opt.upto)?N:opt.colors?BCOL(bi):N;
     const faces=[['top',[[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]],[[0,-1,0],[1,0,0],[0,1,0],[-1,0,0]],[0,0,1]],
       ['l',[[x,y+1,z],[x+1,y+1,z],[x+1,y+1,z+1],[x,y+1,z+1]],[[0,0,-1],[1,0,0],[0,0,1],[-1,0,0]],[0,1,0]],
       ['r',[[x+1,y,z],[x+1,y+1,z],[x+1,y+1,z+1],[x+1,y,z+1]],[[0,0,-1],[0,1,0],[0,0,1],[0,-1,0]],[1,0,0]]];
@@ -423,11 +425,13 @@ function drawBricks(canvas,S,opt={}){const P=(x,y,z)=>[x-y,(x+y)/2-z],K=(x,y,z)=
   if(opt.numbers){const r=Math.max(8,s*.22);
     if(opt.layer!=null)S.blocks.forEach((b,bi)=>{if(!only.includes(bi))return;const top=Math.max(...b.map(p=>p[2]));const tc=b.filter(p=>p[2]===top);const cx=tc.reduce((a,p)=>a+p[0],0)/tc.length,cy=tc.reduce((a,p)=>a+p[1],0)/tc.length;
       const[px,py]=T(cx+.5,cy+.5,top+1-dz);badge(ctx,px,py,r,bi+1)});
-    else{const vis=S.vis||brickSight(S),placed=[];S.blocks.forEach((b,bi)=>{const v=vis[bi];if(!v||!v.pts.length)return;
+    else{const vis=opt.upto!=null?brickSight({blocks:S.blocks.map((b,i)=>only.includes(i)?b:[])}):(S.vis||brickSight(S)),placed=[];S.blocks.forEach((b,bi)=>{if(opt.upto!=null&&lay(bi)!==opt.upto)return;const v=vis[bi];if(!v||!v.pts.length)return;
       const cands=[...v.pts.filter(o=>o.fi===0),...v.pts.filter(o=>o.fi!==0)].map(o=>T(...o.p));
       let best=cands[0],bd=-1;for(const c of cands){const d=Math.min(1e9,...placed.map(p=>Math.hypot(p[0]-c[0],p[1]-c[1])));if(d>bd){bd=d;best=c}if(d>r*2.6)break}
       placed.push(best);badge(ctx,best[0],best[1],r,bi+1)})}}
   return{s,T}}
+/* a different colour for each block, so neighbouring blocks stand apart (yellow is kept for peeking blocks) */
+const BCOL=bi=>{const h=[210,350,150,280,190,320,110,240,15,170].at(bi%10);return{top:`hsl(${h} 55% 68%)`,l:`hsl(${h} 45% 50%)`,r:`hsl(${h} 45% 37%)`}};
 const brickLayers=S=>{const L=[];S.blocks.forEach((b,i)=>{const z=Math.min(...b.map(p=>p[2]));(L[z]=L[z]||[]).push(i)});return L.map(x=>x||[])};
 function brickNotes(S,{given=null,timeout=false}={}){const t=S.blocks.length,L=brickLayers(S),vis=S.vis||brickSight(S);
   const peek=vis.map((v,i)=>v.n<=8?i:-1).filter(i=>i>=0),shapeName=BLOCK_SHAPES[S.shape]?BLOCK_SHAPES[S.shape].name:'blocks';
@@ -437,12 +441,12 @@ function brickNotes(S,{given=null,timeout=false}={}){const t=S.blocks.length,L=b
     `<b>Counted a block twice.</b> You were ${given-t} over. A big block shows its top, front and side, and can look like two cubes. If there’s no line across a face, it’s still one block. Every block is the same size, so check each one is the full size.`;
   const sum=`<ul class="rowsum">${L.map((ids,z)=>`<li><b>Layer ${z+1}${z===0?' (bottom)':z===L.length-1?' (top)':''}:</b> ${ids.length} block${ids.length===1?'':'s'} <span class="muted">(${ids.map(i=>i+1).join(', ')})</span></li>`).join('')}</ul><p><b>Total:</b> ${L.map(l=>l.length).join(' + ')} = <b>${t}</b></p>`;
   return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
-    <figure class="fig" style="margin:0"><canvas id="bA"></canvas><figcaption>Every block numbered once · yellow = only a small part shows</figcaption></figure>
-    <figure class="fig" style="margin:0"><div class="layers" id="bL">${L.map((ids,z)=>`<div class="layer"><canvas id="bL${z}"></canvas><span>Layer ${z+1}: ${ids.length}</span></div>`).join('')}</div><figcaption>The layers pulled apart, bottom to top</figcaption></figure></div>
+    <figure class="fig" style="margin:0;grid-column:1/-1"><canvas id="bA"></canvas><figcaption>Every block numbered once, each in its own colour · yellow = only a small part shows</figcaption></figure>
+    <figure class="fig" style="margin:0;grid-column:1/-1"><div class="layers" id="bL">${L.map((ids,z)=>`<div class="layer"><canvas id="bL${z}"></canvas><span>${z===0?'Start with layer 1':`Add layer ${z+1}`}: ${ids.length} new</span></div>`).join('')}</div><figcaption>Building the stack up, one layer at a time · new blocks in colour, blocks already counted in grey</figcaption></figure></div>
     <div class="nb"><h4>What happened</h4><p>${what}</p></div>
     <div class="nb trick"><h4>The trick: layer by layer, on paper</h4>${sum}<p><b>Know the block first:</b> every block in a stack is the same shape, just turned different ways. Work out its size from one block you can see clearly. <b>Spot each block’s ends:</b> a line across a face is where one block stops; no line means it’s still the same block.</p></div>
     <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`,
-   draw:()=>{const a=$('#bA');if(a)drawBricks(a,S,{numbers:true,peek,maxH:300});L.forEach((ids,z)=>{const c=$('#bL'+z);if(c)drawBricks(c,S,{layer:z,numbers:true,ratio:.72,maxH:170,maxS:34})})}}}
+   draw:()=>{const a=$('#bA');if(a)drawBricks(a,S,{numbers:true,peek,colors:true,maxH:300});L.forEach((ids,z)=>{const c=$('#bL'+z);if(c)drawBricks(c,S,{upto:z,numbers:true,colors:true,ratio:.85,maxH:240,maxS:44})})}}}
 
 /* ============ Bonus round: rotated blocks ============ */
 /* A shape of joined cubes. The right answer is the same shape turned; traps are its mirror image, a shape with one cube moved,
@@ -482,6 +486,9 @@ function genRot(level){const n=[5,6,7][level];
     if(!count)continue;
     const shown=showRot(S);if(!shown)continue;const opt=[{kind:'ok',cs:showRot(S,keyC(shown))},{kind:'mirror',cs:showRot(M)},{kind:'moved',cs:showRot(moved.cs)},{kind:'count',cs:showRot(count.cs),dir:count.dir}];
     if(opt.some(o=>!o.cs))continue;
+    /* no hidden-cube loophole: a wrong option must not match the shape plus a cube hidden in the picture (or minus one hidden in its own picture) */
+    const hidSpots=cs=>{const k=new Set(cs.map(ck)),out=[];cs.forEach(c=>N6.forEach(d=>{const p=[c[0]+d[0],c[1]+d[1],c[2]+d[2]];if(k.has(ck(p)))return;k.add(ck(p));const sn=cubeSight([...cs,p]);if(sn[sn.length-1]===0)out.push(p)}));return out};
+    const hS=hidSpots(shown);if(opt.some(o=>o.kind!=='ok'&&(hS.some(h=>canonC([...shown,h])===canonC(o.cs))||hidSpots(o.cs).some(h=>canonC([...o.cs,h])===cS))))continue;
     /* where the marker cube is in each picture, found by matching the shape */
     const findMarker=(target,src,mi)=>{for(const R of ROT24){const v=rotC(R,src);if(keyC(v)===keyC(target))return ck(v[mi])}return null};
     const mk={shown:findMarker(shown,S,marker),ok:findMarker(opt[0].cs,S,marker),mirror:findMarker(opt[1].cs,M,marker)};
@@ -691,7 +698,7 @@ const SYM={
   arrow:{name:'arrow',feat:'tip',m:[0,-1],parts:[{p:[[0,-.36],[.27,-.02],[.1,-.02],[.1,.34],[-.1,.34],[-.1,-.02],[-.27,-.02]]}]},
   half:{name:'half-shaded square',feat:'shaded corner',m:[-.71,-.71],parts:[{p:[[-.5,-.5],[.5,-.5],[-.5,.5]]}]},
   ell:{name:'L shape',feat:'foot',m:[1,0],chiral:true,parts:[{p:[[-.24,-.32],[-.06,-.32],[-.06,.14],[.26,.14],[.26,.32],[-.24,.32]]}]},
-  flag:{name:'flag',feat:'flag',m:[1,0],chiral:true,parts:[{p:[[-.28,-.38],[-.15,-.38],[-.15,.38],[-.28,.38]]},{p:[[-.15,-.38],[.36,-.16],[-.15,.06]]}]},
+  flag:{name:'flag',feat:'tip',m:[1,0],chiral:true,parts:[{p:[[-.28,-.38],[-.15,-.38],[-.15,.38],[-.28,.38]]},{p:[[-.15,-.38],[.36,-.16],[-.15,.06]]}]},
   circle:{name:'circle',symm:true,parts:[{ring:.27}]},
   plus:{name:'cross',symm:true,parts:[{p:[[-.06,-.3],[.06,-.3],[.06,.3],[-.06,.3]]},{p:[[-.3,-.06],[.3,-.06],[.3,.06],[-.3,.06]]}]},
   tri:{name:'triangle',feat:'point',m:[0,-1],parts:[{p:[[0,-.3],[.28,.24],[-.28,.24]]}]}};
@@ -725,20 +732,31 @@ function symShapes(sym,map,ink='var(--ink)'){return SYM[sym].parts.map(pt=>{
     return`<polygon points="${ps.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${ink}" stroke-width="2.4"/>`}
   return`<polygon points="${pt.p.map(q=>map(q).map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${ink}"/>`}).join('')}
 const CUBEFACE={'0,0,1':[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],'0,1,0':[[0,1,0],[1,1,0],[1,1,1],[0,1,1]],'1,0,0':[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]};
-function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)'}={}){
+const BUDDY='#3B82F6';
+const arrowSVG=(a,b,col,w=3)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,h=Math.max(7,w*2.6),bx=b[0]-ux*h,by=b[1]-uy*h;
+  return`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/><polygon points="${b[0].toFixed(1)},${b[1].toFixed(1)} ${(bx-uy*h*.55).toFixed(1)},${(by+ux*h*.55).toFixed(1)} ${(bx+uy*h*.55).toFixed(1)},${(by-ux*h*.55).toFixed(1)}" fill="${col}"/>`};
+function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)',edge=null,arrow=-1,arrowCol='var(--good)'}={}){
   const P=([x,y,z])=>[(y-x)*s,(x+y)*s/2-z*s];
   let o=`<svg viewBox="${-s-6} ${-s-6} ${2*s+12} ${2*s+12}" width="${2*s+12}" style="max-width:100%;display:block;margin:0 auto">`;
   view.forEach((e,j)=>{const pts=CUBEFACE[e.d.join(',')].map(P);
     o+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round"/>`;
     const c=e.d.map(x=>.5+.5*x);o+=symShapes(e.sym,([u,v])=>P([0,1,2].map(i=>c[i]+u*e.right[i]+v*e.down[i])))});
   if(hot>=0){const pts=CUBEFACE[view[hot].d.join(',')].map(P);o+=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${hotCol}" stroke-width="3.5" stroke-linejoin="round"/>`}
+  /* the edge where two faces meet, and an arrow showing which way a symbol's point goes */
+  if(edge){const A=view[edge[0]].d,B=view[edge[1]].d,pt=t=>[0,1,2].map(k=>A[k]?(A[k]>0?1:0):B[k]?(B[k]>0?1:0):t);const a=P(pt(0)),b=P(pt(1));
+    o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${BUDDY}" stroke-width="5" stroke-linecap="round"/>`}
+  if(arrow>=0){const e=view[arrow],m=SYM[e.sym].m,c=e.d.map(x=>.5+.5*x),M=[0,1,2].map(i=>m[0]*e.right[i]+m[1]*e.down[i]);
+    o+=arrowSVG(P(c),P(c.map((v,i)=>v+.4*M[i])),arrowCol)}
   return o+'</svg>'}
-function netSymSVG(cells,symOf,{size=50,fill={},stroke={}}={}){
+function netSymSVG(cells,symOf,{size=50,fill={},stroke={},edges=[],arrow=null}={}){
   const R=Math.max(...cells.map(p=>p[0]))+1,C=Math.max(...cells.map(p=>p[1]))+1,pad=3;
   let o=`<svg viewBox="0 0 ${C*size+pad*2} ${R*size+pad*2}" width="${C*size+pad*2}" style="max-width:100%">`;
   cells.forEach(([r,c],i)=>{const k=r+','+c,x0=pad+c*size,y0=pad+r*size;
     o+=`<rect x="${x0}" y="${y0}" width="${size}" height="${size}" fill="${fill[k]||'var(--surface)'}" stroke="${stroke[k]||'var(--ink)'}" stroke-width="${stroke[k]?3:1.6}"/>`;
     o+=symShapes(symOf[i],([u,v])=>[x0+(u+.5)*size,y0+(v+.5)*size])});
+  edges.forEach(({k,d})=>{const[r,c]=cells[k],x0=pad+c*size,y0=pad+r*size,cx=x0+size/2,cy=y0+size/2,h=size/2,ex=cx+d[0]*h,ey=cy+d[1]*h;
+    o+=`<line x1="${ex-d[1]*h}" y1="${ey-d[0]*h}" x2="${ex+d[1]*h}" y2="${ey+d[0]*h}" stroke="${BUDDY}" stroke-width="5" stroke-linecap="round"/>`});
+  if(arrow){const[r,c]=cells[arrow.k],cx=pad+c*size+size/2,cy=pad+r*size+size/2,m=SYM[symOf[arrow.k]].m;o+=arrowSVG([cx,cy],[cx+m[0]*size*.4,cy+m[1]*size*.4],arrow.col||'var(--good)')}
   return o+'</svg>'}
 const relE=(e,g)=>{const m=SYM[e.sym].m,M=[0,1,2].map(i=>m[0]*e.right[i]+m[1]*e.down[i]),t=dot(M,g.d);return t>.6?'toward':t<-.6?'away':'side'};
 const relText={toward:'points toward',away:'points away from',side:'runs alongside'};
@@ -773,12 +791,21 @@ const LET='ABCDE';
 function edgeNotes(E,i){
   const o=E.options[i],face=fold(E.cells).face,fill={},stroke={},nm=s=>SYM[s].name;
   E.cells.forEach(([r,c],k)=>fill[r+','+c]=PAIRCOL[face[k]]);
-  let what,trap,hot=-1,fig2='';
+  let what,trap,hot=-1,fig2='',figAns=null;
+  let netOpt={};
   if(o.kind==='orient'){const j=o.info.face;hot=j;const e=o.view[j],b=o.base[j];
-    const g=[0,1,2].filter(x=>x!==j).find(x=>relE(b,o.base[x])!==relE(e,o.view[x]));const gn=nm(o.view[g].sym);
-    what=`The ${nm(e.sym)} is turned the wrong way. On the real cube, the ${nm(e.sym)}’s ${SYM[e.sym].feat} ${relText[relE(b,o.base[g])]} the ${gn} face. In answer ${LET[i]} it ${relText[relE(e,o.view[g])]} it.`;
+    const gs=[0,1,2].filter(x=>x!==j&&relE(b,o.base[x])!==relE(e,o.view[x]));const g=gs.find(x=>relE(b,o.base[x])!=='side')??gs[0];const gn=nm(o.view[g].sym),sn=nm(e.sym),ft=SYM[e.sym].feat;
+    const Fj=E.F[b.cell],Fg=E.F[o.base[g].cell],dir=(F,n)=>[Math.round(dot(F.right,n)),Math.round(dot(F.down,n))];
+    netOpt={edges:[{k:b.cell,d:dir(Fj,Fg.n)},{k:o.base[g].cell,d:dir(Fg,Fj.n)}],arrow:{k:b.cell,col:'var(--good)'}};
+    const rb=relE(b,o.base[g]),re=relE(e,o.view[g]),word={toward:'points at',away:'points away from',side:'runs along'};
+    what=`The ${sn} is turned the wrong way. Here’s how to see it:<ol class="steps">
+      <li><b>On the net,</b> find the blue edge: it’s where the ${sn} square meets the ${gn} square when the net folds up (both blue edges join). The ${sn}’s ${ft} (green arrow) ${word[rb]} that edge.</li>
+      <li><b>On the real cube,</b> the blue edge is the line where the ${sn} face and the ${gn} face meet. Folding never changes which edge a symbol points at, so the ${ft} still ${word[rb]} it.</li>
+      <li><b>In answer ${LET[i]},</b> the ${ft} (red arrow) ${word[re]} the blue edge instead. So the ${sn} has been turned: cross it out.</li></ol>
+      <b>Say it in a few words: “${ft} ${{toward:'touches',away:'away from',side:'along'}[rb]} ${gn}”.</b> Say it on the net, then check it on each cube.${SYM[e.sym].chiral?` For a flag or an L, also check it isn’t flipped: walk along the ${sn==='flag'?'pole':'upright stroke'} towards the ${sn==='flag'?'flag':'foot'}. Is it sticking out to your left or your right? Turning never changes that, only a mirror does.`:''}`;
     trap=`<b>Right faces, wrong turn.</b> All three faces really are neighbours, so it looks right. That’s why this is the commonest trap. Pick one edge buddy and check which way it points.`;
-    fig2=`<figure class="fig" style="margin:0">${cubeSVG(o.base,{hot:j,hotCol:'var(--good)'})}<figcaption>How it really looks</figcaption></figure>`}
+    fig2=`<figure class="fig" style="margin:0">${cubeSVG(o.base,{s:58,hot:j,hotCol:'var(--good)',edge:[j,g],arrow:j})}<figcaption>How it really looks</figcaption></figure>`;
+    figAns=cubeSVG(o.view,{s:58,hot,edge:[j,g],arrow:j,arrowCol:'var(--bad)'})}
   else if(o.kind==='opposite'){const a=o.view[o.info.a],b=o.view[o.info.b];hot=o.info.b;
     E.cells.forEach(([r,c],k)=>{if(k===a.cell||k===b.cell)stroke[r+','+c]='var(--bad)'});
     what=`It shows the ${nm(a.sym)} and the ${nm(b.sym)} together, but on the net they are opposite each other (same colour, outlined in red). Opposite faces can never be seen at the same time.`;
@@ -792,10 +819,10 @@ function edgeNotes(E,i){
   const step=(k,label)=>{const order=['dud','opp','way'],bad=o.kind.startsWith('dud')?'dud':o.kind==='opposite'?'opp':'way',bi=order.indexOf(bad),ki=order.indexOf(k);
     return`<li><span class="${ki<bi?'y':ki===bi?'n':'s'}">${ki<bi?'✓':ki===bi?'✗':'–'}</span><span>${label} <span class="muted">${ki<bi?'passes':ki===bi?'caught it here':'no need: already ruled out'}</span></span></li>`};
   return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
-    <figure class="fig" style="margin:0">${netSymSVG(E.cells,E.symOf,{size:46,fill,stroke})}<figcaption>The net · same colour = opposite pair</figcaption></figure>
-    <figure class="fig" style="margin:0">${cubeSVG(o.view,{hot})}<figcaption>Your answer ${LET[i]}</figcaption></figure>${fig2}</div>
+    <figure class="fig" style="margin:0">${netSymSVG(E.cells,E.symOf,{size:46,fill,stroke,...netOpt})}<figcaption>The net · same colour = opposite pair${netOpt.edges?' · blue edges join when folded':''}</figcaption></figure>
+    <figure class="fig" style="margin:0">${figAns||cubeSVG(o.view,{hot})}<figcaption>Your answer ${LET[i]}</figcaption></figure>${fig2}</div>
     <div class="nb"><h4>What happened</h4><p>${what}</p></div>
-    <div class="nb trick"><h4>The trick: rule out in this order</h4><ul class="checks">${step('dud','1. Duds: any symbol not on the net, or flipped?')}${step('opp','2. Opposites: two same-colour faces together?')}${step('way','3. Edge buddies: is every symbol turned the right way?')}</ul></div>
+    <div class="nb trick"><h4>The trick: rule out in this order</h4><ul class="checks">${step('dud','1. Duds: any symbol not on the net, or flipped?')}${step('opp','2. Opposites: two same-colour faces together?')}${step('way','3. Edge buddies: is every symbol turned the right way?')}<li><span class="s">↻</span><span>4. Corner check, if two are left: when three faces make an L on the net, go clockwise round their shared corner. On the cube, go clockwise round the corner nearest you (top, right, left). The order must match. <span class="muted">This catches a mirror-image cube.</span></span></li></ul></div>
     <div class="nb trap"><h4>The trap</h4><p>${trap}</p></div></div>`}}
 function droneNotes(D,i){
   const o=D.opts[i],letters=towerLetters(D.H),isIn=(a,p)=>a.some(q=>q[0]===p[0]&&q[1]===p[1]);
@@ -930,7 +957,7 @@ function rotCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('ro
     rule:'<strong>Count, track one end, catch the mirror.</strong>',plan:repeat('rot',8),remake:()=>repeat('rot',8)})};
   $('#rLearn').onclick=()=>go(true);$('#rExam').onclick=()=>go(false);scrollTo(0,0)}
 function edgeCase(){runQuiz({id:'edge',tag:'Case 06 · Nets to cubes',title:'Edge Buddies',secs:60,level:1,
-  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick one symbol and check which neighbour its tip, foot or shaded corner points at.</li></ol>',
+  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick a symbol with a point (arrow tip, flag, L foot, shaded corner). On the net, say which neighbour it points at: “tip touches circle”. On the cube it must touch the same neighbour.</li><li><b>Corner check</b> if two are left: when three faces make an L on the net, go clockwise round their shared corner. On the cube go clockwise round the near corner: top, right, left. Same order, or it’s a mirror image.</li></ol>',
   plan:repeat('edge',8),remake:()=>repeat('edge',8)})}
 function droneCase(){runQuiz({id:'drone',tag:'Case 07 · View from above',title:'Drone View',secs:45,level:1,
   rule:'<strong>Drone view.</strong><ol><li>Count width × depth. Cross out any answer that’s a different size.</li><li>One tower = one square. Heights don’t matter.</li><li>Check where the gaps are. A flipped shape is always wrong.</li></ol>',
@@ -944,7 +971,7 @@ const TARGET={edge:40,drone:25};
 function elimCase(){
   stopTimer();$('#homeBtn').hidden=false;const ROUNDS=6,plan=shuffle([...repeat('edge',3),...repeat('drone',3)]);let n=0,clean=0;const times=[];
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 08 · Elimination</div><h2>Rule It Out</h2></div><span class="score" id="sc"></span></div>
-    <div class="rule"><strong>Don’t look for the answer. Cross out the wrong ones.</strong> Tap an option, then say why it’s wrong. When only one is left, that’s your answer. Aim for no mistakes, then aim for speed: under ${TARGET.edge}s for cubes, under ${TARGET.drone}s for views from above.</div><div id="game"></div></section>`;
+    <div class="rule"><strong>Don’t look for the answer. Cross out the wrong ones.</strong> Tap an option to cross it out, but only once you can say why it’s wrong (in your head is fine). The game then shows the reason so you can check. Crossing out the right answer is a mistake. When only one is left, that’s your answer. Aim for no mistakes, then aim for speed: under ${TARGET.edge}s for cubes, under ${TARGET.drone}s for views from above.</div><div id="game"></div></section>`;
   const g=$('#game');
   const next=()=>{stopTimer();redraw=null;
     if(n===ROUNDS){const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);record('elim',clean,ROUNDS,0,avg);
@@ -965,13 +992,11 @@ function elimCase(){
       $('#fb').innerHTML=`<div class="feedback ${mistakes?'no':'ok'}"><b>${LET[ans]} is the answer.</b> ${secs}s, ${mistakes} mistake${mistakes===1?'':'s'}. ${secs<=TARGET[type]&&!mistakes?'Exam speed!':secs>TARGET[type]?`Target is under ${TARGET[type]}s.`:''}</div><div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===ROUNDS?'See results':'Next →'}</button></div>`;
       $('#nx').onclick=next};
     $('#ops').querySelectorAll('.copt').forEach(card=>{const i=+card.dataset.i;
-      card.querySelector('.pick').onclick=()=>{if(!left.has(i)||left.size===1)return;$('#ops').querySelectorAll('.why').forEach(w=>w.hidden=true);card.querySelector('.why').hidden=false};
-      card.querySelectorAll('.why button').forEach(b=>b.onclick=()=>{const r=b.dataset.r;card.querySelector('.why').hidden=true;
-        if(i===ans){mistakes++;$('#mk').textContent=`Mistakes ${mistakes}`;say(false,`<b>Careful: ${LET[i]} is possible.</b> Nothing is wrong with it. Never cross out an option unless you can name the reason.`);return}
+      card.querySelector('.pick').onclick=()=>{if(!left.has(i)||left.size===1)return;
+        if(i===ans){mistakes++;$('#mk').textContent=`Mistakes ${mistakes}`;say(false,`<b>Careful: ${LET[i]} is possible.</b> Nothing is wrong with it. Only cross out an option when you can say what’s wrong with it.`);return}
         const real=KIND_REASON[opts[i].kind];left.delete(i);card.classList.add('out');card.querySelector('.tagr').textContent=REASONS[type].find(x=>x[0]===real)[1];
-        if(r===real)say(true,`<b>Ruled out: ${b.textContent}.</b> ${LET[i]}: ${REASON_WHY[real]}.`);
-        else{mistakes++;$('#mk').textContent=`Mistakes ${mistakes}`;say(false,`<b>Out, but for a different reason.</b> ${LET[i]} isn’t “${b.textContent}”: ${REASON_WHY[real]}.`)}
-        if(left.size===1)finish()})})};
+        say(true,`<b>Ruled out: ${REASONS[type].find(x=>x[0]===real)[1]}.</b> ${LET[i]}: ${REASON_WHY[real]}. Was that your reason?`);
+        if(left.size===1)finish()}})};
   next()}
 /* ============ Rewards: stamps, cards and detective rank ============ */
 const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
