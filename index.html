@@ -1252,14 +1252,14 @@ const TRICK={rot:'Count the cubes first. Then pick one end cube and check it’s
   count:'Tower Method: on scrap paper, write each tower’s height row by row, then add the rows. The cubes you can see are the smallest possible answer.',
   impostor:'Three checks: no line of 5, no 2×2 block, and four in a line needs one wing on each side.',
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
-  edge:'Rule out in order: duds, then opposites shown together, then edge buddies (which way does the point face?).',
+  edge:'Rule out in order: duds, then opposites shown together, then edge buddies. Edge buddies: on the net, say which neighbour the point touches (“tip touches circle”), then check the same on each cube. Draw a little arrow on the tip if it helps. Flag or L: walk along the pole or upright: is it sticking out left or right? Turning never changes that. Two left? Corner check: go clockwise round the corner, and the faces must come in the same order as on the net.',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
 const WHY={rot:'Every rotation question hides a mirror image that looks exactly right at a glance. Tracking one end cube is the only quick way to catch it.',
   brick:'A big block shows three faces, so it’s easy to count it twice, and blocks tucked behind others are easy to miss. Knowing the block size and counting layer by layer means every block is counted exactly once.',
   count:'The answer options are usually just 1 or 2 apart, set to catch anyone who misses a hidden cube. The Tower Method counts every hidden cube, so it turns a close guess into a sure mark.',
   impostor:'Test-setters often put exactly the right symbols on a net that can’t fold. If you check the shape first, those options are gone in a few seconds, before you even look at the symbols.',
   opp:'Opposites are the fastest way to cut down a nets question: any cube showing an opposite pair together is wrong. Spot the pairs first and you can often cross out two options straight away.',
-  edge:'The commonest trap shows three faces that really are neighbours, but with one symbol turned the wrong way. It looks right, so only checking an edge buddy catches it.',
+  edge:'The commonest trap shows three faces that really are neighbours, but with one symbol turned the wrong way. It looks right, so only checking an edge buddy catches it. Folding never changes which edge a symbol points at, so one quick check of the tip settles it.',
   drone:'Wrong views are usually the right shape flipped, or with one square added, missing or moved. Counting width × depth and checking the gaps catches them in seconds.'};
 const ruleBox=(t,lead)=>`<div class="rulebox"><h4>${lead||'Rule to remember'}: ${TYPE_NAME[t]}</h4><p class="rb-rule">${TRICK[t]}</p><p class="rb-why"><b>Why it matters:</b> ${WHY[t]}</p></div>`;
 function learnedTypes(){const h=store.get('hist',{}),out=new Set();Object.entries(CASE_TYPES).forEach(([id,ts])=>{if((h[id]||[]).length||(id==='hunt'&&store.get('found',[]).length))ts.forEach(t=>out.add(t))});
