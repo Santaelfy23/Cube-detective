@@ -132,7 +132,10 @@ input.num{font-family:inherit;font-size:1.3rem;width:110px;padding:8px 10px;bord
 .fig figcaption{font-size:.82rem;color:var(--muted);text-align:center}
 .checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .checks li{display:flex;gap:8px;align-items:baseline}
-ol.steps{margin:8px 0 8px 20px;padding:0}ol.steps li{margin:6px 0}
+ol.steps{margin:8px 0 8px 20px;padding:0}
+h3.sub{margin:16px 0 8px;font-size:1rem}
+.joinq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:8px 0 12px}.joinq .op{font-size:1.6rem;font-weight:800;color:var(--muted)}.joinq svg{max-height:170px;width:auto}
+p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
 .qtext{margin:0;font-weight:600}
@@ -733,9 +736,12 @@ function symShapes(sym,map,ink='var(--ink)'){return SYM[sym].parts.map(pt=>{
   return`<polygon points="${pt.p.map(q=>map(q).map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${ink}"/>`}).join('')}
 const CUBEFACE={'0,0,1':[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],'0,1,0':[[0,1,0],[1,1,0],[1,1,1],[0,1,1]],'1,0,0':[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]};
 const BUDDY='#3B82F6';
+/* a clockwise arrow round a point: start angle and sweep in degrees (screen angles, so increasing = clockwise) */
+const cwArc=(cx,cy,r,a0,sw,col=BUDDY)=>{const R=d=>d*Math.PI/180,p=d=>[cx+r*Math.cos(R(d)),cy+r*Math.sin(R(d))],s=p(a0),e=p(a0+sw),t=R(a0+sw),tx=-Math.sin(t),ty=Math.cos(t),h=r*.45;
+  return`<path d="M${s[0].toFixed(1)} ${s[1].toFixed(1)}A${r.toFixed(1)} ${r.toFixed(1)} 0 ${sw>180?1:0} 1 ${e[0].toFixed(1)} ${e[1].toFixed(1)}" fill="none" stroke="${col}" stroke-width="2.6"/><polygon points="${(e[0]+tx*h).toFixed(1)},${(e[1]+ty*h).toFixed(1)} ${(e[0]-ty*h*.6).toFixed(1)},${(e[1]+tx*h*.6).toFixed(1)} ${(e[0]+ty*h*.6).toFixed(1)},${(e[1]-tx*h*.6).toFixed(1)}" fill="${col}"/>`};
 const arrowSVG=(a,b,col,w=3)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,h=Math.max(7,w*2.6),bx=b[0]-ux*h,by=b[1]-uy*h;
   return`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/><polygon points="${b[0].toFixed(1)},${b[1].toFixed(1)} ${(bx-uy*h*.55).toFixed(1)},${(by+ux*h*.55).toFixed(1)} ${(bx+uy*h*.55).toFixed(1)},${(by-ux*h*.55).toFixed(1)}" fill="${col}"/>`};
-function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)',edge=null,arrow=-1,arrowCol='var(--good)'}={}){
+function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)',edge=null,arrow=-1,arrowCol='var(--good)',cw=false}={}){
   const P=([x,y,z])=>[(y-x)*s,(x+y)*s/2-z*s];
   let o=`<svg viewBox="${-s-6} ${-s-6} ${2*s+12} ${2*s+12}" width="${2*s+12}" style="max-width:100%;display:block;margin:0 auto">`;
   view.forEach((e,j)=>{const pts=CUBEFACE[e.d.join(',')].map(P);
@@ -747,8 +753,9 @@ function cubeSVG(view,{s=44,hot=-1,hotCol='var(--bad)',edge=null,arrow=-1,arrowC
     o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${BUDDY}" stroke-width="5" stroke-linecap="round"/>`}
   if(arrow>=0){const e=view[arrow],m=SYM[e.sym].m,c=e.d.map(x=>.5+.5*x),M=[0,1,2].map(i=>m[0]*e.right[i]+m[1]*e.down[i]);
     o+=arrowSVG(P(c),P(c.map((v,i)=>v+.4*M[i])),arrowCol)}
+  if(cw){const q=P([1,1,1]);o+=cwArc(q[0],q[1],s*.28,-110,240)}
   return o+'</svg>'}
-function netSymSVG(cells,symOf,{size=50,fill={},stroke={},edges=[],arrow=null}={}){
+function netSymSVG(cells,symOf,{size=50,fill={},stroke={},edges=[],arrow=null,corner=null}={}){
   const R=Math.max(...cells.map(p=>p[0]))+1,C=Math.max(...cells.map(p=>p[1]))+1,pad=3;
   let o=`<svg viewBox="0 0 ${C*size+pad*2} ${R*size+pad*2}" width="${C*size+pad*2}" style="max-width:100%">`;
   cells.forEach(([r,c],i)=>{const k=r+','+c,x0=pad+c*size,y0=pad+r*size;
@@ -756,6 +763,7 @@ function netSymSVG(cells,symOf,{size=50,fill={},stroke={},edges=[],arrow=null}={
     o+=symShapes(symOf[i],([u,v])=>[x0+(u+.5)*size,y0+(v+.5)*size])});
   edges.forEach(({k,d})=>{const[r,c]=cells[k],x0=pad+c*size,y0=pad+r*size,cx=x0+size/2,cy=y0+size/2,h=size/2,ex=cx+d[0]*h,ey=cy+d[1]*h;
     o+=`<line x1="${ex-d[1]*h}" y1="${ey-d[0]*h}" x2="${ex+d[1]*h}" y2="${ey+d[0]*h}" stroke="${BUDDY}" stroke-width="5" stroke-linecap="round"/>`});
+  if(corner){const cx=pad+corner[1]*size,cy=pad+corner[0]*size;o+=cwArc(cx,cy,size*.3,-150,230)}
   if(arrow){const[r,c]=cells[arrow.k],cx=pad+c*size+size/2,cy=pad+r*size+size/2,m=SYM[symOf[arrow.k]].m;o+=arrowSVG([cx,cy],[cx+m[0]*size*.4,cy+m[1]*size*.4],arrow.col||'var(--good)')}
   return o+'</svg>'}
 const relE=(e,g)=>{const m=SYM[e.sym].m,M=[0,1,2].map(i=>m[0]*e.right[i]+m[1]*e.down[i]),t=dot(M,g.d);return t>.6?'toward':t<-.6?'away':'side'};
@@ -895,7 +903,7 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_NAME={odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
 const TYPE_CASE={rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
@@ -956,12 +964,89 @@ function rotCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('ro
   const go=learn=>{const level=store.get('rotLevel',1);runQuiz({id:learn?null:'rot',tag:`Bonus · Case 09 · ${learn?'Learn':'Exam mode'} · ${['Easy','Medium','Hard'][level]}`,title:'Turn It Around',secs:learn?0:45,level,learn,
     rule:'<strong>Count, track one end, catch the mirror.</strong>',plan:repeat('rot',8),remake:()=>repeat('rot',8)})};
   $('#rLearn').onclick=()=>go(true);$('#rExam').onclick=()=>go(false);scrollTo(0,0)}
-function edgeCase(){runQuiz({id:'edge',tag:'Case 06 · Nets to cubes',title:'Edge Buddies',secs:60,level:1,
-  rule:'<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick a symbol with a point (arrow tip, flag, L foot, shaded corner). On the net, say which neighbour it points at: “tip touches circle”. On the cube it must touch the same neighbour.</li><li><b>Corner check</b> if two are left: when three faces make an L on the net, go clockwise round their shared corner. On the cube go clockwise round the near corner: top, right, left. Same order, or it’s a mirror image.</li></ol>',
-  plan:repeat('edge',8),remake:()=>repeat('edge',8)})}
-function droneCase(){runQuiz({id:'drone',tag:'Case 07 · View from above',title:'Drone View',secs:45,level:1,
-  rule:'<strong>Drone view.</strong><ol><li>Count width × depth. Cross out any answer that’s a different size.</li><li>One tower = one square. Heights don’t matter.</li><li>Check where the gaps are. A flipped shape is always wrong.</li></ol>',
-  plan:repeat('drone',8),remake:()=>repeat('drone',8)})}
+const EDGE_RULE='<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick a symbol with a point (arrow tip, flag, L foot, shaded corner). On the net, say which neighbour it points at: “tip touches circle”. On the cube it must touch the same neighbour.</li><li><b>Corner check</b> if two are left: when three faces make an L on the net, go clockwise round their shared corner. On the cube go clockwise round the near corner: top, right, left. Same order, or it’s a mirror image.</li></ol>';
+function edgeExam(){runQuiz({id:'edge',tag:'Case 06 · Exam mode',title:'Edge Buddies',secs:60,level:1,rule:EDGE_RULE,plan:repeat('edge',8),remake:()=>repeat('edge',8)})}
+function edgeApply(){runQuiz({id:null,tag:'Case 06 · Learn · Lesson 5',title:'Put it all together',secs:0,level:1,learn:true,
+  rule:'<strong>No timer. Use every check, in order:</strong> duds → opposites → edge buddies (“tip touches …”, draw the arrow) → walk test for a flag or L → corner check if two are left.'+EDGE_RULE.replace('<strong>Rule options out in this order.</strong>',''),
+  plan:repeat('edge',6),remake:()=>repeat('edge',6)})}
+/* ---- Case 06 Learn mode: the harder tricks, one at a time ---- */
+const POINTY=['arrow','flag','ell'],PLAIN=['circle','plus','arrow','half'];
+const symTile=(sym,size=46)=>netSymSVG([[0,0]],[sym],{size});
+const tipWord=sym=>SYM[sym].feat;
+function edgeSetup(){const cells=randomPose(pick(NETS)),symOf=shuffle(['arrow','half','ell','flag','circle','plus']);return{cells,symOf,F:foldFrames(cells)}}
+const faceOf=(F,n)=>F.findIndex(f=>veq(f.n,n));
+const tipTarget=(N,k)=>{const m=SYM[N.symOf[k]].m,f=N.F[k];return faceOf(N.F,[0,1,2].map(i=>Math.round(m[0]*f.right[i]+m[1]*f.down[i])))};
+const netDir=(F,a,b)=>[Math.round(dot(F[a].right,F[b].n)),Math.round(dot(F[a].down,F[b].n))];
+const netAdj=(cells,a,b)=>Math.abs(cells[a][0]-cells[b][0])+Math.abs(cells[a][1]-cells[b][1])===1;
+const viewWith=(N,need)=>shuffle(ROT24.slice()).map(Q=>trueView(N.F,N.symOf,Q)).find(v=>need.every(k=>v.some(e=>e.cell===k)));
+const LESSONS=[
+ {key:'tip',title:'Tip touches who?',n:5,
+  intro:`<strong>Trick 1: say where the point goes, on the net.</strong> Every arrow, flag and L has a point (the arrow’s tip, the flag’s tip, the L’s foot). Folding never changes which edge it points at. So before looking at any cube, say it in a few words: <b>“tip touches circle”</b>. Careful: the face it touches may not be next to it on the net. It might only join when the net folds up.`,
+  make(){const N=edgeSetup(),k=N.symOf.indexOf(pick(POINTY)),t=tipTarget(N,k),sym=N.symOf[k];
+    const nb=N.F.map((f,i)=>i).filter(i=>i!==k&&!veq(N.F[i].n,neg(N.F[k].n))),opts=shuffle(nb);
+    return{opts,ans:opts.indexOf(t),
+      q:`When this net folds into a cube, which face does the <b>${SYM[sym].name}’s ${tipWord(sym)}</b> point at? <span class="muted">(It’s outlined in blue.)</span>`,
+      fig:netSymSVG(N.cells,N.symOf,{size:50,stroke:{[N.cells[k].join(',')]:'#3B82F6'}}),
+      opt:i=>symTile(N.symOf[i]),
+      fb:ok=>{const adj=netAdj(N.cells,k,t);return`<div class="figs"><figure class="fig" style="margin:0">${netSymSVG(N.cells,N.symOf,{size:46,edges:[{k,d:netDir(N.F,k,t)},{k:t,d:netDir(N.F,t,k)}],arrow:{k}})}<figcaption>Blue edges join when the net folds</figcaption></figure></div>
+        <p>The ${tipWord(sym)} (green arrow) points at the blue edge. ${adj?`That edge is shared with the ${SYM[N.symOf[t]].name}.`:`The ${SYM[N.symOf[t]].name} isn’t next to it on the net, but when the net folds up, its blue edge joins this one.`} So say: <b>“${tipWord(sym)} touches ${SYM[N.symOf[t]].name}”</b>.</p>`}}}},
+ {key:'turn',title:'Check it on the cube',n:5,
+  intro:`<strong>Trick 2: check just that one thing on each cube.</strong> Say “tip touches circle” on the net. Then on each cube, find the line where the two faces meet and check the tip points at it. Draw a little arrow on the tip with your pen if it helps. Don’t try to turn the whole cube in your head.`,
+  make(){let N,k,t,v;for(let x=0;x<50;x++){N=edgeSetup();k=N.symOf.indexOf(pick(POINTY));t=tipTarget(N,k);v=viewWith(N,[k,t]);if(v)break}
+    const j=v.findIndex(e=>e.cell===k),base=v,mk=q=>{const w=base.map(e=>({...e}));for(let s=0;s<q;s++){const r=w[j].right;w[j].right=w[j].down;w[j].down=neg(r)}return w};
+    const vs=shuffle([{view:base,kind:'ok'},...shuffle([1,2,3]).slice(0,2).map(q=>({view:mk(q),kind:'orient',base,info:{face:j}}))]),E={cells:N.cells,symOf:N.symOf,F:N.F,options:vs},ans=vs.findIndex(o=>o.kind==='ok'),sym=N.symOf[k],g=v.findIndex(e=>e.cell===t);
+    return{opts:vs.map((_,i)=>i),ans,q:`Which cube has the <b>${SYM[sym].name}</b> turned the right way? <span class="muted">First say it on the net: “${tipWord(sym)} touches …”.</span>`,
+      fig:netSymSVG(N.cells,N.symOf,{size:50}),opt:i=>cubeSVG(vs[i].view,{s:52}),
+      fb:(ok,i)=>ok?`<div class="figs"><figure class="fig" style="margin:0">${netSymSVG(N.cells,N.symOf,{size:46,edges:[{k,d:netDir(N.F,k,t)},{k:t,d:netDir(N.F,t,k)}],arrow:{k}})}<figcaption>On the net</figcaption></figure><figure class="fig" style="margin:0">${cubeSVG(base,{s:58,edge:[j,g],arrow:j})}<figcaption>On the cube</figcaption></figure></div><p>“${tipWord(sym)} touches ${SYM[N.symOf[t]].name}” on the net, and the same on this cube. The other two have it pointing at a different edge.</p>`:edgeNotes(E,i).html}}},
+ {key:'walk',title:'The walk test (flag and L)',n:4,
+  intro:`<strong>Trick 3: a flag or an L can be flipped.</strong> A flipped one can still point at the right face, so trick 2 won’t catch it. Imagine walking along the flag’s pole towards the flag, or along the L’s upright towards its foot. Is it sticking out to your <b>left</b> or your <b>right</b>? Turning never changes that. Only a mirror does, and a mirror image is always wrong.`,
+  make(){let N,k,v;for(let x=0;x<50;x++){N=edgeSetup();k=N.symOf.indexOf(pick(['flag','ell']));v=viewWith(N,[k]);if(v)break}
+    const j=v.findIndex(e=>e.cell===k),flip=v.map(e=>({...e}));flip[j].down=neg(flip[j].down);flip[j].mir=true;
+    const vs=shuffle([{view:v,ok:true},{view:flip,ok:false}]),ans=vs.findIndex(o=>o.ok),sym=N.symOf[k],fl=sym==='flag';
+    const side=fl?'right':'left',other=fl?'left':'right',walk=fl?'up the pole towards the flag':'along the upright towards the foot';
+    return{opts:[0,1],ans,q:`One of these cubes has the <b>${SYM[sym].name}</b> flipped. Which one is right?`,
+      fig:netSymSVG(N.cells,N.symOf,{size:50,stroke:{[N.cells[k].join(',')]:'#3B82F6'}}),opt:i=>cubeSVG(vs[i].view,{s:58,hot:vs[i].view.findIndex(e=>e.cell===k),hotCol:'#3B82F6'}),
+      fb:ok=>`<p>Walk ${walk}. On the net, it sticks out to your <b>${side}</b>. On cube ${LET[ans]} it’s to your ${side} too, so it’s right. On cube ${LET[1-ans]} it’s to your <b>${other}</b>: that’s a mirror image, and turning can never make one. Both still point at the same face, which is why trick 2 alone can’t catch this.</p>`}}},
+ {key:'corner',title:'The corner check',n:4,
+  intro:`<strong>Trick 4: for when two cubes are left and both look right.</strong> Find three faces that make an L on the net. Go <b>clockwise</b> round the corner they share. Then on the cube, go clockwise round the corner nearest you: <b>top, then right, then left</b>. The order must be the same. If it’s reversed, the cube is a mirror image.`,
+  make(){for(let x=0;x<400;x++){const N=edgeSetup(),v=trueView(N.F,N.symOf,pick(ROT24));if(!v.every(e=>PLAIN.includes(e.sym)))continue;
+      const cs=v.map(e=>e.cell),L=cs.find(a=>cs.filter(b=>b!==a&&netAdj(N.cells,a,b)).length===2);if(L==null)continue;
+      const others=cs.filter(b=>b!==L),d1=[N.cells[others[0]][0]-N.cells[L][0],N.cells[others[0]][1]-N.cells[L][1]],d2=[N.cells[others[1]][0]-N.cells[L][0],N.cells[others[1]][1]-N.cells[L][1]];if(d1[0]===-d2[0]&&d1[1]===-d2[1])continue;
+      const corner=[N.cells[L][0]+.5+(d1[0]+d2[0])/2,N.cells[L][1]+.5+(d1[1]+d2[1])/2];
+      const ang=a=>Math.atan2(N.cells[a][0]+.5-corner[0],N.cells[a][1]+.5-corner[1]),netOrder=cs.slice().sort((a,b)=>ang(a)-ang(b));
+      const cyc=o=>[o,[o[1],o[2],o[0]],[o[2],o[0],o[1]]].map(x=>x.join()),cubeOrder=[v[0].cell,v[1].cell,v[2].cell];
+      if(!cyc(netOrder).includes(cubeOrder.join()))continue; /* sanity: the real cube must match the net */
+      const S=a=>[a[1],a[0],a[2]],mir=v.map(e=>({...e,d:S(e.d),right:S(e.right),down:S(e.down)}));
+      const TS=new Set(ROT24.map(Q=>viewSig(trueView(N.F,N.symOf,Q))));if(TS.has(viewSig(mir)))continue;
+      const vs=shuffle([{view:v,ok:true},{view:mir,ok:false}]),ans=vs.findIndex(o=>o.ok),nmC=c=>SYM[N.symOf[c]].name;
+      const order=w=>{const top=w.find(e=>e.d[2]===1),rt=w.find(e=>e.d[1]===1),lf=w.find(e=>e.d[0]===1);return[top,rt,lf].map(e=>nmC(e.cell)).join(' → ')};
+      const no=netOrder.indexOf(v[0].cell),nOrd=[0,1,2].map(i=>nmC(netOrder[(no+i)%3])).join(' → ');
+      return{opts:[0,1],ans,q:`Both cubes pass every other check. Use the corner check: which one can the net really make?`,
+        fig:netSymSVG(N.cells,N.symOf,{size:50,corner,stroke:Object.fromEntries(cs.map(c=>[N.cells[c].join(','),'#3B82F6']))}),opt:i=>cubeSVG(vs[i].view,{s:58,cw:true}),
+        fb:ok=>`<p>On the net, the three blue squares make an L. Going clockwise round their corner: <b>${nOrd}</b>.</p><p>Cube ${LET[ans]}, clockwise from the top (top, right, left): <b>${order(vs[ans].view)}</b>. Same order, so it’s right.<br>Cube ${LET[1-ans]}: <b>${order(vs[1-ans].view)}</b>. Reversed, so it’s a mirror image. No net can fold into it.</p>`}}
+    return null}},
+];
+function edgeCase(){stopTimer();$('#homeBtn').hidden=false;const done=store.get('edgeLearn',{});
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 06 · Nets to cubes</div><h2>Edge Buddies</h2></div></div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span>You already know <b>duds</b> and <b>opposites</b> from Cases 03–05. This case adds the harder tricks for symbols that point. Learn them one at a time, then put them together, then try Exam mode.</div>
+    <h3 class="sub">Learn the tricks</h3><div class="lessons">${LESSONS.map((L,i)=>`<button class="lesson" data-i="${i}"><span class="ln">${i+1}</span><span><b>${L.title}</b><span class="muted"> · ${L.n} questions</span></span><span class="lt">${done[L.key]?'✓':''}</span></button>`).join('')}
+      <button class="lesson" data-i="apply"><span class="ln">5</span><span><b>Put it all together</b><span class="muted"> · 6 full questions, no timer</span></span><span class="lt">${done.apply?'✓':''}</span></button></div>
+    <div class="row" style="margin-top:14px"><button class="btn-primary" id="eExam">Exam mode: 8 timed questions</button></div></section>`;
+  view.querySelectorAll('.lesson').forEach(b=>b.onclick=()=>{if(b.dataset.i==='apply'){done.apply=true;store.set('edgeLearn',done);edgeApply()}else edgeLesson(+b.dataset.i)});
+  $('#eExam').onclick=edgeExam}
+function edgeLesson(li){stopTimer();const L=LESSONS[li];let n=0,score=0;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 06 · Learn · Lesson ${li+1}</div><h2>${L.title}</h2></div><span class="score" id="sc"></span></div><div class="rule">${L.intro}</div><div id="game"></div></section>`;
+  const g=$('#game');
+  const next=()=>{if(n===L.n){const d=store.get('edgeLearn',{});if(score>=L.n-1){d[L.key]=true;store.set('edgeLearn',d)}
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${L.n}</div><p>${score>=L.n-1?'Got it. On to the next trick.':'Have another go at this one before moving on.'}</p><div class="row" style="justify-content:center">${score>=L.n-1?`<button class="btn-primary" id="nl">${li+1<LESSONS.length?`Next: ${LESSONS[li+1].title}`:'Next: Put it all together'}</button>`:`<button class="btn-primary" id="ag">Try again</button>`}<button id="bk">Back to Edge Buddies</button></div></div>`;
+      if($('#nl'))$('#nl').onclick=()=>li+1<LESSONS.length?edgeLesson(li+1):(()=>{const d=store.get('edgeLearn',{});d.apply=true;store.set('edgeLearn',d);edgeApply()})();
+      if($('#ag'))$('#ag').onclick=()=>edgeLesson(li);$('#bk').onclick=edgeCase;scrollTo(0,0);return}
+    let Q=null;for(let x=0;x<20&&!Q;x++)Q=L.make();n++;$('#sc').textContent=`Question ${n} of ${L.n} · Score ${score}`;
+    g.innerHTML=`<p class="qtext">${Q.q}</p><div class="netbox">${Q.fig}</div><div class="copts ${Q.opts.length===4?'four':''}">${Q.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${Q.opt(o)}</button></div>`).join('')}</div><div id="fb"></div>`;
+    g.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,ok=i===Q.ans;if(ok)score++;markOpts(g,Q.ans,i);$('#sc').textContent=`Question ${n} of ${L.n} · Score ${score}`;
+      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':`Not quite. It’s ${LET[Q.ans]}.`}</b></div><div class="notes">${Q.fb(ok,i)}</div><div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===L.n?'See results':'Next →'}</button></div>`;$('#nx').onclick=next})};
+  next()}
+
 
 /* ============ Rule It Out: elimination drill ============ */
 const REASONS={edge:[['dud','Dud'],['opp','Opposites'],['way','Wrong way']],drone:[['flip','Flipped'],['extra','Extra square'],['miss','Missing square'],['moved','Moved square']]};
@@ -998,6 +1083,235 @@ function elimCase(){
         say(true,`<b>Ruled out: ${REASONS[type].find(x=>x[0]===real)[1]}.</b> ${LET[i]}: ${REASON_WHY[real]}. Was that your reason?`);
         if(left.size===1)finish()}})};
   next()}
+/* ============ Bonus · Case 10: Odd Cube Out ============ */
+/* Five views of one cube, no net. Four are real views that all show the same two faces; the odd one has one of those faces turned.
+   Because the two faces always meet along one edge, the odd view clashes with every other view, so the answer is always unique. */
+function genOdd(){
+  for(let t=0;t<300;t++){const N=edgeSetup(),F=N.F,S=N.symOf;
+    const p=S.indexOf(pick(['arrow','flag','ell','half'])),qs=F.map((f,i)=>i).filter(i=>i!==p&&!veq(F[i].n,neg(F[p].n)));const q=pick(qs);
+    const TS=new Set(ROT24.map(Q=>viewSig(trueView(F,S,Q))));
+    const seen=new Set(),TV=[];ROT24.forEach(Q=>{const v=trueView(F,S,Q);if(!(v.some(e=>e.cell===p)&&v.some(e=>e.cell===q)))return;const sg=viewSig(v);if(seen.has(sg))return;seen.add(sg);TV.push(v)});
+    const third=v=>v.find(e=>e.cell!==p&&e.cell!==q).cell,ts=[...new Set(TV.map(third))];if(ts.length<2)continue;
+    /* usually: three views share the same third face and one shows a face seen only once (a red herring) */
+    const herring=Math.random()<.7,main=pick(ts),other=ts.find(x=>x!==main);
+    const A=shuffle(TV.filter(v=>third(v)===main)),B=shuffle(TV.filter(v=>third(v)===other));
+    const trues=herring?[...A.slice(0,3),B[0]]:shuffle([...A.slice(0,2),...B.slice(0,2)]);if(trues.length<4||trues.some(v=>!v))continue;
+    const base=pick(TV),j=base.findIndex(e=>e.cell===p),g=base.findIndex(e=>e.cell===q);let odd=null;
+    for(const k of shuffle([1,2,3])){const w=base.map(e=>({...e}));for(let s=0;s<k;s++){const r=w[j].right;w[j].right=w[j].down;w[j].down=neg(r)}
+      if(relE(w[j],w[g])!==relE(base[j],base[g])&&!TS.has(viewSig(w))&&!trues.some(v=>viewSig(v)===viewSig(w))){odd=w;break}}
+    if(!odd)continue;
+    const opts=shuffle([...trues.map(v=>({view:v,ok:true})),{view:odd,ok:false,base}]);
+    const hv=herring?opts.findIndex(o=>o.ok&&third(o.view)===other):-1;
+    return{N,p,q,opts,ans:opts.findIndex(o=>!o.ok),herring:hv,herringFace:other}}
+  return null}
+function oddNotes(X,i){const nm=c=>SYM[X.N.symOf[c]].name,P=nm(X.p),Q=nm(X.q),ft=SYM[X.N.symOf[X.p]].feat,word={toward:'points at',away:'points away from',side:'runs along'};
+  const at=(v,c)=>v.findIndex(e=>e.cell===c),good=X.opts.map((o,k)=>k).filter(k=>k!==X.ans),ex=i!=null&&i!==X.ans?i:good[0];
+  const gv=X.opts[ex].view,ov=X.opts[X.ans].view,rg=relE(gv[at(gv,X.p)],gv[at(gv,X.q)]),ro=relE(ov[at(ov,X.p)],ov[at(ov,X.q)]);
+  const what=`<p>${i==null?'Time ran out.':`You picked <b>${LET[i]}</b>, but cube ${LET[i]} is fine.`} Here’s how to find the odd one out:</p><ol class="steps">
+    <li><b>Find two faces that are on every cube:</b> the ${P} and the ${Q}.</li>
+    <li><b>Say how they touch.</b> On cubes ${good.map(k=>LET[k]).join(', ')}, the ${P}’s ${ft} ${word[rg]} the ${Q} (green arrow, blue edge).</li>
+    <li><b>Check every cube.</b> On cube ${LET[X.ans]}, the ${ft} ${word[ro]} the ${Q} instead (red arrow). A face can’t turn on its own, so ${LET[X.ans]} can’t be the same cube.</li></ol>
+    ${X.herring>=0?`<p><b>Red herring:</b> the ${nm(X.herringFace)} on cube ${LET[X.herring]} isn’t on any other cube. That doesn’t make it wrong. That face is just hidden on the others. A face you only see once can’t be compared with anything, so ignore it.</p>`:''}`;
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0">${cubeSVG(gv,{s:58,edge:[at(gv,X.p),at(gv,X.q)],arrow:at(gv,X.p)})}<figcaption>Cube ${LET[ex]}: the rule the cubes agree on</figcaption></figure>
+    <figure class="fig" style="margin:0">${cubeSVG(ov,{s:58,edge:[at(ov,X.p),at(ov,X.q)],arrow:at(ov,X.p),arrowCol:'var(--bad)'})}<figcaption>Cube ${LET[X.ans]}: breaks the rule</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4>${what}</div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.odd}</p></div>
+    <div class="nb trap"><h4>The trap</h4><p><b>Picking the cube that looks most different.</b> A cube can look very different just because it’s turned, or because it shows a face the others hide. Only a broken rule between two faces proves it’s a different cube.</p></div></div>`}}
+QB.odd=function(host,lvl=1,opt={}){const X=genOdd(),nm=c=>SYM[X.N.symOf[c]].name;
+  host.innerHTML=`<p class="qtext">Which cube <b>cannot</b> be the same as the others? <span class="muted">No two faces of the cube are the same. Tap ✕ to cross an option out.</span></p>
+    ${opt.learn?`<p class="hint">Hint: the ${nm(X.p)} and the ${nm(X.q)} are on every cube. How do they touch?</p>`:''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${cubeSVG(o.view,{s:48})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:oddNotes(X,i),ok?`The ${nm(X.p)} is turned differently from every other cube.`:`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+function oddCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 10 · Cubes</div><h2>Odd Cube Out</h2></div></div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Five pictures of “the same” cube. One can’t be. Which?</strong>
+      <ol><li><b>Ignore faces you only see once.</b> They’re just hidden on the other cubes, so they prove nothing.</li>
+      <li><b>Find two faces that are on most of the cubes.</b></li>
+      <li><b>Say how they touch</b>, in a few words: “tip points at circle”, “spiral touches pointy corner”.</li>
+      <li><b>Check every cube.</b> The one that breaks the rule is the odd one out. Stuck? Try a second pair, or the corner check.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="oLearn">Learn: 6 questions, no timer, hints</button><button id="oExam">Exam mode: 8 timed questions</button></div></section>`;
+  const go=learn=>runQuiz({id:learn?null:'odd',tag:`Bonus · Case 10 · ${learn?'Learn':'Exam mode'}`,title:'Odd Cube Out',secs:learn?0:60,level:1,learn,
+    rule:'<strong>Ignore faces seen once. Find two faces on every cube, say how they touch, and find the cube that breaks it.</strong>',plan:repeat('odd',learn?6:8),remake:()=>repeat('odd',learn?6:8)});
+  $('#oLearn').onclick=()=>go(true);$('#oExam').onclick=()=>go(false);scrollTo(0,0)}
+
+/* ============ Bonus · Case 11: Join It Up (2D shapes joined edge to edge) ============ */
+/* Shapes are polygons with whole-number corners (y goes down the screen). Pieces are joined edge to edge where the letters match.
+   Turning is allowed (quarter turns), flipping is not. Overlaps and duplicate answers are checked on a fine grid of sample points. */
+const JSHAPES={square:{name:'square',p:[[0,0],[1,0],[1,1],[0,1]]},rect:{name:'rectangle',p:[[0,0],[2,0],[2,1],[0,1]]},big:{name:'square',p:[[0,0],[2,0],[2,2],[0,2]]},
+  tri:{name:'triangle',p:[[0,0],[1,0],[0,1]]},tri2:{name:'triangle',p:[[0,0],[2,0],[0,2]]},trap:{name:'trapezium',p:[[0,0],[2,0],[1,1],[0,1]]},
+  trap3:{name:'trapezium',p:[[0,0],[3,0],[2,1],[0,1]]},ell:{name:'L shape',p:[[0,0],[1,0],[1,1],[2,1],[2,2],[0,2]]},notch:{name:'notched shape',p:[[0,0],[2,0],[2,2],[1,1],[0,2]]},
+  house:{name:'house shape',p:[[1,0],[2,1],[2,2],[0,2],[0,1]]},para:{name:'parallelogram',p:[[1,0],[2,0],[1,1],[0,1]]},rect3:{name:'rectangle',p:[[0,0],[3,0],[3,2],[0,2]]}};
+const JBASE=['big','rect3','trap3','tri2','notch','house','ell','rect'],JPIECE=['square','rect','tri','trap','para','tri2','ell','notch','big'];
+const jArea=p=>p.reduce((a,v,i)=>{const w=p[(i+1)%p.length];return a+v[0]*w[1]-w[0]*v[1]},0)/2;
+const jOrient=p=>jArea(p)>0?p:p.slice().reverse();
+const jRot=(v,k)=>{let[x,y]=v;for(let i=0;i<k;i++)[x,y]=[-y,x];return[x+0,y+0]};
+const jEdge=(p,i)=>[p[i],p[(i+1)%p.length]];
+const jSame=(a,b)=>a[0]===b[0]&&a[1]===b[1];
+const jVec=(a,b)=>[b[0]-a[0],b[1]-a[1]];
+const jFits=(u,v)=>{const ax=w=>w[0]===0||w[1]===0;return ax(u)===ax(v)&&Math.max(Math.abs(u[0]),Math.abs(u[1]))===Math.max(Math.abs(v[0]),Math.abs(v[1]))};
+/* place piece P so its edge j sits on base edge i (outside to outside). Returns the moved polygon or null. */
+function jAttach(B,i,P,j){const[b0,b1]=jEdge(B,i),[p0,p1]=jEdge(P,j),want=jVec(b1,b0),have=jVec(p0,p1);
+  for(let k=0;k<4;k++){if(jSame(jRot(have,k),want)){return P.map(v=>{const r=jRot(jVec(p0,v),k);return[r[0]+b1[0],r[1]+b1[1]]})}}return null}
+const jMirror=p=>jOrient(p.map(([x,y])=>[-x+0,y]));
+const jMirEdge=(P,j)=>{const[a,b]=jEdge(P,j),M=jMirror(P),ma=[-a[0]+0,a[1]],mb=[-b[0]+0,b[1]];return{M,j:M.findIndex((v,k)=>{const[c,d]=jEdge(M,k);return jSame(c,mb)&&jSame(d,ma)})}};
+const jInside=(pt,p)=>{let c=false;for(let i=0,k=p.length-1;i<p.length;k=i++){const[xi,yi]=p[i],[xk,yk]=p[k];if((yi>pt[1])!==(yk>pt[1])&&pt[0]<(xk-xi)*(pt[1]-yi)/(yk-yi)+xi)c=!c}return c};
+function jRaster(polys){const xs=polys.flat().map(v=>v[0]),ys=polys.flat().map(v=>v[1]),mx=Math.min(...xs),my=Math.min(...ys),Mx=Math.max(...xs),My=Math.max(...ys),R=6,cells=new Map();
+  for(let a=0;a<(Mx-mx)*R;a++)for(let b=0;b<(My-my)*R;b++){const pt=[mx+(a+.37)/R,my+(b+.61)/R];let n=0;for(const p of polys)if(jInside(pt,p))n++;if(n)cells.set(a+','+b,n)}
+  return{cells,w:(Mx-mx)*R,h:(My-my)*R}}
+const jOverlap=polys=>[...jRaster(polys).cells.values()].some(n=>n>1);
+function jCanon(polys){let best=null;for(let k=0;k<4;k++){const r=polys.map(p=>p.map(v=>jRot(v,k))),{cells}=jRaster(r),key=[...cells.keys()].sort().join('|');if(best===null||key<best)best=key}return best}
+const jMirrorAll=polys=>polys.map(p=>jMirror(p));
+function genJoin(){
+  for(let t=0;t<400;t++){const bk=pick(JBASE),B=jOrient(JSHAPES[bk].p.map(v=>v.slice()));const n=B.length;
+    const ei=shuffle([...Array(n).keys()]).slice(0,2);if(ei.length<2)continue;const[ia,ib]=ei;
+    const fitPieces=i=>{const want=jVec(...jEdge(B,i)),out=[];JPIECE.forEach(k=>{const P=jOrient(JSHAPES[k].p);P.forEach((_,j)=>{if(jFits(jVec(...jEdge(P,j)),want))out.push({k,P,j})})});return out};
+    const ca=fitPieces(ia),cb=fitPieces(ib);if(!ca.length||!cb.length)continue;
+    const A=pick(ca),Bp=pick(cb);if(A.k===Bp.k)continue;
+    const PA=jAttach(B,ia,A.P,A.j),PB=jAttach(B,ib,Bp.P,Bp.j);if(!PA||!PB)continue;
+    const correct=[B,PA,PB];if(jOverlap(correct))continue;
+    const cK=jCanon(correct),keys=new Set([cK]),opts=[{polys:correct,kind:'ok'}];
+    const tryAdd=(polys,kind,extra={})=>{if(!polys||polys.some(p=>!p)||jOverlap(polys))return;const k=jCanon(polys);if(keys.has(k))return;keys.add(k);opts.push({polys,kind,...extra})};
+    const cands=[];
+    cands.push(()=>tryAdd(jMirrorAll(correct),'mirror'));
+    cands.push(()=>{const m=jMirEdge(A.P,A.j);tryAdd([B,jAttach(B,ia,m.M,m.j),PB],'flip',{who:'A'})});
+    cands.push(()=>{const m=jMirEdge(Bp.P,Bp.j);tryAdd([B,PA,jAttach(B,ib,m.M,m.j)],'flip',{who:'B'})});
+    cands.push(()=>{if(jFits(jVec(...jEdge(B,ia)),jVec(...jEdge(B,ib))))tryAdd([B,jAttach(B,ib,A.P,A.j),jAttach(B,ia,Bp.P,Bp.j)],'swap')});
+    cands.push(()=>{const others=[...Array(n).keys()].filter(i=>i!==ia&&i!==ib&&jFits(jVec(...jEdge(B,i)),jVec(...jEdge(B,ia))));if(others.length)tryAdd([B,jAttach(B,pick(others),A.P,A.j),PB],'edge',{who:'A'})});
+    cands.push(()=>{const others=[...Array(n).keys()].filter(i=>i!==ia&&i!==ib&&jFits(jVec(...jEdge(B,i)),jVec(...jEdge(B,ib))));if(others.length)tryAdd([B,PA,jAttach(B,pick(others),Bp.P,Bp.j)],'edge',{who:'B'})});
+    cands.push(()=>{const alt=ca.filter(c=>JSHAPES[c.k].name!==JSHAPES[A.k].name);if(alt.length){const c=pick(alt);tryAdd([B,jAttach(B,ia,c.P,c.j),PB],'piece',{who:'A'})}});
+    cands.push(()=>{const alt=cb.filter(c=>JSHAPES[c.k].name!==JSHAPES[Bp.k].name);if(alt.length){const c=pick(alt);tryAdd([B,PA,jAttach(B,ib,c.P,c.j)],'piece',{who:'B'})}});
+    /* also slide a piece along its edge the other way round: same as flipping it, already covered */
+    for(const f of shuffle(cands)){if(opts.length===5)break;f()}
+    if(opts.length<5)continue;
+    const sh=shuffle(opts).map(o=>({...o,rot:rnd(4)}));
+    return{B,ia,ib,A:{...A,name:JSHAPES[A.k].name},Bp:{...Bp,name:JSHAPES[Bp.k].name},PA,PB,opts:sh,ans:sh.findIndex(o=>o.kind==='ok'),showA:rnd(4),showB:rnd(4)}}
+  return null}
+/* draw polygons; outline only on the outside when merge is set. labels: [{poly,edge,txt,col}] */
+function joinSVG(polys,{u=22,merge=true,fills=null,labels=[],marks=[],rot=0,maxW=null}={}){
+  const R=polys.map(p=>p.map(v=>jRot(v,rot))),pts=R.flat(),mx=Math.min(...pts.map(v=>v[0])),my=Math.min(...pts.map(v=>v[1])),W=Math.max(...pts.map(v=>v[0]))-mx,H=Math.max(...pts.map(v=>v[1]))-my,pad=.6;
+  const X=v=>((v[0]-mx+pad)*u).toFixed(1),Y=v=>((v[1]-my+pad)*u).toFixed(1),pp=p=>p.map(v=>X(v)+','+Y(v)).join(' ');
+  let o=`<svg viewBox="0 0 ${((W+2*pad)*u).toFixed(1)} ${((H+2*pad)*u).toFixed(1)}" width="${((W+2*pad)*u).toFixed(0)}" style="max-width:100%;display:block;margin:0 auto">`;
+  if(merge){R.forEach(p=>o+=`<polygon points="${pp(p)}" fill="none" stroke="var(--ink)" stroke-width="3.2" stroke-linejoin="round"/>`);R.forEach((p,i)=>{const f=fills?fills[i]:'var(--cube-l)';o+=`<polygon points="${pp(p)}" fill="${f}" stroke="${f}" stroke-width="1.2" stroke-linejoin="round"/>`})}
+  else R.forEach((p,i)=>o+=`<polygon points="${pp(p)}" fill="${fills?fills[i]:'var(--cube-l)'}" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>`);
+  marks.forEach(({poly,edge,col})=>{const[a,b]=jEdge(R[poly],edge);o+=`<line x1="${X(a)}" y1="${Y(a)}" x2="${X(b)}" y2="${Y(b)}" stroke="${col}" stroke-width="4" stroke-linecap="round"/>`});
+  labels.forEach(({poly,edge,txt,col})=>{const p=R[poly],[a,b]=jEdge(p,edge),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],d=jVec(a,b),L=Math.hypot(d[0],d[1]);let nx=d[1]/L,ny=-d[0]/L;
+    if(jInside([m[0]+nx*.05,m[1]+ny*.05],p)){nx=-nx;ny=-ny}const q=[m[0]+nx*.34,m[1]+ny*.34];
+    o+=`<text x="${X(q)}" y="${Y(q)}" text-anchor="middle" dominant-baseline="middle" font-size="${(u*.62).toFixed(0)}" font-weight="800" fill="${col||'var(--ink)'}">${txt}</text>`});
+  return o+'</svg>'}
+const JCOL={A:'#3B82F6',B:'#22A06B'};
+function joinNotes(X,i){const o=i!=null?X.opts[i]:null,nmA=X.A.name,nmB=X.Bp.name,who=o&&o.who==='B'?nmB:nmA,letter=o&&o.who==='B'?'B':'A';
+  const how=joinSVG([X.B,X.PA,X.PB],{u:30,merge:false,fills:['var(--cube-l)','rgba(59,130,246,.55)','rgba(34,160,107,.55)'],labels:[{poly:0,edge:X.ia,txt:'A',col:JCOL.A},{poly:0,edge:X.ib,txt:'B',col:JCOL.B}],marks:[{poly:0,edge:X.ia,col:JCOL.A},{poly:0,edge:X.ib,col:JCOL.B}]});
+  const W={mirror:`Answer ${LET[i]} is the whole shape flipped over, like a mirror image. The pieces may be turned, but never flipped, so a mirror image is always wrong.`,
+    flip:`In answer ${LET[i]} the ${who} has been <b>flipped over</b> before joining edge ${letter}. It’s on the right edge, but its slope or corner points the wrong way. Turning is allowed, flipping isn’t.`,
+    swap:`In answer ${LET[i]} the pieces are on the wrong edges: the ${nmA} is on edge B and the ${nmB} is on edge A. Each piece must join where its letter matches.`,
+    edge:`In answer ${LET[i]} the ${who} is joined to the wrong edge. It must go on the base’s edge ${letter}, where the letters match.`,
+    piece:`Answer ${LET[i]} uses the wrong piece: the shape joined at edge ${letter} isn’t the ${who}.`};
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${how}<figcaption>How the pieces really join · blue = ${nmA} on edge A · green = ${nmB} on edge B</figcaption></figure>
+    ${o?`<figure class="fig" style="margin:0">${joinSVG(o.polys,{u:24,rot:o.rot})}<figcaption>Your answer ${LET[i]}</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${o?W[o.kind]:'Time ran out.'} The real shape can be shown turned round in the answers, so compare the shape, not which way up it is.</p></div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.join}</p></div>
+    <div class="nb trap"><h4>The trap</h4><p><b>Answering in a few seconds.</b> These look easy, so it’s tempting to pick the first one that roughly matches. Every wrong answer is nearly right: a piece flipped, on the wrong edge, or the whole thing mirrored. Check both joins before you choose.</p></div></div>`}}
+QB.join=function(host,lvl=1,opt={}){const X=genJoin();
+  const base=joinSVG([X.B],{u:38,merge:false,labels:[{poly:0,edge:X.ia,txt:'A',col:opt.learn?JCOL.A:null},{poly:0,edge:X.ib,txt:'B',col:opt.learn?JCOL.B:null}],marks:opt.learn?[{poly:0,edge:X.ia,col:JCOL.A},{poly:0,edge:X.ib,col:JCOL.B}]:[]});
+  const pa=joinSVG([X.A.P],{u:38,merge:false,rot:X.showA,labels:[{poly:0,edge:X.A.j,txt:'A',col:opt.learn?JCOL.A:null}],marks:opt.learn?[{poly:0,edge:X.A.j,col:JCOL.A}]:[]});
+  const pb=joinSVG([X.Bp.P],{u:38,merge:false,rot:X.showB,labels:[{poly:0,edge:X.Bp.j,txt:'B',col:opt.learn?JCOL.B:null}],marks:opt.learn?[{poly:0,edge:X.Bp.j,col:JCOL.B}]:[]});
+  host.innerHTML=`<p class="qtext">The first shape is the base. Join the other two to it where the letters match. They may be <b>turned</b>, but not <b>flipped</b>. Which shape do you get?</p>
+    <div class="joinq"><div>${base}</div><span class="op">+</span><div>${pa}</div><span class="op">+</span><div>${pb}</div><span class="op">=</span><span class="op">?</span></div>
+    ${opt.learn?'<p class="hint">Hint: match the coloured edges. Then check which way each piece’s slope or corner points.</p>':''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${joinSVG(o.polys,{u:22,rot:o.rot})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:joinNotes(X,i),ok?'Both pieces on the right edges, turned but not flipped.':`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+function joinCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 11 · Shapes</div><h2>Join It Up</h2></div></div>
+    <div class="rule"><span class="pp">✎ Take 20–30 seconds on each one, not 5. Every wrong answer is nearly right.</span><strong>Join the pieces to the base where the letters match.</strong>
+      <ol><li><b>Match the letters.</b> The piece’s A edge goes on the base’s A edge. The two edges are always the same length.</li>
+      <li><b>Turn, never flip.</b> Imagine sliding the piece round until its edge lines up. Check which end its slope, point or long side ends up at.</li>
+      <li><b>Do the same for B.</b></li>
+      <li><b>Answers may be turned round.</b> Compare the shape, not which way up it is. One answer is usually the mirror image, and that’s always wrong.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="jLearn">Learn: 6 questions, no timer, coloured edges</button><button id="jExam">Exam mode: 8 timed questions</button></div></section>`;
+  const go=learn=>runQuiz({id:learn?null:'join',tag:`Bonus · Case 11 · ${learn?'Learn':'Exam mode'}`,title:'Join It Up',secs:learn?0:45,level:1,learn,
+    rule:'<strong>Match the letters, turn but never flip, then compare the shape (answers may be turned).</strong>',plan:repeat('join',learn?6:8),remake:()=>repeat('join',learn?6:8)});
+  $('#jLearn').onclick=()=>go(true);$('#jExam').onclick=()=>go(false);scrollTo(0,0)}
+
+/* ============ Drone View · Hard: Atom-style shapes with floating cubes and gaps ============ */
+/* what the picture looks like: for each pixel, which kind of face shows and where. Two shapes with the same signature look identical. */
+function picSig(cs){const S=6,P=(x,y,z)=>[(x-y)*S,((x+y)/2-z)*S],order=cs.slice().sort((a,b)=>(a[0]+a[1]+a[2])-(b[0]+b[1]+b[2])||a[2]-b[2]),px=new Map();
+  for(const[x,y,z]of order){[['t',[[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]]],['l',[[x,y+1,z],[x+1,y+1,z],[x+1,y+1,z+1],[x,y+1,z+1]]],['r',[[x+1,y,z],[x+1,y+1,z],[x+1,y+1,z+1],[x+1,y,z+1]]]].forEach(([ty,pts])=>{
+    const q=pts.map(v=>P(...v)),xs=q.map(v=>v[0]),ys=q.map(v=>v[1]),an=ty+q[0].join(',');
+    for(let X=Math.floor(Math.min(...xs));X<=Math.max(...xs);X++)for(let Y=Math.floor(Math.min(...ys));Y<=Math.max(...ys);Y++){const cx=X+.5,cy=Y+.5;let sg=0,ok=true;
+      for(let i=0;i<4;i++){const u=q[i],v=q[(i+1)%4],cr=(v[0]-u[0])*(cy-u[1])-(v[1]-u[1])*(cx-u[0]);if(!cr)continue;if(sg&&Math.sign(cr)!==sg){ok=false;break}sg=Math.sign(cr)}
+      if(ok)px.set(X+','+Y,an)}})}
+  return[...px.entries()].sort().join('|')}
+const footKey=cs=>[...new Set(cs.map(c=>c[0]+','+c[1]))].sort().join(';');
+/* a picture is fair only if no cube could be read as sitting one step nearer or further away, still joined to the rest (which would change the view from above) */
+function droneFair(cs){const sig=picSig(cs),fk=footKey(cs),has=c=>cs.some(q=>q[0]===c[0]&&q[1]===c[1]&&q[2]===c[2]);
+  for(let i=0;i<cs.length;i++)for(const k of[-1,1]){const c=cs[i].map(v=>v+k);if(c[2]<0||has(c))continue;const alt=cs.map((q,j)=>j===i?c:q);if(footKey(alt)!==fk&&connectedC(alt)&&picSig(alt)===sig)return false}
+  return true}
+function genDroneHard(){
+  for(let t=0;t<400;t++){const W=3,D=pick([3,4]),n=7+rnd(4),cs=[[rnd(W),rnd(D),0]],has=c=>cs.some(q=>q[0]===c[0]&&q[1]===c[1]&&q[2]===c[2]);
+    let g=0;while(cs.length<n&&g++<400){const c=pick(cs),d=pick(N6),p=[c[0]+d[0],c[1]+d[1],c[2]+d[2]];if(p[0]<0||p[1]<0||p[2]<0||p[0]>=W||p[1]>=D||p[2]>2||has(p))continue;cs.push(p)}
+    if(cs.length<n)continue;
+    const cols=new Map();cs.forEach(([x,y,z])=>{const k=x+','+y;cols.set(k,Math.min(z,cols.has(k)?cols.get(k):9))});
+    const fp=[...cols.keys()].map(k=>{const[x,y]=k.split(',').map(Number);return[y,x]});
+    const R=Math.max(...fp.map(p=>p[0])),C=Math.max(...fp.map(p=>p[1]));if(R+1!==D||C+1!==W||Math.min(...fp.map(p=>p[0]))||Math.min(...fp.map(p=>p[1])))continue;
+    if(fp.length>W*D-1||fp.length<5||Math.max(...cs.map(c=>c[2]))<1)continue;
+    const floatK=[...cols.entries()].filter(([k,z])=>z>0).map(([k])=>k);if(!floatK.length)continue;
+    if(!allSeen(cs)||!droneFair(cs))continue;
+    const isF=([r,c])=>floatK.includes(c+','+r);
+    const rotK=new Set([0,1,2,3].map(k=>{let c=fp;for(let i=0;i<k;i++)c=c.map(([r,cc])=>[cc,-r]);return keyOf(c)}));
+    const hasP=(c,p)=>c.some(q=>q[0]===p[0]&&q[1]===p[1]);
+    const extras=()=>{const out=[];fp.forEach(([r,c])=>DIRS.forEach(([dr,dc])=>{const p=[r+dr,c+dc];if(p[0]>=0&&p[1]>=0&&p[0]<=R&&p[1]<=C&&!hasP(fp,p)&&!hasP(out,p))out.push(p)}));return out};
+    const make={mirror:()=>fp.map(([r,c])=>[r,C-c]),
+      extra:()=>{const e=extras();return e.length?[...fp,pick(e)]:null},
+      missing:()=>{if(fp.length<4)return null;const fl=fp.filter(isF),k=pick(fl.length?fl:fp);return fp.filter(p=>p!==k)},
+      shift:()=>{const e=extras();if(!e.length||fp.length<4)return null;const k=pick(fp);return[...fp.filter(p=>p!==k),pick(e)]}};
+    const correct={cells:fp,kind:'ok'},seen=new Set([keyOf(fp)]),opts=[correct];
+    for(const kind of ['missing',...shuffle(['mirror','extra','shift'])]){if(opts.length===4)break;
+      for(let k=0;k<20;k++){const c=make[kind]();if(!c)break;const key=keyOf(c);if(rotK.has(key)||seen.has(key))continue;seen.add(key);opts.push({cells:c,kind});break}}
+    if(opts.length===4){const sh=shuffle(opts);return{cs,fp,floatK,isF,opts:sh,ans:sh.indexOf(correct),W:C+1,D:R+1}}}
+  return null}
+function droneHardNotes(D,i){const o=i!=null?D.opts[i]:null,isIn=(a,p)=>a.some(q=>q[0]===p[0]&&q[1]===p[1]);
+  const rows=[...Array(D.D).keys()].map(r=>D.fp.filter(p=>p[0]===r).length),letters={};D.fp.forEach(([r,c])=>{if(D.isF([r,c]))letters[c+','+r]='↑'});
+  let mine='',what='Time ran out.';
+  if(o){const extra=o.cells.filter(p=>!isIn(D.fp,p)),missing=D.fp.filter(p=>!isIn(o.cells,p)),fl=missing.filter(D.isF);
+    mine=o.kind==='mirror'?gridSVG(o.cells,{g:30}):gridSVG(o.cells.filter(p=>isIn(D.fp,p)||isIn(extra,p)),{g:30,extra,missing});
+    what={mirror:`Answer ${LET[i]} is the real view flipped, like a mirror image. The gaps are on the wrong side.`,
+      extra:`Answer ${LET[i]} has an extra square (red). There are no cubes above or below that spot.`,
+      missing:fl.length?`Answer ${LET[i]} is missing a square (dashed). That square is under a cube that <b>floats</b> in mid-air (↑). Nothing stands on the floor there, but from above you still see the cube, so it still makes a square.`:`Answer ${LET[i]} is missing a square (dashed). Every column with any cube in it makes one square from above.`,
+      shift:`In answer ${LET[i]} one square has moved: red is a square with no cube above it, dashed is a cube with no square.`}[o.kind]}
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">
+    <figure class="fig" style="margin:0"><canvas id="nH"></canvas><figcaption>The shape</figcaption></figure>
+    <figure class="fig" style="margin:0">${gridSVG(D.fp,{g:34,letters})}<figcaption>The real view from above · ↑ = a cube floating in mid-air</figcaption></figure>
+    ${o?`<figure class="fig" style="margin:0">${mine}<figcaption>Your answer ${LET[i]}</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: measure, then count each row</h4><ol class="steps"><li><b>Measure:</b> the shape is ${D.W} wide and ${D.D} deep. Cross out any answer that’s a different size.</li>
+      <li><b>Count each row</b>, top to bottom: ${rows.join(', ')}. Cross out any answer with a different count in a row.</li>
+      <li><b>Trace every cube straight down</b> to the floor. A cube floating in mid-air, or sticking out between two parts, still makes a square from above.</li></ol></div>
+    <div class="nb trap"><h4>The trap</h4><p><b>The floating cube.</b> A cube sticking out halfway up looks as if it belongs to the parts beside it, so its row gets missed. That’s exactly how a 3 × 4 shape gets mistaken for 3 × 3.</p></div></div>`,
+    draw:()=>{const c=$('#nH');if(c)drawCubesOn(c,D.cs,{maxH:240})}}}
+const droneQB=QB.drone;
+QB.drone=function(host,lvl=1,opt){if(lvl!==2)return droneQB(host,lvl,opt);const D=genDroneHard();
+  host.innerHTML=`<p class="qtext">Which is the view from above? <span class="muted">Tap ✕ to cross an option out.</span></p><canvas class="stack" id="qcv"></canvas>
+    <div class="copts four">${D.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${gridSVG(o.cells,{g:22})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);const cv=host.querySelector('#qcv'),q={draw:()=>drawCubesOn(cv,D.cs,{maxH:300})};q.draw();let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
+    q.onAnswer(ok,ok?null:droneHardNotes(D,i),ok?`${D.W} wide, ${D.D} deep, and every floating cube counted.`:`The answer is ${LET[D.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+const DRONE_RULE='<strong>Drone view.</strong><ol><li>Count width × depth. Cross out any answer that’s a different size.</li><li>One tower = one square. Heights don’t matter.</li><li>Check where the gaps are. A flipped shape is always wrong.</li></ol>';
+function droneCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 07 · View from above</div><h2>Drone View</h2></div></div>
+    <div class="rule">${DRONE_RULE}</div>
+    <div class="row"><button class="btn-primary" id="dExam">Exam mode: 8 timed questions</button><button id="dHard">Hard practice: Atom-style shapes</button></div>
+    <p class="muted">Hard practice has cubes floating in mid-air and gaps between parts, like Atom and ISEB questions. It doesn’t count towards mastery, so try it once Exam mode feels easy.</p></section>`;
+  $('#dExam').onclick=()=>runQuiz({id:'drone',tag:'Case 07 · Exam mode',title:'Drone View',secs:45,level:1,rule:DRONE_RULE,plan:repeat('drone',8),remake:()=>repeat('drone',8)});
+  $('#dHard').onclick=()=>runQuiz({id:null,tag:'Case 07 · Hard practice',title:'Drone View: floating cubes',secs:0,level:2,learn:true,
+    rule:'<strong>Measure width × depth, count each row, and trace every cube straight down to the floor.</strong> A cube floating in mid-air still makes a square from above.',plan:repeat('drone',8),remake:()=>repeat('drone',8)});
+  scrollTo(0,0)}
+
 /* ============ Rewards: stamps, cards and detective rank ============ */
 const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
 const DAILY_STAMPS=2,PLAY_CAP_MIN=40;
@@ -1133,7 +1447,7 @@ const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
 /* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
-const MASTERY={rot:{min:7,of:8,secs:30,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+const MASTERY={rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
   edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
 const secsFor=(m,lvl)=>m.secsHard&&lvl>=2?m.secsHard:m.secs;
 const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=secsFor(m,r.lvl||0)};
@@ -1171,7 +1485,9 @@ const CASES=[
   {id:'edge',week:2,tab:'CASE 06',title:'Edge Buddies',blurb:'Which cube can the net make? Rule out duds, opposites, then symbols turned the wrong way.',go:()=>edgeCase()},
   {id:'drone',week:2,tab:'CASE 07',title:'Drone View',blurb:'What does the stack look like from above? Watch for flipped and missing squares.',go:()=>droneCase()},
   {id:'rot',week:3,bonus:true,tab:'BONUS · CASE 09',title:'Turn It Around',blurb:'Which answer is the same shape, just turned? Count the cubes, track one end, and catch the mirror trap.',go:()=>rotCase()},
-  {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option and name the reason. Quick and accurate.',go:()=>elimCase()}];
+  {id:'odd',week:3,bonus:true,tab:'BONUS · CASE 10',title:'Odd Cube Out',blurb:'Five pictures of the same cube, but one can’t be. Find two faces on every cube and check how they touch.',go:()=>oddCase()},
+  {id:'join',week:3,bonus:true,tab:'BONUS · CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
+  {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option, knowing why. Quick and accurate.',go:()=>elimCase()}];
 const caseType={rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
   let meta;if(c.id==='hunt')meta=`${Math.min(11,store.get('found',[]).length)} of 11 found`;
@@ -1200,7 +1516,7 @@ function home(){
   <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
     <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Bonus round</h2><p class="muted" style="margin:0">Extra practice for rotation questions. Not part of the 10-day challenge.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Bonus round</h2><p class="muted" style="margin:0">Extra practice for question types from Atom and the ISEB pretest. Not part of the 10-day challenge.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
   <section class="week"><h2 class="wk">Day 11 onwards · Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
@@ -1247,14 +1563,18 @@ function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',ti
   passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
   rule:`<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
 const CASE_TYPES={rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
-const TRICK={rot:'Count the cubes first. Then pick one end cube and check it’s joined the same way, on the same side. If it sticks out the other side, it’s the mirror image: turning can never make that.',
+const TRICK={odd:'Ignore faces you only see once (they’re just hidden on the other cubes). Find two faces that are on most cubes and say how they touch: “tip points at circle”. The cube that breaks that rule is the odd one out.',
+  join:'Match the letters: each piece’s edge goes on the base edge with the same letter. Turn the piece, never flip it, and check which end its slope or corner ends up at. Answers may be turned round, so compare the shape, and watch for the mirror image.',
+  rot:'Count the cubes first. Then pick one end cube and check it’s joined the same way, on the same side. If it sticks out the other side, it’s the mirror image: turning can never make that.',
   brick:'Know the block’s size first (all blocks match). Then go layer by layer on paper: count each layer’s blocks and write it down. A line across a face is where one block ends; no line means it’s the same block.',
   count:'Tower Method: on scrap paper, write each tower’s height row by row, then add the rows. The cubes you can see are the smallest possible answer.',
   impostor:'Three checks: no line of 5, no 2×2 block, and four in a line needs one wing on each side.',
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
   edge:'Rule out in order: duds, then opposites shown together, then edge buddies. Edge buddies: on the net, say which neighbour the point touches (“tip touches circle”), then check the same on each cube. Draw a little arrow on the tip if it helps. Flag or L: walk along the pole or upright: is it sticking out left or right? Turning never changes that. Two left? Corner check: go clockwise round the corner, and the faces must come in the same order as on the net.',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
-const WHY={rot:'Every rotation question hides a mirror image that looks exactly right at a glance. Tracking one end cube is the only quick way to catch it.',
+const WHY={odd:'A cube can look very different just because it’s turned or shows a hidden face. Only a broken rule between two faces proves it’s a different cube, so check one pair of faces on every cube.',
+  join:'Every wrong answer is nearly right: a piece flipped, a piece on the wrong edge, or the whole shape mirrored. A quick glance can’t tell them apart; checking both joins can.',
+  rot:'Every rotation question hides a mirror image that looks exactly right at a glance. Tracking one end cube is the only quick way to catch it.',
   brick:'A big block shows three faces, so it’s easy to count it twice, and blocks tucked behind others are easy to miss. Knowing the block size and counting layer by layer means every block is counted exactly once.',
   count:'The answer options are usually just 1 or 2 apart, set to catch anyone who misses a hidden cube. The Tower Method counts every hidden cube, so it turns a close guess into a sure mark.',
   impostor:'Test-setters often put exactly the right symbols on a net that can’t fold. If you check the shape first, those options are gone in a few seconds, before you even look at the symbols.',
