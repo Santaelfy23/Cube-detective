@@ -98,6 +98,7 @@ input.num{font-family:inherit;font-size:1.3rem;width:110px;padding:8px 10px;bord
 .options button.right{background:var(--good-soft);border-color:var(--good)}
 .options button.wrong{background:var(--bad-soft);border-color:var(--bad)}
 .timer{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bigclock{position:sticky;top:0;z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0;font-size:.95rem}.bigclock b{font-size:1.5rem;font-variant-numeric:tabular-nums;margin-right:4px}.bigclock span{display:block;font-size:.8rem;color:var(--muted)}.bigclock.behind{border-color:var(--hid-l)}.bigclock.behind b{color:var(--hid-top)}.bigclock.low{border-color:var(--bad)}.bigclock.low b{color:var(--bad)}
 .timer i{display:block;height:100%;background:var(--accent);width:100%}
 .score{font-variant-numeric:tabular-nums;font-weight:600}
 .stamps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -909,10 +910,16 @@ const TYPE_CASE={rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'
 /* ============ Quiz runner ============ */
 function runQuiz(cfg){
   stopTimer();$('#homeBtn').hidden=false;
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}<div id="game"></div></section>`;
-  const g=$('#game'),plan=cfg.plan;let n=0,score=0;const tally={},missed={};QT.reset();
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}${cfg.total?'<div class="bigclock" id="clk"></div>':''}<div id="game"></div></section>`;
+  const g=$('#game'),plan=cfg.plan;let n=0,score=0,unreached=0;const tally={},missed={};QT.reset();
+  /* exam timing: one clock for the whole paper, counting down. It pauses while case notes are open, so reading them costs nothing. */
+  let left=cfg.total||0,running=false,timeUp=false,curQ=null;const fmt=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+  const paint=()=>{const c=$('#clk');if(!c)return false;const todo=plan.length-n+(running?1:0),pace=todo*45;
+    c.className='bigclock'+(left<=60?' low':left<pace-20?' behind':'');c.innerHTML=`<b>${fmt(Math.max(0,left))}</b> left · ${plan.length-n+(running?1:0)} question${todo===1?'':'s'} to go<span>${left<pace-20&&left>60?'Behind pace: guess the hard ones and move on':'Aim for about 45 seconds a question'}</span>`;return true};
+  if(cfg.total){clearInterval(window.__totalId);window.__totalId=setInterval(()=>{if(!paint()){clearInterval(window.__totalId);return}if(!running)return;left-=.25;
+    if(left<=0&&!timeUp){timeUp=true;running=false;paint();curQ&&curQ.timeout()}},250);paint()}
   const next=()=>{stopTimer();redraw=null;
-    if(n===plan.length){
+    if(n===plan.length){clearInterval(window.__totalId);const ck=$('#clk');if(ck)ck.remove();
       const avg=QT.avg();if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0,avg);
       if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);w[t]=now});store.set('weak',w)}
       if(cfg.id==='warm'){const S=streakInfo();if(S.doneToday&&onceFlag('streak-'+today())){addPoints(5*Math.min(S.n,10));if(STREAK_GOALS.includes(S.n))toast(`<b>${S.n}-day streak!</b> Keep it going.`,'rank')}}
@@ -920,18 +927,18 @@ function runQuiz(cfg){
       if(cfg.id==='mock'&&score>=17&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
       const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
       const rows=Object.entries(tally).map(([t,v])=>`<tr><td>${TYPE_NAME[t]}</td><td class="num">${v.r} / ${v.a}</td><td>${v.r===v.a?'<span class="y">Solid</span>':v.a-v.r>=2||v.r/v.a<.7?`<span class="n">Refresh: replay ${CASES.find(c=>c.id===TYPE_CASE[t]).title}</span>`:'<span class="s">Nearly</span>'}</td></tr>`).join('');
-      g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${speedLine(cfg.id,score,plan.length,avg)}${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
+      g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${cfg.total?`<p>${unreached?`<b>Time ran out with ${unreached} question${unreached===1?'':'s'} not reached.</b> In the real exam, guess any you can’t finish: a guess can score, a blank never does.`:`Finished with <b>${fmt(Math.max(0,left))}</b> to spare.`}</p>`:''}${speedLine(cfg.id,score,plan.length,avg)}${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
         ${Object.keys(missed).length?`<div class="revise"><h3>Rules to revise</h3><p class="muted" style="margin:0">Say each one out loud, then try the case file again.</p>${Object.keys(missed).sort((a,b)=>missed[b]-missed[a]).map(t=>ruleBox(t,`Missed ${missed[t]}×`)).join('')}</div>`:''}
         ${Object.keys(tally).length>1?`<div class="tablewrap"><table class="res"><thead><tr><th>Skill</th><th>Score</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
         <div class="row" style="justify-content:center;margin-top:12px"><button class="btn-primary" id="again">Try again</button><button id="hm">Back to case files</button></div>`;
       $('#again').onclick=()=>runQuiz({...cfg,plan:cfg.remake?cfg.remake():plan});$('#hm').onclick=home;scrollTo(0,0);return}
     const type=plan[n];n++;
     g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${plan.length} · ${TYPE_NAME[type]}</span><span class="score">Score ${score}</span></div>${cfg.secs?'<div class="timer"><i id="bar"></i></div>':''}<div id="qh" class="qhost"></div><div id="fb"></div>`;
-    const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn});QT.start();let notes=null;redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
-    q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
+    const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn});QT.start();let notes=null;curQ=q;if(cfg.total){running=true;paint()}redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
+    q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();running=false;(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
       if(!ok)missed[type]=(missed[type]||0)+1;
-      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length?'See results':'Next →'}</button></div>`;
-      nt&&nt.draw&&nt.draw();$('#nx').onclick=next};
+      $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length||timeUp?'See results':'Next →'}</button></div>`;
+      nt&&nt.draw&&nt.draw();$('#nx').onclick=()=>{if(timeUp&&n<plan.length){plan.slice(n).forEach(t=>{(tally[t]=tally[t]||{a:0,r:0}).a++});unreached=plan.length-n;n=plan.length}next()}};
     if(cfg.secs){let left=cfg.secs;timerId=setInterval(()=>{left-=.25;const b=$('#bar');if(b)b.style.width=Math.max(0,left/cfg.secs*100)+'%';if(left<=0){stopTimer();q.timeout()}},250)}
   };
   next()}
@@ -1294,7 +1301,7 @@ function droneHardNotes(D,i){const o=i!=null?D.opts[i]:null,isIn=(a,p)=>a.some(q
     <div class="nb trap"><h4>The trap</h4><p><b>The floating cube.</b> A cube sticking out halfway up looks as if it belongs to the parts beside it, so its row gets missed. That’s exactly how a 3 × 4 shape gets mistaken for 3 × 3.</p></div></div>`,
     draw:()=>{const c=$('#nH');if(c)drawCubesOn(c,D.cs,{maxH:240})}}}
 const droneQB=QB.drone;
-QB.drone=function(host,lvl=1,opt){if(lvl!==2)return droneQB(host,lvl,opt);const D=genDroneHard();
+QB.drone=function(host,lvl=1,opt){if(lvl!==9)return droneQB(host,lvl,opt);const D=genDroneHard();
   host.innerHTML=`<p class="qtext">Which is the view from above? <span class="muted">Tap ✕ to cross an option out.</span></p><canvas class="stack" id="qcv"></canvas>
     <div class="copts four">${D.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${gridSVG(o.cells,{g:22})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
   crossable(host);const cv=host.querySelector('#qcv'),q={draw:()=>drawCubesOn(cv,D.cs,{maxH:300})};q.draw();let done=false;
@@ -1308,7 +1315,7 @@ function droneCase(){stopTimer();$('#homeBtn').hidden=false;
     <div class="row"><button class="btn-primary" id="dExam">Exam mode: 8 timed questions</button><button id="dHard">Hard practice: Atom-style shapes</button></div>
     <p class="muted">Hard practice has cubes floating in mid-air and gaps between parts, like Atom and ISEB questions. It doesn’t count towards mastery, so try it once Exam mode feels easy.</p></section>`;
   $('#dExam').onclick=()=>runQuiz({id:'drone',tag:'Case 07 · Exam mode',title:'Drone View',secs:45,level:1,rule:DRONE_RULE,plan:repeat('drone',8),remake:()=>repeat('drone',8)});
-  $('#dHard').onclick=()=>runQuiz({id:null,tag:'Case 07 · Hard practice',title:'Drone View: floating cubes',secs:0,level:2,learn:true,
+  $('#dHard').onclick=()=>runQuiz({id:null,tag:'Case 07 · Hard practice',title:'Drone View: floating cubes',secs:0,level:9,learn:true,
     rule:'<strong>Measure width × depth, count each row, and trace every cube straight down to the floor.</strong> A cube floating in mid-air still makes a square from above.',plan:repeat('drone',8),remake:()=>repeat('drone',8)});
   scrollTo(0,0)}
 
@@ -1520,7 +1527,7 @@ function home(){
   <section class="week"><h2 class="wk">Day 11 onwards · Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
-    <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions at exam pace, 45 seconds each, with a skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
+    <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -1600,9 +1607,17 @@ function warmup(){const types=learnedTypes();if(!types.length)return home();
     rule:`<strong>Before you start, say ${recall.length>1?'these tricks':'this trick'} out loud. Then tap to check.</strong>
       ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
       <p style="margin:8px 0 0"><span class="pp">✎ Pen and paper ready, just like in the exam.</span> ${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
-function mock(){const make=()=>shuffle([...repeat('count',3),...repeat('brick',3),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',4),...repeat('drone',4)]);
-  runQuiz({id:'mock',tag:'Week 3 · Exam practice',title:'The Mock Exam',secs:45,level:2,mixed:true,plan:make(),remake:make,
-    rule:'<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 questions at exam pace: 45 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'})}
+function mock(){stopTimer();$('#homeBtn').hidden=false;const make=()=>shuffle([...repeat('count',3),...repeat('brick',3),...repeat('impostor',3),...repeat('opp',3),...repeat('edge',4),...repeat('drone',4)]);
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Exam practice</div><h2>The Mock Exam</h2></div></div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 mixed questions. Aim for 17 or more.</strong> Choose how the clock works:</div>
+    <div class="lessons"><button class="lesson" id="mTotal"><span class="ln">⏱</span><span><b>Exam timing: 15 minutes for all 20</b><span class="muted"> · one clock counts down for the whole paper, like the real exam. Spend longer on hard ones, less on easy ones.</span></span></button>
+      <button class="lesson" id="mEach"><span class="ln">45</span><span><b>45 seconds per question</b><span class="muted"> · a fresh timer for every question</span></span></button></div></section>`;
+  const base={id:'mock',title:'The Mock Exam',level:2,mixed:true,plan:make(),remake:make};
+  $('#mTotal').onclick=()=>runQuiz({...base,tag:'Mock Exam · Exam timing',secs:0,total:15*60,
+    rule:'<span class="pp">✎ Pen and paper ready.</span><strong>15 minutes for 20 questions.</strong> The clock keeps going until you answer, then pauses while you read the notes. Stuck? Cross out what you can, guess, and move on. Don’t let one question eat the clock.'});
+  $('#mEach').onclick=()=>runQuiz({...base,tag:'Mock Exam · 45s per question',secs:45,
+    rule:'<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 questions at exam pace: 45 seconds each.</strong> If you’re stuck, cross out what you can, make your best guess and move on.'});
+  scrollTo(0,0)}
 
 /* ============ Case 01: Tower Count ============ */
 function tower(){
