@@ -1812,7 +1812,7 @@ function home(){
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
     <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
   <section class="week"><h2 class="wk">Week 2 · New question types</h2><p class="muted" style="margin:0">More question types from Atom and the ISEB pretest. Cases 10–13 are the new cases in the 7-day challenge; Turn It Around is one of the cube revision rounds.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Day 11 onwards · Practise to exam standard</h2>
+  <section class="week"><h2 class="wk">Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
