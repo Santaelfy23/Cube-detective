@@ -980,7 +980,7 @@ function brickCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('
     rule:'<span class="pp">✎ Pen and paper ready.</span><strong>Layer by layer.</strong> Count each layer’s blocks, write it down, then add. A line across a face is where one block ends.',plan:repeat('brick',8),remake:()=>repeat('brick',8)})};
   $('#bLearn').onclick=()=>go(true);$('#bExam').onclick=()=>go(false);scrollTo(0,0)}
 function rotCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('rotLevel',1);
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 09 · Rotation</div><h2>Turn It Around</h2></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 09 · Rotation</div><h2>Turn It Around</h2></div>
       <div class="seg" id="rlvl"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div></div>
     <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Which answer is the same shape, just turned round?</strong>
       <ol><li><b>Count the cubes.</b> Cross out any answer with a different number.</li>
@@ -990,7 +990,7 @@ function rotCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('ro
     <div class="row"><button class="btn-primary" id="rLearn">Learn: 8 questions, no timer</button><button id="rExam">Exam mode: 8 timed questions</button></div></section>`;
   const set=v=>view.querySelectorAll('#rlvl button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v==String(v)));set(lv);
   view.querySelectorAll('#rlvl button').forEach(b=>b.onclick=()=>{store.set('rotLevel',+b.dataset.v);set(+b.dataset.v)});
-  const go=learn=>{const level=store.get('rotLevel',1);runQuiz({id:learn?null:'rot',tag:`Bonus · Case 09 · ${learn?'Learn':'Exam mode'} · ${['Easy','Medium','Hard'][level]}`,title:'Turn It Around',secs:learn?0:45,level,learn,
+  const go=learn=>{const level=store.get('rotLevel',1);runQuiz({id:learn?null:'rot',tag:`Case 09 · ${learn?'Learn':'Exam mode'} · ${['Easy','Medium','Hard'][level]}`,title:'Turn It Around',secs:learn?0:45,level,learn,
     rule:'<strong>Count, track one end, catch the mirror.</strong>',plan:repeat('rot',8),remake:()=>repeat('rot',8)})};
   $('#rLearn').onclick=()=>go(true);$('#rExam').onclick=()=>go(false);scrollTo(0,0)}
 const EDGE_RULE='<strong>Rule options out in this order.</strong><ol><li><b>Duds:</b> a symbol that isn’t on the net, or is flipped.</li><li><b>Opposites:</b> two faces that are opposite on the net, shown together. Jot the three pairs on paper first.</li><li><b>Edge buddies:</b> pick a symbol with a point (arrow tip, flag, L foot, shaded corner). On the net, say which neighbour it points at: “tip touches circle”. On the cube it must touch the same neighbour.</li><li><b>Corner check</b> if two are left: when three faces make an L on the net, go clockwise round their shared corner. On the cube go clockwise round the near corner: top, right, left. Same order, or it’s a mirror image.</li></ol>';
@@ -1179,14 +1179,14 @@ QB.odd=function(host,lvl=1,opt={}){const X=genOdd(),nm=c=>SYM[X.N.symOf[c]].name
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:oddNotes(X,i),ok?`The ${nm(X.p)} is turned differently from every other cube.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function oddCase(){stopTimer();$('#homeBtn').hidden=false;
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 10 · Cubes</div><h2>Odd Cube Out</h2></div></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 10 · Cubes</div><h2>Odd Cube Out</h2></div></div>
     <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Five pictures of “the same” cube. One can’t be. Which?</strong>
       <ol><li><b>Ignore faces you only see once.</b> They’re just hidden on the other cubes, so they prove nothing.</li>
       <li><b>Find two faces that are on most of the cubes.</b></li>
       <li><b>Say how they touch</b>, in a few words: “tip points at circle”, “spiral touches pointy corner”.</li>
       <li><b>Check every cube.</b> The one that breaks the rule is the odd one out. Stuck? Try a second pair, or the corner check.</li></ol></div>
     <div class="row"><button class="btn-primary" id="oLearn">Learn: 6 questions, no timer, hints</button><button id="oExam">Exam mode: 8 timed questions</button></div></section>`;
-  const go=learn=>runQuiz({id:learn?null:'odd',tag:`Bonus · Case 10 · ${learn?'Learn':'Exam mode'}`,title:'Odd Cube Out',secs:learn?0:60,level:1,learn,
+  const go=learn=>runQuiz({id:learn?null:'odd',tag:`Case 10 · ${learn?'Learn':'Exam mode'}`,title:'Odd Cube Out',secs:learn?0:60,level:1,learn,
     rule:'<strong>Ignore faces seen once. Find two faces on every cube, say how they touch, and find the cube that breaks it.</strong>',plan:repeat('odd',learn?6:8),remake:()=>repeat('odd',learn?6:8)});
   $('#oLearn').onclick=()=>go(true);$('#oExam').onclick=()=>go(false);scrollTo(0,0)}
 
@@ -1279,14 +1279,14 @@ QB.join=function(host,lvl=1,opt={}){const X=genJoin();
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:joinNotes(X,i),ok?'Both pieces on the right edges, turned but not flipped.':`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function joinCase(){stopTimer();$('#homeBtn').hidden=false;
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 11 · Shapes</div><h2>Join It Up</h2></div></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 11 · Shapes</div><h2>Join It Up</h2></div></div>
     <div class="rule"><span class="pp">✎ Take 20–30 seconds on each one, not 5. Every wrong answer is nearly right.</span><strong>Join the pieces to the base where the letters match.</strong>
       <ol><li><b>Match the letters.</b> The piece’s A edge goes on the base’s A edge. The two edges are always the same length.</li>
       <li><b>Turn, never flip.</b> Imagine sliding the piece round until its edge lines up. Check which end its slope, point or long side ends up at.</li>
       <li><b>Do the same for B.</b></li>
       <li><b>Answers may be turned round.</b> Compare the shape, not which way up it is. One answer is usually the mirror image, and that’s always wrong.</li></ol></div>
     <div class="row"><button class="btn-primary" id="jLearn">Learn: 6 questions, no timer, coloured edges</button><button id="jExam">Exam mode: 8 timed questions</button></div></section>`;
-  const go=learn=>runQuiz({id:learn?null:'join',tag:`Bonus · Case 11 · ${learn?'Learn':'Exam mode'}`,title:'Join It Up',secs:learn?0:45,level:1,learn,
+  const go=learn=>runQuiz({id:learn?null:'join',tag:`Case 11 · ${learn?'Learn':'Exam mode'}`,title:'Join It Up',secs:learn?0:45,level:1,learn,
     rule:'<strong>Match the letters, turn but never flip, then compare the shape (answers may be turned).</strong>',plan:repeat('join',learn?6:8),remake:()=>repeat('join',learn?6:8)});
   $('#jLearn').onclick=()=>go(true);$('#jExam').onclick=()=>go(false);scrollTo(0,0)}
 
@@ -1429,7 +1429,7 @@ QB.code=function(host,lvl=1,opt={}){const X=genCode();
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:codeNotes(X,i),ok?`First letter = ${CODE_DIMS[X.d1].name}, second = ${CODE_DIMS[X.d2].name}.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function codeCase(){stopTimer();$('#homeBtn').hidden=false;
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 12 · Codes</div><h2>Code Breaker</h2></div></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 12 · Codes</div><h2>Code Breaker</h2></div></div>
     <div class="rule"><span class="pp">✎ Jot the code key on paper as you crack it: “1st letter = shape: C hourglass, H oval…”</span><strong>Each letter stands for one feature.</strong>
       <ol><li><b>One letter at a time.</b> Find two pictures with the same first letter. What do they have in common?</li>
       <li><b>Check it</b> on a picture with a different first letter: that feature must be different there.</li>
@@ -1437,7 +1437,7 @@ function codeCase(){stopTimer();$('#homeBtn').hidden=false;
       <li><b>Watch for red herrings:</b> a feature that changes but has no letter.</li>
       <li><b>Something new?</b> If the last picture has a feature no other picture has, its letter is the one that isn’t used anywhere above.</li></ol></div>
     <div class="row"><button class="btn-primary" id="cLearn">Learn: 6 questions, no timer, hints</button><button id="cExam">Exam mode: 8 timed questions</button></div></section>`;
-  const go=learn=>runQuiz({id:learn?null:'code',tag:`Bonus · Case 12 · ${learn?'Learn':'Exam mode'}`,title:'Code Breaker',secs:learn?0:45,level:1,learn,
+  const go=learn=>runQuiz({id:learn?null:'code',tag:`Case 12 · ${learn?'Learn':'Exam mode'}`,title:'Code Breaker',secs:learn?0:45,level:1,learn,
     rule:'<strong>One letter at a time: find what pictures with the same letter share. Ignore red herrings.</strong>',plan:repeat('code',learn?6:8),remake:()=>repeat('code',learn?6:8)});
   $('#cLearn').onclick=()=>go(true);$('#cExam').onclick=()=>go(false);scrollTo(0,0)}
 
@@ -1533,14 +1533,14 @@ QB.fold=function(host,lvl=1,opt={}){const X=genFold();
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:foldNotes(X,i),ok?`Every shape mirrored across each fold: ${2**X.n} of each.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function foldCase(){stopTimer();$('#homeBtn').hidden=false;
-  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 13 · Paper folding</div><h2>Fold and Cut</h2></div></div>
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 13 · Paper folding</div><h2>Fold and Cut</h2></div></div>
     <div class="rule"><span class="pp">✎ Try it for real once: fold a square of paper, snip a shape, unfold it.</span><strong>The paper is folded, shapes are cut, then it’s unfolded.</strong>
       <ol><li><b>Count the layers.</b> 1 fold = 2 layers, 2 folds = 4 layers. Every shape cut appears that many times. Cross out answers with the wrong count.</li>
       <li><b>Unfold the last fold first.</b> Mirror every cut across that fold line. Then the fold before it.</li>
       <li><b>Mirror, don’t copy.</b> A shape pointing towards the fold line still points towards it after unfolding. Shapes are flipped, never turned.</li>
       <li><b>Check positions:</b> each copy sits exactly opposite its shape, the same distance from the fold.</li></ol></div>
     <div class="row"><button class="btn-primary" id="fLearn">Learn: 6 questions, no timer, hints</button><button id="fExam">Exam mode: 8 timed questions</button></div></section>`;
-  const go=learn=>runQuiz({id:learn?null:'fold',tag:`Bonus · Case 13 · ${learn?'Learn':'Exam mode'}`,title:'Fold and Cut',secs:learn?0:50,level:1,learn,
+  const go=learn=>runQuiz({id:learn?null:'fold',tag:`Case 13 · ${learn?'Learn':'Exam mode'}`,title:'Fold and Cut',secs:learn?0:50,level:1,learn,
     rule:'<strong>Count the layers, unfold the last fold first, and mirror every shape across each fold line.</strong>',plan:repeat('fold',learn?6:8),remake:()=>repeat('fold',learn?6:8)});
   $('#fLearn').onclick=()=>go(true);$('#fExam').onclick=()=>go(false);scrollTo(0,0)}
 
@@ -1549,7 +1549,6 @@ function foldCase(){stopTimer();$('#homeBtn').hidden=false;
    one cube revision round, and today's new case(s). Win: all 7 daily missions done (one every day) and all four new cases mastered. */
 const MOCK_PER_CARD=3,MOCK_STAMP_MIN=17,CH2_FROM='2026-10-29',CH2_NEW=['odd','join','code','fold'];
 const CH2_CUBE=['edge','opp','edge','rot','droneH','edge','mock'];
-const CH2_MODS=[['odd'],['join'],['code'],['fold'],['odd','join'],['code','fold'],null];
 const CH2_NAME={edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
   odd:'Odd Cube Out',join:'Join It Up',code:'Code Breaker',fold:'Fold and Cut',warm:'Memory warm-up'};
 const CH2_PASS={edge:6,opp:6,rot:6,droneH:6,mock:15,odd:6,join:6,code:6,fold:6};
@@ -1558,8 +1557,12 @@ function ch2(){let start=store.get('ch2Start',null);const t=today();
   const dayN=Math.floor((Date.parse(t+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,dateOf=k=>dayStr(Date.parse(start+'T12:00:00Z')+(k-1)*864e5);
   const passed=(id,d)=>hist(id).some(r=>r.d===d&&r.n>=CH2_PASS[id]);
   const mastBefore=(m,d)=>new Set(hist(m).filter(r=>r.d<d&&examReady(m,r)).map(r=>r.d)).size>=2;
-  const mission=k=>{const d=dateOf(k),mods=(CH2_MODS[k-1]||CH2_NEW).filter(m=>!mastBefore(m,d));
-    const items=[{id:'warm',done:hist('warm').some(r=>r.d===d)},{id:CH2_CUBE[k-1],done:passed(CH2_CUBE[k-1],d),cube:true},...mods.map(m=>({id:m,done:passed(m,d)}))];
+    /* which new cases today: any case already half-mastered (1 good day) to finish it, plus the next case not started yet.
+     So each case gets two days in a row, and anything she has already started or mastered is picked up or skipped. Days 6-7: catch up on everything left. */
+  const readyBefore=(m,d)=>new Set(hist(m).filter(r=>r.d<d&&examReady(m,r)).map(r=>r.d)).size;
+  const modsFor=(k,d)=>{const left=CH2_NEW.filter(m=>readyBefore(m,d)<2);if(k>=6)return left;const half=left.filter(m=>readyBefore(m,d)===1),fresh=left.find(m=>readyBefore(m,d)===0);return[...half,...(fresh?[fresh]:[])]};
+  const mission=k=>{const d=dateOf(k),mods=modsFor(k,d);
+    const items=[{id:'warm',done:hist('warm').some(r=>r.d===d)},{id:CH2_CUBE[k-1],done:passed(CH2_CUBE[k-1],d),cube:true},...mods.map(m=>({id:m,done:hist(m).some(r=>r.d===d&&examReady(m,r)),mod:true}))];
     return{k,d,items,done:items.every(x=>x.done)}};
   const days=[1,2,3,4,5,6,7].map(mission),T0=days[dayN-1],mastered=CH2_NEW.map(m=>({m,days:Math.min(2,readyDays(m))}));
   /* optional daily bonus: a Mock Exam scoring 17/20 or more earns a mock stamp (one a day). Every 3 mock stamps = an extra card.
@@ -1579,7 +1582,7 @@ function ch2HTML(){const C=ch2();
   const T=C.dayN<=7?C.days[C.dayN-1]:null,dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
   const msg=C.won?'<b>Challenge won!</b> Every day played and all four new cases mastered. Bonus card earned.':C.dayN>7?'The 7 days are over. Keep the daily routine going: warm-up, one cube case, one new case.':
     C.missed?'A day was missed, so the bonus card is gone this time, but keep going: every mission still builds exam skill.':`Do <b>every</b> day’s mission and master all four new cases by ${dl} to win a <b>bonus card</b>.`;
-  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${x.id==='droneH'?'8 questions':x.id==='mock'?'15/20 or more':'Exam mode, 6/8 or more'}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
+  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${x.id==='droneH'?'8 questions, 6/8 or more':x.id==='mock'?'15/20 or more':x.mod?`Exam mode, 7/8 or more, about ${MASTERY[x.id].secs}s a question or less · counts towards mastering it`:'Exam mode, 6/8 or more'}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
   const chips=C.mastered.map(x=>`<span class="c2chip ${x.days>=2?'ok':''}">${CH2_NAME[x.m]} ${x.days>=2?'✓ Mastered':`${x.days}/2 days`}</span>`).join('');
   return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${C.dayN>7?'7+':day}</b><span>of 7 days</span></div>
     <div class="ch-main"><div class="tag">7-day challenge · week 2</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
@@ -1772,11 +1775,11 @@ const CASES=[
   {id:'opp',week:1,tab:'CASE 05',title:'Opposite Suspects',blurb:'Which square ends up opposite? Opposite faces can never be seen together.',go:()=>opposites()},
   {id:'edge',week:2,tab:'CASE 06',title:'Edge Buddies',blurb:'Which cube can the net make? Rule out duds, opposites, then symbols turned the wrong way.',go:()=>edgeCase()},
   {id:'drone',week:2,tab:'CASE 07',title:'Drone View',blurb:'What does the stack look like from above? Watch for flipped and missing squares.',go:()=>droneCase()},
-  {id:'rot',week:3,bonus:true,tab:'BONUS · CASE 09',title:'Turn It Around',blurb:'Which answer is the same shape, just turned? Count the cubes, track one end, and catch the mirror trap.',go:()=>rotCase()},
-  {id:'odd',week:3,bonus:true,tab:'BONUS · CASE 10',title:'Odd Cube Out',blurb:'Five pictures of the same cube, but one can’t be. Find two faces on every cube and check how they touch.',go:()=>oddCase()},
-  {id:'join',week:3,bonus:true,tab:'BONUS · CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
-  {id:'code',week:3,bonus:true,tab:'BONUS · CASE 12',title:'Code Breaker',blurb:'Each letter stands for a feature. Crack the code one letter at a time and spot the red herring.',go:()=>codeCase()},
-  {id:'fold',week:3,bonus:true,tab:'BONUS · CASE 13',title:'Fold and Cut',blurb:'Fold the paper, cut the shapes, then unfold it in your head. Count the layers and mirror every cut.',go:()=>foldCase()},
+  {id:'rot',week:3,bonus:true,tab:'CASE 09',title:'Turn It Around',blurb:'Which answer is the same shape, just turned? Count the cubes, track one end, and catch the mirror trap.',go:()=>rotCase()},
+  {id:'odd',week:3,bonus:true,tab:'CASE 10',title:'Odd Cube Out',blurb:'Five pictures of the same cube, but one can’t be. Find two faces on every cube and check how they touch.',go:()=>oddCase()},
+  {id:'join',week:3,bonus:true,tab:'CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
+  {id:'code',week:3,bonus:true,tab:'CASE 12',title:'Code Breaker',blurb:'Each letter stands for a feature. Crack the code one letter at a time and spot the red herring.',go:()=>codeCase()},
+  {id:'fold',week:3,bonus:true,tab:'CASE 13',title:'Fold and Cut',blurb:'Fold the paper, cut the shapes, then unfold it in your head. Count the layers and mirror every cut.',go:()=>foldCase()},
   {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option, knowing why. Quick and accurate.',go:()=>elimCase()}];
 const caseType={rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
@@ -1808,7 +1811,7 @@ function home(){
   <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
     <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Bonus round</h2><p class="muted" style="margin:0">Extra practice for question types from Atom and the ISEB pretest. Not part of the 10-day challenge.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Week 2 · New question types</h2><p class="muted" style="margin:0">More question types from Atom and the ISEB pretest. Cases 10–13 are the new cases in the 7-day challenge; Turn It Around is one of the cube revision rounds.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
   <section class="week"><h2 class="wk">Day 11 onwards · Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
