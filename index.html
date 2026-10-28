@@ -136,6 +136,8 @@ input.num{font-family:inherit;font-size:1.3rem;width:110px;padding:8px 10px;bord
 ol.steps{margin:8px 0 8px 20px;padding:0}
 h3.sub{margin:16px 0 8px;font-size:1rem}
 .joinq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:8px 0 12px}.joinq .op{font-size:1.6rem;font-weight:800;color:var(--muted)}.joinq svg{max-height:170px;width:auto}
+/* code breaker and fold and cut */
+.codeq,.foldq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:8px 0 12px}.codeq figure{margin:0;text-align:center}.codeq figcaption{font-weight:800;font-size:1.15rem;margin-top:4px;letter-spacing:.08em}.foldq .op{font-size:1.4rem;font-weight:800;color:var(--muted)}.codeopt{font-size:1.4rem;font-weight:800;letter-spacing:.1em;display:block;padding:10px 0}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -244,6 +246,18 @@ textarea.code{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-
 .ch-day b{font-family:var(--font-display);font-weight:400;font-size:2.4rem;line-height:1;color:var(--folder)}
 .ch-day span{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .ch-main{flex:1 1 240px;min-width:0}
+.trophies{margin-top:14px}.trophy{display:flex;gap:12px;background:var(--surface);border:2px solid var(--folder);border-radius:var(--r);padding:12px 14px;margin-top:8px}.tro-icon{font-size:2rem;line-height:1}.trophy h3{margin:0}
+.tro-cards{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tro-cards span{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:.82rem}
+.wcheck{background:var(--surface);border:2px dashed var(--folder);border-radius:var(--r);padding:10px 12px;margin:8px 0}.wcheck p{margin:0 0 8px}.wc-ch{display:flex;flex-wrap:wrap;gap:8px}.wc-ch button{padding:6px 12px}.wc-ch button svg{display:block}.wc-ch button.right{border-color:var(--good);box-shadow:0 0 0 2px var(--good) inset}.wc-ch button.wrong{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad) inset}.wc-fb{margin:8px 0 0!important}
+.pengate{display:flex;gap:14px;background:var(--surface);border:2px solid var(--folder);border-radius:var(--r);padding:16px;margin-top:10px}.pg-icon{font-size:2.2rem;line-height:1;color:var(--folder)}.pengate h3{margin:0 0 6px}.pengate p{margin:0 0 8px}.pg-tip{background:var(--bg,transparent);border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
+.ch-won{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;margin-top:10px;font-size:.92rem}
+.c2dots{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.c2dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:.9rem;position:relative;margin-bottom:12px}
+.c2dot em{position:absolute;top:36px;font-style:normal;font-size:.62rem;color:var(--muted);font-weight:600}.c2dot.done{background:var(--good);border-color:var(--good);color:#fff}.c2dot.miss{border-color:var(--bad);color:var(--bad)}.c2dot.today{border-color:var(--folder);color:var(--folder)}
+.c2h{margin:12px 0 6px;font-size:.95rem}.c2list{list-style:none;margin:0;padding:0;display:grid;gap:6px}.c2list li{display:flex;align-items:center;gap:10px;background:var(--bg,transparent);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.c2list li button{margin-left:auto;padding:4px 14px}.c2list li.ok{opacity:.7}.c2tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;color:#fff;flex:none}.c2list li.ok .c2tick{background:var(--good);border-color:var(--good)}
+.c2stamps{display:flex;align-items:center;gap:6px;margin-bottom:6px}.c2stamps span{width:28px;height:28px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;color:var(--line)}.c2stamps span.on{border:2px solid var(--folder);color:var(--folder);background:rgba(200,160,60,.15)}.c2stamps em{font-style:normal;font-size:.85rem;color:var(--muted);margin-left:4px}
+.c2star{position:absolute;top:-8px;right:-8px;font-style:normal;color:var(--folder);font-size:.95rem}.c2list.bonus li{border-style:dashed}
+.c2chips{display:flex;gap:6px;flex-wrap:wrap}.c2chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:600}.c2chip.ok{border-color:var(--good);color:var(--good)}
 .ch-bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin-top:6px}.ch-bar i{display:block;height:100%;background:var(--good)}
 .ocv{width:100%;display:block}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.folder:hover{transform:none}}
@@ -904,7 +918,7 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_NAME={code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
 const TYPE_CASE={rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
@@ -924,7 +938,7 @@ function runQuiz(cfg){
       if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);w[t]=now});store.set('weak',w)}
       if(cfg.id==='warm'){const S=streakInfo();if(S.doneToday&&onceFlag('streak-'+today())){addPoints(5*Math.min(S.n,10));if(STREAK_GOALS.includes(S.n))toast(`<b>${S.n}-day streak!</b> Keep it going.`,'rank')}}
       if(cfg.id==='warm'&&score===plan.length&&onceFlag('warm-'+today()))stamp(`Daily warm-up: ${score}/6`);
-      if(cfg.id==='mock'&&score>=17&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
+      if(cfg.id==='mock'&&score>=17&&!ch2Active()&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
       const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
       const rows=Object.entries(tally).map(([t,v])=>`<tr><td>${TYPE_NAME[t]}</td><td class="num">${v.r} / ${v.a}</td><td>${v.r===v.a?'<span class="y">Solid</span>':v.a-v.r>=2||v.r/v.a<.7?`<span class="n">Refresh: replay ${CASES.find(c=>c.id===TYPE_CASE[t]).title}</span>`:'<span class="s">Nearly</span>'}</td></tr>`).join('');
       g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${cfg.total?`<p>${unreached?`<b>Time ran out with ${unreached} question${unreached===1?'':'s'} not reached.</b> In the real exam, guess any you can’t finish: a guess can score, a blank never does.`:`Finished with <b>${fmt(Math.max(0,left))}</b> to spare.`}</p>`:''}${speedLine(cfg.id,score,plan.length,avg)}${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
@@ -941,7 +955,15 @@ function runQuiz(cfg){
       nt&&nt.draw&&nt.draw();$('#nx').onclick=()=>{if(timeUp&&n<plan.length){plan.slice(n).forEach(t=>{(tally[t]=tally[t]||{a:0,r:0}).a++});unreached=plan.length-n;n=plan.length}next()}};
     if(cfg.secs){let left=cfg.secs;timerId=setInterval(()=>{left-=.25;const b=$('#bar');if(b)b.style.width=Math.max(0,left/cfg.secs*100)+'%';if(left<=0){stopTimer();q.timeout()}},250)}
   };
-  next()}
+  /* pen-and-paper check before the first question (new question types) */
+  const tip=cfg.pen||PEN_TIPS[cfg.id]||(cfg.plan&&PEN_TIPS[cfg.plan[0]]&&cfg.plan.every(t=>t===cfg.plan[0])?PEN_TIPS[cfg.plan[0]]:null);
+  if(tip){g.innerHTML=`<div class="pengate"><div class="pg-icon">✎</div><div><h3>Pen and paper ready?</h3><p>Get a pencil and a sheet of paper before you start. In the exam you can use them, so practise with them now. <b>Before the answers appear, each question asks what’s on your paper</b>, so write it down first.</p><p class="pg-tip"><b>What to draw:</b> ${tip}</p><button class="btn-primary" id="penGo">✎ I’ve got my pen and paper, let’s go</button></div></div>`;$('#penGo').onclick=next}
+  else next()}
+const PEN_TIPS={odd:'write the two faces you’re comparing, and draw a little arrow for how they touch, like “tip → circle”. Then tick or cross each cube.',
+  join:'sketch the base shape and draw each piece on the edge with its letter. Mark which way its slope or point goes.',
+  code:'write the key as you crack it: “1st letter = shape: C hourglass, H oval…”, then “2nd letter = …”. Cross out the red herring.',
+  fold:'draw a square and the fold lines. Write the layers (“2 folds = 4 of each”), then sketch each cut’s mirror copy, last fold first.',
+  droneH:'draw an empty grid, as wide and deep as the shape, and shade a square for every column with a cube in it, floating ones too.'};
 const repeat=(t,k)=>Array(k).fill(t);
 function brickCase(){stopTimer();$('#homeBtn').hidden=false;const lv=store.get('brickLevel',1);
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 02 · Counting blocks</div><h2>The Odd Blocks</h2></div>
@@ -1090,6 +1112,30 @@ function elimCase(){
         say(true,`<b>Ruled out: ${REASONS[type].find(x=>x[0]===real)[1]}.</b> ${LET[i]}: ${REASON_WHY[real]}. Was that your reason?`);
         if(left.size===1)finish()}})};
   next()}
+/* ---- Working check: before the answers appear, one quick question about what should be on her paper ---- */
+function workCheck(host,W){if(!W)return;const box=host.querySelector('.copts');if(!box)return;box.hidden=true;
+  const d=document.createElement('div');d.className='wcheck';
+  d.innerHTML=`<p><b>✎ Working check:</b> ${W.q}</p><div class="wc-ch">${W.choices.map((c,i)=>`<button data-i="${i}">${c}</button>`).join('')}</div><p class="wc-fb" hidden></p>`;
+  box.parentNode.insertBefore(d,box);
+  d.querySelectorAll('.wc-ch button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,ok=i===W.ans;d.querySelectorAll('.wc-ch button').forEach((x,k)=>{x.disabled=true;if(k===W.ans)x.classList.add('right');else if(k===i)x.classList.add('wrong')});
+    const fb=d.querySelector('.wc-fb');fb.hidden=false;fb.innerHTML=(ok?'<b>Yes.</b> ':'<b>Not quite.</b> ')+W.why+' Now use your working to choose the answer.';box.hidden=false})}
+function codeCheck(X){const pos=rnd(2),d=pos?X.d2:X.d1,others=Object.keys(CODE_DIMS).filter(k=>![X.d1,X.d2,X.dh].includes(k)),ch=shuffle([X.d1,X.d2,X.dh,pick(others)]);
+  return{q:`What does the <b>${pos?'second':'first'}</b> letter stand for? Check your key.`,choices:ch.map(k=>CODE_DIMS[k].name),ans:ch.indexOf(d),
+    why:`The ${pos?'second':'first'} letter is the ${CODE_DIMS[d].name}: pictures with the same ${pos?'second':'first'} letter all share it. (The ${CODE_DIMS[X.dh].name} is the red herring.)`}}
+function foldCheck(X){const n=2**X.n,ch=[2,4,8];return{q:'How many times will each cut shape appear when the paper is unfolded?',choices:ch.map(String),ans:ch.indexOf(n),why:`${X.n} fold${X.n>1?'s':''} = ${n} layers of paper, so there will be ${n} of each shape.`}}
+function oddCheck(X){const nm=c=>SYM[X.N.symOf[c]].name,seen=[...new Set(X.opts.flatMap(o=>o.view.map(e=>e.cell)))].filter(c=>c!==X.p&&c!==X.q);
+  const right=[X.p,X.q],pairs=[right];for(const a of shuffle(seen.concat([X.p,X.q]))){for(const b of shuffle(seen)){if(a===b)continue;const k=[a,b].sort().join();if(pairs.some(p=>p.slice().sort().join()===k))continue;pairs.push([a,b]);break}if(pairs.length===3)break}
+  const ch=shuffle(pairs.slice());return{q:'Which two faces are on every cube? Write them down first.',choices:ch.map(([a,b])=>`the ${nm(a)} and the ${nm(b)}`),ans:ch.indexOf(right),
+    why:`The ${nm(X.p)} and the ${nm(X.q)} are on every cube. Next, say how they touch.`}}
+function joinCheck(X){const key=ps=>[...jRaster(ps).cells.keys()].sort().join('|');
+  for(const[w,P,i,name,L]of[[X.A,X.PA,X.ia,X.A.name,'A'],[X.Bp,X.PB,X.ib,X.Bp.name,'B']]){const m=jMirEdge(w.P,w.j),F=jAttach(X.B,i,m.M,m.j);if(!F||key([X.B,P])===key([X.B,F]))continue;
+    const opts=shuffle([{p:[X.B,P],ok:true},{p:[X.B,F],ok:false}]),pic=o=>joinSVG(o.p,{u:24,merge:false,fills:['var(--cube-l)',L==='A'?'rgba(59,130,246,.55)':'rgba(34,160,107,.55)']});
+    return{q:`Sketch the ${name} on edge ${L}. Which picture shows it joined the right way (turned, not flipped)?`,choices:opts.map(pic),ans:opts.findIndex(o=>o.ok),
+      why:`The other picture has the ${name} flipped over. Turning is allowed, flipping isn’t.`}}
+  return null}
+function droneCheck(D){const W=D.W,H=D.D,c=[[W,H],[W,H-1],[W+1,H],[W-1,H]].filter(([a,b])=>a>0&&b>0),uniq=c.filter((v,i)=>c.findIndex(u=>u[0]===v[0]&&u[1]===v[1])===i).slice(0,3),ch=shuffle(uniq);
+  return{q:'Draw the empty grid first. How wide and how deep is the view from above?',choices:ch.map(([a,b])=>`${a} wide × ${b} deep`),ans:ch.findIndex(([a,b])=>a===W&&b===H),
+    why:`It’s ${W} wide and ${H} deep, counting the floating cubes too.`}}
 /* ============ Bonus · Case 10: Odd Cube Out ============ */
 /* Five views of one cube, no net. Four are real views that all show the same two faces; the odd one has one of those faces turned.
    Because the two faces always meet along one edge, the odd view clashes with every other view, so the answer is always unique. */
@@ -1129,7 +1175,7 @@ QB.odd=function(host,lvl=1,opt={}){const X=genOdd(),nm=c=>SYM[X.N.symOf[c]].name
   host.innerHTML=`<p class="qtext">Which cube <b>cannot</b> be the same as the others? <span class="muted">No two faces of the cube are the same. Tap ✕ to cross an option out.</span></p>
     ${opt.learn?`<p class="hint">Hint: the ${nm(X.p)} and the ${nm(X.q)} are on every cube. How do they touch?</p>`:''}
     <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${cubeSVG(o.view,{s:48})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
-  crossable(host);const q={};let done=false;
+  crossable(host);workCheck(host,oddCheck(X));const q={};let done=false;
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:oddNotes(X,i),ok?`The ${nm(X.p)} is turned differently from every other cube.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function oddCase(){stopTimer();$('#homeBtn').hidden=false;
@@ -1229,7 +1275,7 @@ QB.join=function(host,lvl=1,opt={}){const X=genJoin();
     <div class="joinq"><div>${base}</div><span class="op">+</span><div>${pa}</div><span class="op">+</span><div>${pb}</div><span class="op">=</span><span class="op">?</span></div>
     ${opt.learn?'<p class="hint">Hint: match the coloured edges. Then check which way each piece’s slope or corner points.</p>':''}
     <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${joinSVG(o.polys,{u:22,rot:o.rot})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
-  crossable(host);const q={};let done=false;
+  crossable(host);workCheck(host,joinCheck(X));const q={};let done=false;
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:joinNotes(X,i),ok?'Both pieces on the right edges, turned but not flipped.':`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function joinCase(){stopTimer();$('#homeBtn').hidden=false;
@@ -1304,7 +1350,7 @@ const droneQB=QB.drone;
 QB.drone=function(host,lvl=1,opt){if(lvl!==9)return droneQB(host,lvl,opt);const D=genDroneHard();
   host.innerHTML=`<p class="qtext">Which is the view from above? <span class="muted">Tap ✕ to cross an option out.</span></p><canvas class="stack" id="qcv"></canvas>
     <div class="copts four">${D.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${gridSVG(o.cells,{g:22})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
-  crossable(host);const cv=host.querySelector('#qcv'),q={draw:()=>drawCubesOn(cv,D.cs,{maxH:300})};q.draw();let done=false;
+  crossable(host);workCheck(host,droneCheck(D));const cv=host.querySelector('#qcv'),q={draw:()=>drawCubesOn(cv,D.cs,{maxH:300})};q.draw();let done=false;
   const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
     q.onAnswer(ok,ok?null:droneHardNotes(D,i),ok?`${D.W} wide, ${D.D} deep, and every floating cube counted.`:`The answer is ${LET[D.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
@@ -1315,9 +1361,233 @@ function droneCase(){stopTimer();$('#homeBtn').hidden=false;
     <div class="row"><button class="btn-primary" id="dExam">Exam mode: 8 timed questions</button><button id="dHard">Hard practice: Atom-style shapes</button></div>
     <p class="muted">Hard practice has cubes floating in mid-air and gaps between parts, like Atom and ISEB questions. It doesn’t count towards mastery, so try it once Exam mode feels easy.</p></section>`;
   $('#dExam').onclick=()=>runQuiz({id:'drone',tag:'Case 07 · Exam mode',title:'Drone View',secs:45,level:1,rule:DRONE_RULE,plan:repeat('drone',8),remake:()=>repeat('drone',8)});
-  $('#dHard').onclick=()=>runQuiz({id:null,tag:'Case 07 · Hard practice',title:'Drone View: floating cubes',secs:0,level:9,learn:true,
+  $('#dHard').onclick=()=>runQuiz({id:'droneH',tag:'Case 07 · Hard practice',title:'Drone View: floating cubes',secs:0,level:9,learn:true,
     rule:'<strong>Measure width × depth, count each row, and trace every cube straight down to the floor.</strong> A cube floating in mid-air still makes a square from above.',plan:repeat('drone',8),remake:()=>repeat('drone',8)});
   scrollTo(0,0)}
+
+/* ============ Bonus · Case 12: Code Breaker (letter codes) ============ */
+/* Each picture has a two-letter code. The first letter tracks one feature, the second letter another; a third feature changes
+   but has no letter (a red herring). We only keep questions where exactly one feature explains each letter, so the answer is certain. */
+let __pid=0;
+const CODE_DIMS={
+  shape:{name:'shape',vals:['circle','square','triangle','diamond','hexagon','star']},
+  fill:{name:'shading',vals:['white','grey','black','striped']},
+  line:{name:'line',vals:['no line','vertical line','horizontal line','diagonal line']},
+  dots:{name:'number of dots',vals:['1 dot','2 dots','3 dots']},
+  arrow:{name:'arrow direction',vals:['arrow up','arrow right','arrow down','arrow left']}};
+function codePic(f,{w=92}={}){const id='st'+(++__pid),ink='#222',fills={white:'#fff',grey:'#A7AEBD',black:'#2A2F3A',striped:`url(#${id})`},cx=46,cy=42,r=24;
+  const shape={circle:`<circle cx="${cx}" cy="${cy}" r="${r}"/>`,square:`<rect x="${cx-r+2}" y="${cy-r+2}" width="${2*r-4}" height="${2*r-4}"/>`,
+    triangle:`<polygon points="${cx},${cy-r} ${cx+r},${cy+r-4} ${cx-r},${cy+r-4}"/>`,diamond:`<polygon points="${cx},${cy-r} ${cx+r},${cy} ${cx},${cy+r} ${cx-r},${cy}"/>`,
+    hexagon:`<polygon points="${[0,1,2,3,4,5].map(k=>{const a=Math.PI/3*k;return`${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`}).join(' ')}"/>`,
+    star:`<polygon points="${[...Array(10).keys()].map(k=>{const a=-Math.PI/2+Math.PI/5*k,rr=k%2?r*.45:r;return`${(cx+rr*Math.cos(a)).toFixed(1)},${(cy+rr*Math.sin(a)).toFixed(1)}`}).join(' ')}"/>`}[f.shape||'circle'];
+  const ln={'no line':'','vertical line':`<line x1="${cx}" y1="${cy-r-4}" x2="${cx}" y2="${cy+r+4}"/>`,'horizontal line':`<line x1="${cx-r-4}" y1="${cy}" x2="${cx+r+4}" y2="${cy}"/>`,'diagonal line':`<line x1="${cx-r}" y1="${cy+r}" x2="${cx+r}" y2="${cy-r}"/>`}[f.line||'no line'];
+  const nd=f.dots?parseInt(f.dots):0,dots=[...Array(nd).keys()].map(k=>`<circle cx="${cx+(k-(nd-1)/2)*12}" cy="83" r="3.6" fill="${ink}"/>`).join('');
+  const ar=f.arrow?(()=>{const rot={'arrow up':0,'arrow right':90,'arrow down':180,'arrow left':270}[f.arrow];return`<g transform="translate(80 12) rotate(${rot})"><line x1="0" y1="7" x2="0" y2="-6" stroke="${ink}" stroke-width="2"/><polygon points="0,-8 -4.5,-1 4.5,-1" fill="${ink}"/></g>`})():'';
+  return`<svg viewBox="0 0 92 92" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px"><defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"/><line x1="0" y1="0" x2="0" y2="6" stroke="${ink}" stroke-width="2"/></pattern></defs>
+    <g fill="${fills[f.fill||'white']}" stroke="${ink}" stroke-width="2">${shape}</g><g stroke="${ink}" stroke-width="2.4">${ln}</g>${dots}${ar}</svg>`}
+const LETTERS='ABCDEFGHJKLMNPRSTUVWXYZ'.split('');
+function genCode(){
+  for(let t=0;t<500;t++){const dims=shuffle(Object.keys(CODE_DIMS)).slice(0,3),[d1,d2,dh]=dims,V=d=>shuffle(CODE_DIMS[d].vals.slice()).slice(0,3);
+    const v1=V(d1),v2=V(d2),vh=V(dh),lt=shuffle(LETTERS.slice()),L1=lt.slice(0,4),L2=lt.slice(4,7);
+    const newVal=Math.random()<.3&&CODE_DIMS[d1].vals.length>3,v1all=newVal?[...v1,CODE_DIMS[d1].vals.find(x=>!v1.includes(x))]:v1;
+    const ex=[...Array(4)].map(()=>({[d1]:pick(v1),[d2]:pick(v2),[dh]:pick(vh)}));
+    const code=f=>L1[v1all.indexOf(f[d1])]+L2[v2.indexOf(f[d2])];
+    const target={[d1]:newVal?v1all[3]:pick(v1),[d2]:pick(v2),[dh]:pick(vh)};
+    /* each example value used must make the letter readable: target's values must appear in the examples (except the new one) */
+    if(!newVal&&!ex.some(e=>e[d1]===target[d1]))continue;if(!ex.some(e=>e[d2]===target[d2]))continue;
+    if(new Set(ex.map(e=>e[d1])).size<2||new Set(ex.map(e=>e[d2])).size<2)continue;
+    if(new Set(ex.map(code)).size<3)continue;
+    /* a feature "explains" a letter position if equal values always give equal letters and different values different letters */
+    const explains=(d,pos)=>{const m=new Map(),back=new Map();for(const e of ex){const l=code(e)[pos],v=e[d];if(m.has(v)&&m.get(v)!==l)return false;if(back.has(l)&&back.get(l)!==v)return false;m.set(v,l);back.set(l,v)}return true};
+    if(!dims.filter(d=>explains(d,0)).every(d=>d===d1)||!dims.filter(d=>explains(d,1)).every(d=>d===d2))continue;
+    if(explains(dh,0)||explains(dh,1))continue;
+    const ans=code(target),seen1=[...new Set(ex.map(e=>code(e)[0]))],seen2=[...new Set(ex.map(e=>code(e)[1]))];
+    const opts=new Set([ans]),wrong1=newVal?seen1:seen1.filter(l=>l!==ans[0]),wrong2=seen2.filter(l=>l!==ans[1]);
+    const cands=shuffle([...wrong1.map(a=>a+ans[1]),...wrong2.map(b=>ans[0]+b),...wrong1.flatMap(a=>wrong2.map(b=>a+b))]);
+    if(newVal)cands.unshift(ans[0]+pick(wrong2));
+    for(const c of cands){if(opts.size===5)break;opts.add(c)}
+    if(opts.size<5)continue;
+    const list=shuffle([...opts]);return{d1,d2,dh,v1:v1all,v2,L1,L2,ex,target,code,ans:list.indexOf(ans),opts:list,newVal}}
+  return null}
+function codeNotes(X,i){const used1=[...new Set(X.ex.map(e=>e[X.d1]))],used2=[...new Set(X.ex.map(e=>e[X.d2]))];
+  const row=(d,vals,pos)=>vals.map(v=>`<b>${X.code({[X.d1]:d===X.d1?v:X.ex[0][X.d1],[X.d2]:d===X.d2?v:X.ex[0][X.d2]})[pos]}</b> = ${v}`).join(', ');
+  const t=X.opts[X.ans];
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="nb"><h4>How to crack it</h4><ol class="steps">
+    <li><b>First letter = the ${CODE_DIMS[X.d1].name}.</b> ${row(X.d1,used1,0)}. Pictures with the same first letter always share this, and nothing else.</li>
+    <li><b>Second letter = the ${CODE_DIMS[X.d2].name}.</b> ${row(X.d2,used2,1)}.</li>
+    <li><b>Red herring:</b> the ${CODE_DIMS[X.dh].name} changes too, but no letter goes with it. Ignore it.</li>
+    <li><b>The last picture:</b> ${X.target[X.d1]} → <b>${t[0]}</b>${X.newVal?` (a ${CODE_DIMS[X.d1].name} not seen before, so it takes the first letter that isn’t used by any picture)`:''}, ${X.target[X.d2]} → <b>${t[1]}</b>. So the code is <b>${t}</b>.</li></ol>
+    ${i!=null&&i!==X.ans?`<p>You picked <b>${X.opts[i]}</b>. ${X.opts[i][0]!==t[0]?`Its first letter, ${X.opts[i][0]}, is wrong.`:''} ${X.opts[i][1]!==t[1]?`Its second letter, ${X.opts[i][1]}, is wrong.`:''}</p>`:''}</div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.code}</p></div>
+    <div class="nb trap"><h4>The trap</h4><p><b>Matching the whole picture at once.</b> Take one letter at a time. Find two pictures with the same first letter and ask what they have in common. Then check it on a picture with a different first letter.</p></div></div>`}}
+QB.code=function(host,lvl=1,opt={}){const X=genCode();
+  host.innerHTML=`<p class="qtext">Each letter stands for a feature of the picture. Which code goes with the last picture?</p>
+    <div class="codeq">${X.ex.map(e=>`<figure>${codePic(e)}<figcaption>${X.code(e)}</figcaption></figure>`).join('')}<figure>${codePic(X.target)}<figcaption>?</figcaption></figure></div>
+    ${opt.learn?'<p class="hint">Hint: look only at the first letters. Which pictures share one? What do they have in common?</p>':''}
+    <div class="copts four">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span><span class="codeopt">${o}</span></button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,codeCheck(X));const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:codeNotes(X,i),ok?`First letter = ${CODE_DIMS[X.d1].name}, second = ${CODE_DIMS[X.d2].name}.`:`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+function codeCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 12 · Codes</div><h2>Code Breaker</h2></div></div>
+    <div class="rule"><span class="pp">✎ Jot the code key on paper as you crack it: “1st letter = shape: C hourglass, H oval…”</span><strong>Each letter stands for one feature.</strong>
+      <ol><li><b>One letter at a time.</b> Find two pictures with the same first letter. What do they have in common?</li>
+      <li><b>Check it</b> on a picture with a different first letter: that feature must be different there.</li>
+      <li><b>Then the second letter</b>, the same way.</li>
+      <li><b>Watch for red herrings:</b> a feature that changes but has no letter.</li>
+      <li><b>Something new?</b> If the last picture has a feature no other picture has, its letter is the one that isn’t used anywhere above.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="cLearn">Learn: 6 questions, no timer, hints</button><button id="cExam">Exam mode: 8 timed questions</button></div></section>`;
+  const go=learn=>runQuiz({id:learn?null:'code',tag:`Bonus · Case 12 · ${learn?'Learn':'Exam mode'}`,title:'Code Breaker',secs:learn?0:45,level:1,learn,
+    rule:'<strong>One letter at a time: find what pictures with the same letter share. Ignore red herrings.</strong>',plan:repeat('code',learn?6:8),remake:()=>repeat('code',learn?6:8)});
+  $('#cLearn').onclick=()=>go(true);$('#cExam').onclick=()=>go(false);scrollTo(0,0)}
+
+/* ============ Bonus · Case 13: Fold and Cut ============ */
+/* A square sheet (0..1, y down) is folded once or twice along its lines of symmetry, then shapes are cut out.
+   Unfolding mirrors every cut across each fold line, last fold first. Wrong answers are built from the classic mistakes. */
+const FOLDS={V:{refl:([x,y])=>[1-x,y],side:([x,y])=>x-.5,name:'the up-and-down fold'},H:{refl:([x,y])=>[x,1-y],side:([x,y])=>y-.5,name:'the side-to-side fold'},
+  D1:{refl:([x,y])=>[y,x],side:([x,y])=>(y-x)/Math.SQRT2,name:'the diagonal fold'},D2:{refl:([x,y])=>[1-y,1-x],side:([x,y])=>(1-x-y)/Math.SQRT2,name:'the diagonal fold'}};
+const FC_SHAPES={tri:{name:'triangle',p:[[-1,-1],[1,-1],[-1,1.2]]},flag:{name:'flag shape',p:[[-1,-1],[1,-.4],[-.3,0],[-.3,1.1],[-1,1.1]]},
+  arrow:{name:'arrow',p:[[-1,-.4],[.2,-.4],[.2,-1],[1.1,0],[.2,1],[.2,.4],[-1,.4]]},diamond:{name:'diamond',p:[[0,-1.1],[.8,0],[0,1.1],[-.8,0]]},
+  ell:{name:'L shape',p:[[-1,-1],[-.3,-1],[-.3,.4],[1,.4],[1,1],[-1,1]]},kite:{name:'kite',p:[[0,-1.2],[.7,-.2],[0,1],[-.7,-.2]]}};
+/* clip a convex polygon by keeping the side where s(p)*sign >= 0 */
+function fcClip(poly,s,sign){const out=[];for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],sa=s(a)*sign,sb=s(b)*sign;
+  if(sa>=0)out.push(a);if((sa>=0)!==(sb>=0)){const t=sa/(sa-sb);out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}}return out}
+const SQ=[[0,0],[1,0],[1,1],[0,1]];
+function genFold(){
+  for(let t=0;t<400;t++){const pair=pick([['V','H'],['D1','D2']]),n=Math.random()<.25?1:2,seq=shuffle(pair.slice()).slice(0,n).map(k=>({k,keep:pick([1,-1])}));
+    const regions=[SQ];seq.forEach(f=>regions.push(fcClip(regions.at(-1),FOLDS[f.k].side,f.keep)));const R=regions.at(-1);
+    const inR=(p,m)=>p[0]>m&&p[0]<1-m&&p[1]>m&&p[1]<1-m&&seq.every(f=>FOLDS[f.k].side(p)*f.keep>m);
+    const nc=2+rnd(2),kinds=shuffle(Object.keys(FC_SHAPES)).slice(0,nc),cuts=[];let ok=true;
+    for(const k of kinds){let placed=null;for(let g=0;g<200&&!placed;g++){const sz=.055,c=[.04+Math.random()*.92,.04+Math.random()*.92],rot=rnd(4);
+        const pts=FC_SHAPES[k].p.map(([u,v])=>{let[a,b]=[u,v];for(let r=0;r<rot;r++)[a,b]=[-b,a];return[c[0]+a*sz,c[1]+b*sz]});
+        if(!pts.every(p=>inR(p,.035))||!inR(c,.09))continue;if(cuts.some(o=>Math.hypot(o.c[0]-c[0],o.c[1]-c[1])<.2))continue;placed={k,c,pts}}
+      if(!placed){ok=false;break}cuts.push(placed)}
+    if(!ok)continue;
+    /* unfold: last fold first. Each hole remembers which cut it came from. */
+    const unfold=(cs,steps,fault=null)=>{let H=cs.map((c,ci)=>({ci,pts:c.pts}));steps.slice().reverse().forEach((f,si)=>{const add=H.map(h=>{let pts=h.pts.map(FOLDS[f.k].refl);
+        if(fault&&fault.type==='noflip'&&fault.step===si&&fault.ci===h.ci){const c0=centroid(h.pts),c1=FOLDS[f.k].refl(c0);pts=h.pts.map(p=>[p[0]-c0[0]+c1[0],p[1]-c0[1]+c1[1]])}
+        if(fault&&fault.type==='wrongline'&&fault.step===si){const other=FOLDS[{V:'H',H:'V',D1:'D2',D2:'D1'}[f.k]];pts=h.pts.map(other.refl)}
+        return{ci:h.ci,pts}});H=[...H,...add]});
+      if(fault&&fault.type==='missing'){const i=H.findIndex((h,k)=>k>=cs.length&&h.ci===fault.ci);if(i>=0)H.splice(i,1)}
+      if(fault&&fault.type==='swap'){const a=H.filter(h=>h.ci===fault.a).slice(-1)[0],b=H.filter(h=>h.ci===fault.b).slice(-1)[0];if(a&&b){const ca=centroid(a.pts),cb=centroid(b.pts),pa=a.pts,pb=b.pts;
+        a.pts=pb.map(p=>[p[0]-cb[0]+ca[0],p[1]-cb[1]+ca[1]]);b.pts=pa.map(p=>[p[0]-ca[0]+cb[0],p[1]-ca[1]+cb[1]])}}
+      if(fault&&fault.type==='turned'){const i=H.length-1-H.slice().reverse().findIndex(h=>h.ci===fault.ci),h=H[i],c0=centroid(h.pts);h.pts=h.pts.map(p=>[c0[0]-(p[1]-c0[1]),c0[1]+(p[0]-c0[0])])}
+      return H};
+    const key=H=>H.map(h=>h.pts.map(p=>p.map(v=>Math.round(v*200)).join(',')).sort().join(';')).sort().join('|');
+    const correct=unfold(cuts,seq),opts=[{holes:correct,kind:'ok'}],keys=new Set([key(correct)]);
+    const add=(f,kind,extra={})=>{const H=unfold(cuts,seq,f);const k=key(H);if(keys.has(k))return;
+      if(H.some((h,i)=>H.some((g,j)=>j>i&&Math.hypot(...centroid(h.pts).map((v,q)=>v-centroid(g.pts)[q]))<.08)))return;keys.add(k);opts.push({holes:H,kind,...extra})};
+    const tries=shuffle([
+      ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
+      ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
+      ()=>{const ci=rnd(nc);add({type:'missing',ci},'missing',{ci})},
+      ()=>{if(nc>1){const[a,b]=shuffle([...Array(nc).keys()]);add({type:'swap',a,b},'swap',{a,b})}},
+      ()=>{add({type:'wrongline',step:rnd(n)},'wrongline')},
+      ()=>{const ci=rnd(nc);add({type:'turned',ci},'turned',{ci})}]);
+    for(const f of [...tries,...tries]){if(opts.length===5)break;f()}
+    if(opts.length<5)continue;
+    const sh=shuffle(opts);return{seq,regions,cuts,opts:sh,ans:sh.findIndex(o=>o.kind==='ok'),n}}
+  return null}
+function centroid(p){return[p.reduce((a,v)=>a+v[0],0)/p.length,p.reduce((a,v)=>a+v[1],0)/p.length]}
+const FC={paper:'#C9CED8',ink:'#333',hole:'#fff',line:'#555'};
+function foldStepSVG(X,i,{w=110,cuts=false}={}){const s=w-16,P=([x,y])=>[(8+x*s).toFixed(1),(8+y*s).toFixed(1)],pp=a=>a.map(p=>P(p).join(',')).join(' ');
+  let o=`<svg viewBox="0 0 ${w} ${w}" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px">`;
+  if(i>0)o+=`<polygon points="${pp(SQ)}" fill="none" stroke="${FC.line}" stroke-width="1" stroke-dasharray="4 3"/>`;
+  o+=`<polygon points="${pp(X.regions[i])}" fill="${FC.paper}" stroke="${FC.ink}" stroke-width="1.4"/>`;
+  if(i<X.seq.length){const f=X.seq[i];
+    const L=X.regions[i].flatMap((a,k)=>{const b=X.regions[i][(k+1)%X.regions[i].length],sa=FOLDS[f.k].side(a),sb=FOLDS[f.k].side(b);const out=[];if(Math.abs(sa)<1e-9)out.push(a);if(sa*sb<0){const t=sa/(sa-sb);out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}return out});
+    if(L.length>=2){const[a,b]=[L[0],L.at(-1)];o+=`<line x1="${P(a)[0]}" y1="${P(a)[1]}" x2="${P(b)[0]}" y2="${P(b)[1]}" stroke="${FC.ink}" stroke-width="1.6" stroke-dasharray="5 4"/>`}
+    const mov=fcClip(X.regions[i],FOLDS[f.k].side,-f.keep),m=centroid(mov),m2=FOLDS[f.k].refl(m),mid=[(m[0]+m2[0])/2,(m[1]+m2[1])/2],d=[m2[0]-m[0],m2[1]-m[1]],ctl=[mid[0]-d[1]*.35,mid[1]+d[0]*.35];
+    const a=P(m),b=P(m2),c=P(ctl);o+=`<path d="M${a[0]} ${a[1]}Q${c[0]} ${c[1]} ${b[0]} ${b[1]}" fill="none" stroke="${FC.ink}" stroke-width="1.8"/>`;
+    const tx=b[0]-c[0],ty=b[1]-c[1],L2=Math.hypot(tx,ty)||1,ux=tx/L2,uy=ty/L2,h=7;o+=`<polygon points="${b[0]},${b[1]} ${(b[0]-ux*h-uy*h*.6).toFixed(1)},${(b[1]-uy*h+ux*h*.6).toFixed(1)} ${(b[0]-ux*h+uy*h*.6).toFixed(1)},${(b[1]-uy*h-ux*h*.6).toFixed(1)}" fill="${FC.ink}"/>`}
+  if(cuts)X.cuts.forEach(c=>o+=`<polygon points="${pp(c.pts)}" fill="${FC.hole}" stroke="${FC.ink}" stroke-width="1.2"/>`);
+  return o+'</svg>'}
+function holesSVG(H,{w=110,region=SQ,mark=[]}={}){const s=w-16,P=([x,y])=>[(8+x*s).toFixed(1),(8+y*s).toFixed(1)],pp=a=>a.map(p=>P(p).join(',')).join(' ');
+  let o=`<svg viewBox="0 0 ${w} ${w}" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px">`;
+  if(region!==SQ)o+=`<polygon points="${pp(SQ)}" fill="none" stroke="${FC.line}" stroke-width="1" stroke-dasharray="4 3"/>`;
+  o+=`<polygon points="${pp(region)}" fill="${FC.paper}" stroke="${FC.ink}" stroke-width="1.4"/>`;
+  H.forEach((h,k)=>o+=`<polygon points="${pp(h.pts)}" fill="${mark.includes(k)?'#F7B9B0':FC.hole}" stroke="${mark.includes(k)?'#D33':FC.ink}" stroke-width="${mark.includes(k)?2:1.2}"/>`);
+  return o+'</svg>'}
+function foldNotes(X,i){const o=i!=null?X.opts[i]:null,layers=2**X.n,nm=c=>c==null?'shape':FC_SHAPES[X.cuts[c].k].name;
+  /* the unfolding, one fold at a time */
+  let stages=[];let H=X.cuts.map((c,ci)=>({ci,pts:c.pts}));stages.push({H,region:X.regions[X.n],cap:'Folded, with the cuts'});
+  X.seq.slice().reverse().forEach((f,si)=>{H=[...H,...H.map(h=>({ci:h.ci,pts:h.pts.map(FOLDS[f.k].refl)}))];stages.push({H,region:X.regions[X.n-1-si],cap:si===X.n-1?'Fully unfolded':'Unfold the last fold first'})});
+  const what=!o?'Time ran out.':{noflip:`In answer ${LET[i]}, one ${nm(o.ci)} has been copied across the fold <b>without being flipped</b>. Unfolding works like a mirror: the copy is a mirror image, so anything pointing towards the fold line still points towards it.`,
+    missing:`Answer ${LET[i]} has a ${nm(o.ci)} missing. The paper was ${layers} layers thick, so every shape cut out appears ${layers} times.`,
+    swap:`In answer ${LET[i]}, two shapes have swapped places. Each copy appears exactly opposite its own shape, across the fold line.`,
+    wrongline:`In answer ${LET[i]}, the shapes are mirrored across the wrong line. Each fold line is where the copies mirror across, so check where the dashed lines were.`,
+    turned:`In answer ${LET[i]}, one ${nm(o.ci)} has been turned round. A mirror copy is flipped across the fold, never turned.`}[o.kind];
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs">${stages.map(st=>`<figure class="fig" style="margin:0">${holesSVG(st.H,{w:130,region:st.region})}<figcaption>${st.cap}</figcaption></figure>`).join('')}
+    ${o?`<figure class="fig" style="margin:0">${holesSVG(o.holes,{w:130})}<figcaption>Your answer ${LET[i]}</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${what}</p></div>
+    <div class="nb trick"><h4>The trick: count, then unfold backwards</h4><ol class="steps"><li><b>Count the layers:</b> ${X.n} fold${X.n>1?'s':''} makes ${layers} layers, so every shape appears ${layers} times. Cross out answers with the wrong number.</li>
+      <li><b>Unfold the last fold first.</b> Mirror every cut across that fold line.</li>${X.n>1?'<li><b>Then the first fold</b>: mirror everything again, across that line.</li>':''}
+      <li><b>Mirror, don’t copy.</b> A shape pointing towards the fold line still points towards it after unfolding.</li></ol></div>
+    <div class="nb trap"><h4>The trap</h4><p><b>Copying instead of mirroring.</b> The most common wrong answer has the right number of shapes, in the right places, but one of them isn’t flipped. Check which way each copy points.</p></div></div>`}}
+QB.fold=function(host,lvl=1,opt={}){const X=genFold();
+  host.innerHTML=`<p class="qtext">The paper is folded along the dashed line${X.n>1?'s':''}, then the shapes are cut out. What does it look like unfolded?</p>
+    <div class="foldq">${X.regions.map((_,k)=>`${k?'<span class="op">→</span>':''}<div>${foldStepSVG(X,k,{w:118,cuts:k===X.n})}</div>`).join('')}<span class="op">→ ?</span></div>
+    ${opt.learn?`<p class="hint">Hint: ${X.n} fold${X.n>1?'s':''} = ${2**X.n} layers, so each shape appears ${2**X.n} times. Unfold the last fold first and mirror every shape across it.</p>`:''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${holesSVG(o.holes,{w:132})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,foldCheck(X));const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:foldNotes(X,i),ok?`Every shape mirrored across each fold: ${2**X.n} of each.`:`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+function foldCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Bonus round · Case 13 · Paper folding</div><h2>Fold and Cut</h2></div></div>
+    <div class="rule"><span class="pp">✎ Try it for real once: fold a square of paper, snip a shape, unfold it.</span><strong>The paper is folded, shapes are cut, then it’s unfolded.</strong>
+      <ol><li><b>Count the layers.</b> 1 fold = 2 layers, 2 folds = 4 layers. Every shape cut appears that many times. Cross out answers with the wrong count.</li>
+      <li><b>Unfold the last fold first.</b> Mirror every cut across that fold line. Then the fold before it.</li>
+      <li><b>Mirror, don’t copy.</b> A shape pointing towards the fold line still points towards it after unfolding. Shapes are flipped, never turned.</li>
+      <li><b>Check positions:</b> each copy sits exactly opposite its shape, the same distance from the fold.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="fLearn">Learn: 6 questions, no timer, hints</button><button id="fExam">Exam mode: 8 timed questions</button></div></section>`;
+  const go=learn=>runQuiz({id:learn?null:'fold',tag:`Bonus · Case 13 · ${learn?'Learn':'Exam mode'}`,title:'Fold and Cut',secs:learn?0:50,level:1,learn,
+    rule:'<strong>Count the layers, unfold the last fold first, and mirror every shape across each fold line.</strong>',plan:repeat('fold',learn?6:8),remake:()=>repeat('fold',learn?6:8)});
+  $('#fLearn').onclick=()=>go(true);$('#fExam').onclick=()=>go(false);scrollTo(0,0)}
+
+/* ============ 7-day challenge (week 2): play every day, revise cubes, master the four new cases ============ */
+/* Starts the first day she opens the game on or after Thu 29 Oct 2026. Each day has a mission: the memory warm-up,
+   one cube revision round, and today's new case(s). Win: all 7 daily missions done (one every day) and all four new cases mastered. */
+const MOCK_PER_CARD=3,MOCK_STAMP_MIN=17,CH2_FROM='2026-10-29',CH2_NEW=['odd','join','code','fold'];
+const CH2_CUBE=['edge','opp','edge','rot','droneH','edge','mock'];
+const CH2_MODS=[['odd'],['join'],['code'],['fold'],['odd','join'],['code','fold'],null];
+const CH2_NAME={edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
+  odd:'Odd Cube Out',join:'Join It Up',code:'Code Breaker',fold:'Fold and Cut',warm:'Memory warm-up'};
+const CH2_PASS={edge:6,opp:6,rot:6,droneH:6,mock:15,odd:6,join:6,code:6,fold:6};
+function ch2(){let start=store.get('ch2Start',null);const t=today();
+  if(!start){if(t<CH2_FROM)return{pending:true};start=t;store.set('ch2Start',start)}
+  const dayN=Math.floor((Date.parse(t+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,dateOf=k=>dayStr(Date.parse(start+'T12:00:00Z')+(k-1)*864e5);
+  const passed=(id,d)=>hist(id).some(r=>r.d===d&&r.n>=CH2_PASS[id]);
+  const mastBefore=(m,d)=>new Set(hist(m).filter(r=>r.d<d&&examReady(m,r)).map(r=>r.d)).size>=2;
+  const mission=k=>{const d=dateOf(k),mods=(CH2_MODS[k-1]||CH2_NEW).filter(m=>!mastBefore(m,d));
+    const items=[{id:'warm',done:hist('warm').some(r=>r.d===d)},{id:CH2_CUBE[k-1],done:passed(CH2_CUBE[k-1],d),cube:true},...mods.map(m=>({id:m,done:passed(m,d)}))];
+    return{k,d,items,done:items.every(x=>x.done)}};
+  const days=[1,2,3,4,5,6,7].map(mission),T0=days[dayN-1],mastered=CH2_NEW.map(m=>({m,days:Math.min(2,readyDays(m))}));
+  /* optional daily bonus: a Mock Exam scoring 17/20 or more earns a mock stamp (one a day). Every 3 mock stamps = an extra card.
+     During the challenge this replaces the usual mock stamp, so a mock never counts twice. */
+  days.forEach(x=>x.mock=hist('mock').some(r=>r.d===x.d&&r.n>=MOCK_STAMP_MIN));const mocks=days.filter(x=>x.mock).length;
+  if(T0&&T0.mock&&onceFlag('mockstamp-'+T0.d))toast(`<b>Mock stamp earned!</b> <span>${mocks%MOCK_PER_CARD===0?'':`${MOCK_PER_CARD-mocks%MOCK_PER_CARD} more for an extra card`}</span>`);
+  for(let k=1;k<=Math.floor(mocks/MOCK_PER_CARD);k++)milestone('mockcard'+k,`Bonus: ${MOCK_PER_CARD} mock stamps (set ${k})`);
+  const allDays=days.every(x=>x.done),allMods=mastered.every(x=>x.days>=2),won=!!rewards().flags.ch2;
+  if(allDays&&allMods&&!won){milestone('ch2','Bonus: 7-day challenge won, every day played and all 4 new cases mastered');addTrophy('ch2','7-day challenge · week 2','A mission every day for 7 days, and all 4 new cases mastered',start,today())}
+  return{start,dayN,deadline:dateOf(7),days,mastered,mocks,allDays,allMods,won:won||(allDays&&allMods),missed:days.some(x=>x.k<dayN&&!x.done)}}
+/* is the 7-day challenge running today? (then mocks earn mock stamps instead of ordinary stamps) */
+function ch2Active(){const s=store.get('ch2Start',null),t=today();return!!s&&t>=s&&t<=dayStr(Date.parse(s+'T12:00:00Z')+6*864e5)}
+function ch2HTML(){const C=ch2();
+  if(C.pending)return`<div class="challenge ch2"><div class="ch-day"><b>7</b><span>day challenge</span></div><div class="ch-main"><div class="tag">Next challenge · starts Thursday 29 October</div><p style="margin:6px 0 0">7 days, a mission every day: the warm-up, a cube revision round, and the new cases. Master all four new cases and play every day to win a <b>bonus card</b>.</p></div></div>`;
+  const day=Math.min(C.dayN,7),wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
+  const dots=C.days.map(x=>{const st=x.done?'done':x.k<C.dayN?'miss':x.k===C.dayN?'today':'';return`<span class="c2dot ${st}" title="Day ${x.k}">${x.done?'✓':x.k<C.dayN?'✗':x.k}${x.mock?'<i class="c2star" title="Mock stamp earned">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
+  const T=C.dayN<=7?C.days[C.dayN-1]:null,dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  const msg=C.won?'<b>Challenge won!</b> Every day played and all four new cases mastered. Bonus card earned.':C.dayN>7?'The 7 days are over. Keep the daily routine going: warm-up, one cube case, one new case.':
+    C.missed?'A day was missed, so the bonus card is gone this time, but keep going: every mission still builds exam skill.':`Do <b>every</b> day’s mission and master all four new cases by ${dl} to win a <b>bonus card</b>.`;
+  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${x.id==='droneH'?'8 questions':x.id==='mock'?'15/20 or more':'Exam mode, 6/8 or more'}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
+  const chips=C.mastered.map(x=>`<span class="c2chip ${x.days>=2?'ok':''}">${CH2_NAME[x.m]} ${x.days>=2?'✓ Mastered':`${x.days}/2 days`}</span>`).join('');
+  return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${C.dayN>7?'7+':day}</b><span>of 7 days</span></div>
+    <div class="ch-main"><div class="tag">7-day challenge · week 2</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
+    ${T&&!C.won?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
+    ${T?`<h4 class="c2h">★ Bonus: mock stamps <span class="muted">(optional · one a day for a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far${Math.floor(C.mocks/MOCK_PER_CARD)?` · ${Math.floor(C.mocks/MOCK_PER_CARD)} extra card${Math.floor(C.mocks/MOCK_PER_CARD)===1?'':'s'} earned`:''} · ${MOCK_PER_CARD-C.mocks%MOCK_PER_CARD} to the next card</em></div><ul class="c2list bonus"><li class="${T.mock?'ok':''}"><span class="c2tick">${T.mock?'✓':''}</span><span><b>Mock Exam</b> <span class="muted">· 15-minute timing · aim for 17/20 or more</span></span>${T.mock?'':'<button data-w2="mock">Play</button>'}</li></ul>`:''}
+    <h4 class="c2h">New cases to master <span class="muted">(7+/8 in Exam mode, quick enough, on 2 different days)</span></h4><div class="c2chips">${chips}</div></div></div>`}
+const CH2_GO={warm:()=>warmup(),mock:()=>mock(),droneH:()=>droneCase(),rot:()=>rotCase()};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-w2]');if(!b)return;const id=b.dataset.w2;(CH2_GO[id]||(()=>CASES.find(c=>c.id===id).go()))()});
 
 /* ============ Rewards: stamps, cards and detective rank ============ */
 const RANKS=[['Rookie',0],['Junior Detective',300],['Detective',900],['Inspector',1800],['Chief Inspector',3000],['Master Detective',4500]];
@@ -1326,12 +1596,12 @@ const rwSettings=()=>({spc:6,limit:15,...store.get('rwset',{})});
 const MODULE_CARDS=[{key:'m1',name:'counting (cases 01–02)',items:()=>[GATES.w1[0],GATES.w1[1]]},{key:'m2',name:'nets (cases 03–05)',items:()=>[GATES.w1[2],GATES.w1[3],GATES.w1[4]]},{key:'m3',name:'turning, views and speed (cases 06–08)',items:()=>GATES.w2}];
 const groupDone=g=>g.items().every(c=>c.p()>=c.of);
 function checkModules(){MODULE_CARDS.forEach(g=>{if(groupDone(g))milestone(g.key,`Mastered ${g.name}`)});
-  const C=challenge();if(C.done&&C.day<=10)milestone('speed10',`Bonus: learned all 8 cases in ${C.day} day${C.day===1?'':'s'}`)}
+  const C=challenge();if(C.done&&C.day<=10){milestone('speed10',`Bonus: learned all 8 cases in ${C.day} day${C.day===1?'':'s'}`);addTrophy('ch1','10-day challenge','All 8 case files mastered',C.start,today())}}
 /* The 10-day challenge: master all 8 case files within 10 days (day 1 = the start date) for a bonus card */
 function challenge(){let start=store.get('chStart',null);if(!start){const ds=Object.values(store.get('hist',{})).flat().map(r=>r.d).sort();start=ds[0]||today();store.set('chStart',start)}
   const day=Math.floor((Date.parse(today()+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,deadline=dayStr(Date.parse(start+'T12:00:00Z')+9*864e5);
   const items=[...GATES.w1,...GATES.w2],got=items.filter(c=>c.p()>=c.of).length;return{start,day,deadline,got,of:items.length,done:got===items.length,won:!!rewards().flags.speed10}}
-function challengeHTML(){const C=challenge(),dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}),left=10-C.day;
+function challengeHTML(){const C=challenge();if(C.won)return`<div class="ch-won">🏆 <b>10-day challenge won:</b> all 8 cases learned. Bonus card earned.</div>`;const dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}),left=10-C.day;
   const pct=Math.round(C.got/C.of*100);
   const msg=C.won?'<b>Challenge won!</b> All 8 cases learned. Bonus card earned.':C.done?'<b>All 8 cases learned.</b> Great work, now keep them sharp.':
     left>=0?`<b>${left===0?'Last day!':`${left} day${left===1?'':'s'} left`}</b> to master all 8 case files by ${dl} and win a <b>bonus card</b>.`:`The 10 days have passed, but keep going: mastering all 8 cases still earns the three case cards.`;
@@ -1356,6 +1626,17 @@ function milestone(key,reason){const r=rewards();if(r.flags[key])return;r.flags[
   if(r.cards.length<rwSettings().limit){r.cards.push({d:today(),from:key,reason});saveRw(r);toast(`<b>CARD EARNED!</b> ${reason}. Ask for your card.`,'card')}else saveRw(r)}
 function addPoints(p){const r=rewards();r.points+=Math.round(p);const nr=RANKS.filter(x=>r.points>=x[1]).length-1,up=nr>r.rank;if(up)r.rank=nr;saveRw(r);
   if(up)toast(`<b>Promoted!</b> You are now a ${RANKS[nr][0]}.`,'rank')}
+/* ---- Trophy cabinet: a permanent record of every challenge won (kept in the rewards data, so reset and backups keep it) ---- */
+function addTrophy(key,title,detail,start,end){const r=rewards();r.trophies=r.trophies||[];if(r.trophies.some(t=>t.key===key))return;
+  const cards=r.cards.filter(c=>c.d>=start&&c.d<=end),days=Math.round((Date.parse(end+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1;
+  r.trophies.push({key,title,detail,start,d:end,days,cards:cards.length,cardReasons:cards.map(c=>c.reason)});saveRw(r)}
+function trophyHTML(){backfillTrophies();const r=rewards(),T=r.trophies||[];if(!T.length)return'';const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  return`<section class="trophies"><h2 class="wk">🏆 Trophy cabinet</h2><p class="muted" style="margin:0 0 8px">Every challenge Greta has won. These stay here for good.</p>
+    ${T.map(t=>`<div class="trophy"><div class="tro-icon">🏆</div><div><h3>${t.title}</h3><p class="muted" style="margin:2px 0 6px">${t.detail}. Won on ${fd(t.d)}, in ${t.days} day${t.days===1?'':'s'}.</p>
+      <p style="margin:0"><b>${t.cards} card${t.cards===1?'':'s'} earned</b> during the challenge:</p><div class="tro-cards">${t.cardReasons.map(x=>`<span>🃏 ${x}</span>`).join('')}</div></div></div>`).join('')}
+    <p class="muted" style="margin:8px 0 0">Cards earned in total: <b>${r.cards.length}</b>.</p></section>`}
+function backfillTrophies(){try{const r=rewards();if(!r.flags.speed10||(r.trophies||[]).some(t=>t.key==='ch1'))return;
+  const card=r.cards.find(c=>c.from==='speed10'),win=card?card.d:today(),start=store.get('chStart',null)||win;addTrophy('ch1','10-day challenge','All 8 case files mastered',start<win?start:win,win)}catch(e){}}
 function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[key]=true;saveRw(r);return true}
 /* practice time: count minutes while a case is open */
 let inCase=false;
@@ -1454,7 +1735,7 @@ const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
 /* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
-const MASTERY={rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+const MASTERY={rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},code:{min:7,of:8,secs:35,label:'7+/8'},fold:{min:7,of:8,secs:40,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
   edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
 const secsFor=(m,lvl)=>m.secsHard&&lvl>=2?m.secsHard:m.secs;
 const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=secsFor(m,r.lvl||0)};
@@ -1494,6 +1775,8 @@ const CASES=[
   {id:'rot',week:3,bonus:true,tab:'BONUS · CASE 09',title:'Turn It Around',blurb:'Which answer is the same shape, just turned? Count the cubes, track one end, and catch the mirror trap.',go:()=>rotCase()},
   {id:'odd',week:3,bonus:true,tab:'BONUS · CASE 10',title:'Odd Cube Out',blurb:'Five pictures of the same cube, but one can’t be. Find two faces on every cube and check how they touch.',go:()=>oddCase()},
   {id:'join',week:3,bonus:true,tab:'BONUS · CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
+  {id:'code',week:3,bonus:true,tab:'BONUS · CASE 12',title:'Code Breaker',blurb:'Each letter stands for a feature. Crack the code one letter at a time and spot the red herring.',go:()=>codeCase()},
+  {id:'fold',week:3,bonus:true,tab:'BONUS · CASE 13',title:'Fold and Cut',blurb:'Fold the paper, cut the shapes, then unfold it in your head. Count the layers and mirror every cut.',go:()=>foldCase()},
   {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option, knowing why. Quick and accurate.',go:()=>elimCase()}];
 const caseType={rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
@@ -1515,10 +1798,12 @@ function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="$
 function home(){
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.<br><b>Detective’s kit:</b> keep a pencil and scrap paper next to you every time you play. In the exam you can use them, so practise with them now.</div>
+  ${ch2HTML()}
   ${challengeHTML()}
   ${streakHTML()}
   ${nextUp()}
   ${collectionHTML()}
+  ${trophyHTML()}
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
   <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
@@ -1545,7 +1830,7 @@ function home(){
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
     <div class="row"><button id="pu">Open both mastery tests now</button><span class="muted" id="puc"></span></div>
     <details><summary style="cursor:pointer;font-weight:600">Greta’s feedback (${store.get('feedback',[]).length})</summary>${feedbackHTML()}<p class="muted" style="font-size:.85rem;margin:6px 0 0">Her feedback is included in backup codes, so you can paste one to Claude to get changes made.</p></details>
-    <div class="row"><button id="pfull">Full reset, including stamps and cards</button><span class="muted" id="pfullc"></span></div></section>`;
+    <div class="row"><button id="pfull">Full reset, including stamps and cards (the trophy cabinet stays)</button><span class="muted" id="pfullc"></span></div></section>`;
   view.querySelectorAll('.folder[data-id]').forEach(b=>b.onclick=()=>{inCase=true;parentOpen=false;if(b.dataset.id==='mock')return mock();const c=CASES.find(x=>x.id===b.dataset.id);$('#homeBtn').hidden=false;c.go();scrollTo(0,0)});
   const nx=$('#nxcase');if(nx)nx.onclick=()=>{inCase=true;parentOpen=false;open(nx.dataset.id)};
   view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
@@ -1562,7 +1847,7 @@ function home(){
   const GAME_KEYS=['hist','best','found','unlock','weak','towerMode','towerLevel'];
   const wipe=keys=>{keys.forEach(k=>{try{localStorage.removeItem('cd_'+k)}catch(e){}})};
   twoStep('#pr','#prc',()=>{wipe(GAME_KEYS);home();toast('<b>Fresh start.</b> Your stamps and cards are safe.','rank')});
-  twoStep('#pfull','#pfullc',()=>{wipe([...GAME_KEYS,'rw','rwset']);parentOpen=false;home()});
+  twoStep('#pfull','#pfullc',()=>{const keep=rewards().trophies||[];wipe([...GAME_KEYS,'rw','rwset']);if(keep.length)store.set('rw',{trophies:keep});parentOpen=false;home()});
   $('#pclose').onclick=()=>{parentOpen=false;$('#parent').hidden=true};
   scrollTo(0,0)}
 function open(id){parentOpen=false;const c=CASES.find(x=>x.id===id);stopTimer();$('#homeBtn').hidden=false;c.go();scrollTo(0,0)}
@@ -1570,7 +1855,9 @@ function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',ti
   passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
   rule:`<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
 const CASE_TYPES={rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
-const TRICK={odd:'Ignore faces you only see once (they’re just hidden on the other cubes). Find two faces that are on most cubes and say how they touch: “tip points at circle”. The cube that breaks that rule is the odd one out.',
+const TRICK={code:'One letter at a time. Find two pictures with the same first letter and ask what they share; check it against a picture with a different first letter. Then the second letter. Ignore a feature that changes but has no letter. A brand-new feature takes the letter nobody else uses.',
+  fold:'Count the layers (1 fold = 2, 2 folds = 4): every shape appears that many times. Unfold the last fold first and mirror every cut across the fold line. Shapes are flipped, never turned, and sit exactly opposite across the fold.',
+  odd:'Ignore faces you only see once (they’re just hidden on the other cubes). Find two faces that are on most cubes and say how they touch: “tip points at circle”. The cube that breaks that rule is the odd one out.',
   join:'Match the letters: each piece’s edge goes on the base edge with the same letter. Turn the piece, never flip it, and check which end its slope or corner ends up at. Answers may be turned round, so compare the shape, and watch for the mirror image.',
   rot:'Count the cubes first. Then pick one end cube and check it’s joined the same way, on the same side. If it sticks out the other side, it’s the mirror image: turning can never make that.',
   brick:'Know the block’s size first (all blocks match). Then go layer by layer on paper: count each layer’s blocks and write it down. A line across a face is where one block ends; no line means it’s the same block.',
@@ -1579,7 +1866,9 @@ const TRICK={odd:'Ignore faces you only see once (they’re just hidden on the o
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
   edge:'Rule out in order: duds, then opposites shown together, then edge buddies. Edge buddies: on the net, say which neighbour the point touches (“tip touches circle”), then check the same on each cube. Draw a little arrow on the tip if it helps. Flag or L: walk along the pole or upright: is it sticking out left or right? Turning never changes that. Two left? Corner check: go clockwise round the corner, and the faces must come in the same order as on the net.',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
-const WHY={odd:'A cube can look very different just because it’s turned or shows a hidden face. Only a broken rule between two faces proves it’s a different cube, so check one pair of faces on every cube.',
+const WHY={code:'Code questions hide a red herring and put close wrong answers that get one letter right. Cracking each letter separately means you can prove the answer instead of guessing.',
+  fold:'Wrong answers usually have the right number of shapes in nearly the right places, but one copied without flipping. Counting layers and mirroring one fold at a time catches them.',
+  odd:'A cube can look very different just because it’s turned or shows a hidden face. Only a broken rule between two faces proves it’s a different cube, so check one pair of faces on every cube.',
   join:'Every wrong answer is nearly right: a piece flipped, a piece on the wrong edge, or the whole shape mirrored. A quick glance can’t tell them apart; checking both joins can.',
   rot:'Every rotation question hides a mirror image that looks exactly right at a glance. Tracking one end cube is the only quick way to catch it.',
   brick:'A big block shows three faces, so it’s easy to count it twice, and blocks tucked behind others are easy to miss. Knowing the block size and counting layer by layer means every block is counted exactly once.',
