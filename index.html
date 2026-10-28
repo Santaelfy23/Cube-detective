@@ -148,7 +148,8 @@ p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px
 .copt{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
 .copt .pick{width:100%;padding:24px 6px 8px;position:relative;min-height:110px;display:flex;align-items:center;justify-content:center}
 .copt .lbl{position:absolute;top:5px;left:8px;font-weight:700;font-size:.85rem;color:var(--muted)}
-.copt .xo{position:absolute;top:4px;right:4px;padding:2px 8px;font-size:.8rem;border-radius:8px}
+.copt .xo{position:static;width:100%;min-height:38px;padding:6px 8px;font-size:.85rem;border-radius:8px;font-weight:600}
+.copt .xo::after{content:" Cross out"}.copt .xo[aria-pressed="true"]::after{content:" Undo"}.copt .pick:disabled~.xo{visibility:hidden}
 .copt.out .pick{opacity:.35}
 .copt.out .pick::after{content:"";position:absolute;inset:10% 10%;background:linear-gradient(to top right,transparent calc(50% - 2px),var(--bad) calc(50% - 2px),var(--bad) calc(50% + 2px),transparent calc(50% + 2px))}
 .copt.right .pick{border-color:var(--good);background:var(--good-soft);opacity:1}
@@ -1549,9 +1550,9 @@ function foldCase(){stopTimer();$('#homeBtn').hidden=false;
    one cube revision round, and today's new case(s). Win: all 7 daily missions done (one every day) and all four new cases mastered. */
 const MOCK_PER_CARD=3,MOCK_STAMP_MIN=17,CH2_FROM='2026-10-29',CH2_NEW=['odd','join','code','fold'];
 const CH2_CUBE=['edge','opp','edge','rot','droneH','edge','mock'];
-const CH2_NAME={edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
+const CH2_NAME={cp1:'Mastery test 1: counting and nets',cp2:'Mastery test 2: everything',edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
   odd:'Odd Cube Out',join:'Join It Up',code:'Code Breaker',fold:'Fold and Cut',warm:'Memory warm-up'};
-const CH2_PASS={edge:6,opp:6,rot:6,droneH:6,mock:15,odd:6,join:6,code:6,fold:6};
+const CH2_PASS={cp1:10,cp2:12,edge:6,opp:6,rot:6,droneH:6,mock:15,odd:6,join:6,code:6,fold:6};
 function ch2(){let start=store.get('ch2Start',null);const t=today();
   if(!start){if(t<CH2_FROM)return{pending:true};start=t;store.set('ch2Start',start)}
   const dayN=Math.floor((Date.parse(t+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,dateOf=k=>dayStr(Date.parse(start+'T12:00:00Z')+(k-1)*864e5);
@@ -1561,8 +1562,11 @@ function ch2(){let start=store.get('ch2Start',null);const t=today();
      So each case gets two days in a row, and anything she has already started or mastered is picked up or skipped. Days 6-7: catch up on everything left. */
   const readyBefore=(m,d)=>new Set(hist(m).filter(r=>r.d<d&&examReady(m,r)).map(r=>r.d)).size;
   const modsFor=(k,d)=>{const left=CH2_NEW.filter(m=>readyBefore(m,d)<2);if(k>=6)return left;const half=left.filter(m=>readyBefore(m,d)===1),fresh=left.find(m=>readyBefore(m,d)===0);return[...half,...(fresh?[fresh]:[])]};
-  const mission=k=>{const d=dateOf(k),mods=modsFor(k,d);
-    const items=[{id:'warm',done:hist('warm').some(r=>r.d===d)},{id:CH2_CUBE[k-1],done:passed(CH2_CUBE[k-1],d),cube:true},...mods.map(m=>({id:m,done:hist(m).some(r=>r.d===d&&examReady(m,r)),mod:true}))];
+  /* step 4: a mastery test, alternating test 1 and test 2, until each has been passed on 2 different days. None on day 7 (Mock Exam day). */
+  const passDaysBefore=(id,d)=>new Set(hist(id).filter(r=>r.d<d&&r.n>=CH2_PASS[id]).map(r=>r.d)).size;
+  const testFor=(k,d)=>{if(k>=7)return null;const pref=k%2?['cp1','cp2']:['cp2','cp1'];return pref.find(t=>passDaysBefore(t,d)<2)||null};
+  const mission=k=>{const d=dateOf(k),mods=modsFor(k,d),test=testFor(k,d);
+    const items=[{id:'warm',done:hist('warm').some(r=>r.d===d)},{id:CH2_CUBE[k-1],done:passed(CH2_CUBE[k-1],d),cube:true},...mods.map(m=>({id:m,done:hist(m).some(r=>r.d===d&&examReady(m,r)),mod:true})),...(test?[{id:test,done:passed(test,d),test:true}]:[])];
     return{k,d,items,done:items.every(x=>x.done)}};
   const days=[1,2,3,4,5,6,7].map(mission),T0=days[dayN-1],mastered=CH2_NEW.map(m=>({m,days:Math.min(2,readyDays(m))}));
   /* optional daily bonus: a Mock Exam scoring 17/20 or more earns a mock stamp (one a day). Every 3 mock stamps = an extra card.
@@ -1582,14 +1586,14 @@ function ch2HTML(){const C=ch2();
   const T=C.dayN<=7?C.days[C.dayN-1]:null,dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
   const msg=C.won?'<b>Challenge won!</b> Every day played and all four new cases mastered. Bonus card earned.':C.dayN>7?'The 7 days are over. Keep the daily routine going: warm-up, one cube case, one new case.':
     C.missed?'A day was missed, so the bonus card is gone this time, but keep going: every mission still builds exam skill.':`Do <b>every</b> day’s mission and master all four new cases by ${dl} to win a <b>bonus card</b>.`;
-  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${x.id==='droneH'?'8 questions, 6/8 or more':x.id==='mock'?'15/20 or more':x.mod?`Exam mode, 7/8 or more, about ${MASTERY[x.id].secs}s a question or less · counts towards mastering it`:'Exam mode, 6/8 or more'}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
+  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${x.id==='droneH'?'8 questions, 6/8 or more':x.id==='mock'?'15/20 or more':x.test?`pass mark ${CH2_PASS[x.id]}/${x.id==='cp1'?12:15} · end-of-session check`:x.mod?`Exam mode, 7/8 or more, about ${MASTERY[x.id].secs}s a question or less · counts towards mastering it`:'Exam mode, 6/8 or more'}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
   const chips=C.mastered.map(x=>`<span class="c2chip ${x.days>=2?'ok':''}">${CH2_NAME[x.m]} ${x.days>=2?'✓ Mastered':`${x.days}/2 days`}</span>`).join('');
   return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${C.dayN>7?'7+':day}</b><span>of 7 days</span></div>
     <div class="ch-main"><div class="tag">7-day challenge · week 2</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
     ${T&&!C.won?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
     ${T?`<h4 class="c2h">★ Bonus: mock stamps <span class="muted">(optional · one a day for a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far${Math.floor(C.mocks/MOCK_PER_CARD)?` · ${Math.floor(C.mocks/MOCK_PER_CARD)} extra card${Math.floor(C.mocks/MOCK_PER_CARD)===1?'':'s'} earned`:''} · ${MOCK_PER_CARD-C.mocks%MOCK_PER_CARD} to the next card</em></div><ul class="c2list bonus"><li class="${T.mock?'ok':''}"><span class="c2tick">${T.mock?'✓':''}</span><span><b>Mock Exam</b> <span class="muted">· 15-minute timing · aim for 17/20 or more</span></span>${T.mock?'':'<button data-w2="mock">Play</button>'}</li></ul>`:''}
     <h4 class="c2h">New cases to master <span class="muted">(7+/8 in Exam mode, quick enough, on 2 different days)</span></h4><div class="c2chips">${chips}</div></div></div>`}
-const CH2_GO={warm:()=>warmup(),mock:()=>mock(),droneH:()=>droneCase(),rot:()=>rotCase()};
+const CH2_GO={cp1:()=>checkpoint('cp1'),cp2:()=>checkpoint('cp2'),warm:()=>warmup(),mock:()=>mock(),droneH:()=>droneCase(),rot:()=>rotCase()};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-w2]');if(!b)return;const id=b.dataset.w2;(CH2_GO[id]||(()=>CASES.find(c=>c.id===id).go()))()});
 
 /* ============ Rewards: stamps, cards and detective rank ============ */
@@ -1816,6 +1820,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 28 Oct, late</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2082,3 +2087,5 @@ home();
 
 </body>
 </html>
+
+  
