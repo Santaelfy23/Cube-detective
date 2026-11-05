@@ -140,6 +140,8 @@ h3.sub{margin:16px 0 8px;font-size:1rem}
 .codeq,.foldq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:8px 0 12px}.codeq figure{margin:0;text-align:center}.codeq figcaption{font-weight:800;font-size:1.15rem;margin-top:4px;letter-spacing:.08em}.foldq .op{font-size:1.4rem;font-weight:800;color:var(--muted)}.codeopt{font-size:1.4rem;font-weight:800;letter-spacing:.1em;display:block;padding:10px 0}
 .mgrid{display:grid;grid-template-columns:repeat(3,auto);gap:4px;justify-content:center;margin:8px 0 12px}.mgrid>div{border:1px solid var(--line);border-radius:4px}
 .copt.sel .pick{outline:3px solid var(--accent);outline-offset:-3px}.notw{color:var(--bad);letter-spacing:.04em}
+.grp{border:2px solid #333;border-radius:50%;background:#fff;padding:20px 26px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:420px;margin:8px auto 12px}.grp figure{margin:0;text-align:center}.grp svg{background:transparent!important}@media (max-width:620px){.grp{border-radius:36px;padding:12px 10px}}.grp figcaption{font-size:.68rem;line-height:1.2;color:#333;max-width:86px}
+.nudge{background:#FFF4D6;border:1px solid #E8B93A;border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:.9rem;color:#5a4300}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -923,8 +925,8 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
-const TYPE_CASE={combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+const TYPE_NAME={group:'Match the group',combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_CASE={group:'group',combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
 function runQuiz(cfg){
@@ -932,10 +934,10 @@ function runQuiz(cfg){
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}${cfg.total?'<div class="bigclock" id="clk"></div>':''}<div id="game"></div></section>`;
   const g=$('#game'),plan=cfg.plan;let n=0,score=0,unreached=0;const tally={},missed={};QT.reset();
   /* exam timing: one clock for the whole paper, counting down. It pauses while case notes are open, so reading them costs nothing. */
-  let left=cfg.total||0,running=false,timeUp=false,curQ=null;const fmt=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+  let left=cfg.total||0,running=false,timeUp=false,curQ=null,qSecs=0,nudged=false;const fmt=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
   const paint=()=>{const c=$('#clk');if(!c)return false;const todo=plan.length-n+(running?1:0),pace=todo*45;
     c.className='bigclock'+(left<=60?' low':left<pace-20?' behind':'');c.innerHTML=`<b>${fmt(Math.max(0,left))}</b> left · ${plan.length-n+(running?1:0)} question${todo===1?'':'s'} to go<span>${left<pace-20&&left>60?'Behind pace: guess the hard ones and move on':'Aim for about 45 seconds a question'}</span>`;return true};
-  if(cfg.total){clearInterval(window.__totalId);window.__totalId=setInterval(()=>{if(!paint()){clearInterval(window.__totalId);return}if(!running)return;left-=.25;
+  if(cfg.total){clearInterval(window.__totalId);window.__totalId=setInterval(()=>{if(!paint()){clearInterval(window.__totalId);return}if(!running)return;left-=.25;qSecs+=.25;if(qSecs>=60&&!nudged){nudged=true;const qh=$('#qh');if(qh){const d=document.createElement('div');d.className='nudge';d.innerHTML='<b>⏱ A minute on this one.</b> Cross out what you can, make your best guess and move on. Don’t let one question eat the clock.';qh.prepend(d)}}
     if(left<=0&&!timeUp){timeUp=true;running=false;paint();curQ&&curQ.timeout()}},250);paint()}
   const next=()=>{stopTimer();redraw=null;
     if(n===plan.length){clearInterval(window.__totalId);const ck=$('#clk');if(ck)ck.remove();
@@ -953,7 +955,7 @@ function runQuiz(cfg){
       $('#again').onclick=()=>runQuiz({...cfg,plan:cfg.remake?cfg.remake():plan});$('#hm').onclick=home;scrollTo(0,0);return}
     const type=plan[n];n++;
     g.innerHTML=`<div class="row" style="justify-content:space-between"><span class="score">Question ${n} of ${plan.length} · ${TYPE_NAME[type]}</span><span class="score">Score ${score}</span></div>${cfg.secs?'<div class="timer"><i id="bar"></i></div>':''}<div id="qh" class="qhost"></div><div id="fb"></div>`;
-    const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn});QT.start();let notes=null;curQ=q;if(cfg.total){running=true;paint()}redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
+    const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn,...(cfg.qopt||{})});qSecs=0;nudged=false;QT.start();let notes=null;curQ=q;if(cfg.total){running=true;paint()}redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
     q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();running=false;(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
       if(!ok)missed[type]=(missed[type]||0)+1;
       $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length||timeUp?'See results':'Next →'}</button></div>`;
@@ -964,7 +966,8 @@ function runQuiz(cfg){
   const tip=cfg.pen||PEN_TIPS[cfg.id]||(cfg.plan&&PEN_TIPS[cfg.plan[0]]&&cfg.plan.every(t=>t===cfg.plan[0])?PEN_TIPS[cfg.plan[0]]:null);
   if(tip){g.innerHTML=`<div class="pengate"><div class="pg-icon">✎</div><div><h3>Pen and paper ready?</h3><p>Get a pencil and a sheet of paper before you start. In the exam you can use them, so practise with them now. <b>Before the answers appear, each question asks what’s on your paper</b>, so write it down first.</p><p class="pg-tip"><b>What to draw:</b> ${tip}</p><button class="btn-primary" id="penGo">✎ I’ve got my pen and paper, let’s go</button></div></div>`;$('#penGo').onclick=next}
   else next()}
-const PEN_TIPS={combine:'sketch the main shape and mark each piece’s length and width in squares. Then tick the pieces that match exactly.',
+const PEN_TIPS={group:'write the rule as “If ___, then ___” (or “number of ___ = number of ___”). Tick it against every picture in the group, then cross out the options that break it.',
+  combine:'sketch the main shape and mark each piece’s length and width in squares. Then tick the pieces that match exactly.',
   grid:'write the features down the side: shape, shading, outline, corner, size, direction. Tick each one you’ve checked, and write its rule next to it (sudoku, row, column, turns, adding).',
   odd:'write the two faces you’re comparing, and draw a little arrow for how they touch, like “tip → circle”. Then tick or cross each cube.',
   join:'sketch the base shape and draw each piece on the edge with its letter. Mark which way its slope or point goes.',
@@ -1591,7 +1594,7 @@ function ch2(){let start=store.get('ch2Start',null);const t=today();
   if(allDays&&allMods&&!won){milestone('ch2','Bonus: 7-day challenge won, every day played and all 4 new cases mastered');addTrophy('ch2','7-day challenge · week 2','A mission every day for 7 days, and all 4 new cases mastered',start,today())}
   return{start,dayN,deadline:dateOf(7),days,mastered,mocks,allDays,allMods,won:won||(allDays&&allMods),missed:days.some(x=>x.k<dayN&&!x.done)}}
 /* is the 7-day challenge running today? (then mocks earn mock stamps instead of ordinary stamps) */
-function ch2Active(){const s=store.get('ch2Start',null),t=today();return!!s&&t>=s&&t<=dayStr(Date.parse(s+'T12:00:00Z')+6*864e5)}
+function ch2Active(){const t=today();return(t>=CD_FROM&&t<='2026-11-14')||['ch2Start','ch3Start'].some(k=>{const s=store.get(k,null);return!!s&&t>=s&&t<=dayStr(Date.parse(s+'T12:00:00Z')+6*864e5)})}
 function ch2HTML(){const C=ch2();
   if(C.pending)return`<div class="challenge ch2"><div class="ch-day"><b>7</b><span>day challenge</span></div><div class="ch-main"><div class="tag">Next challenge · starts Thursday 29 October</div><p style="margin:6px 0 0">7 days, a mission every day: the warm-up, a cube revision round, and the new cases. Master all four new cases and play every day to win a <b>bonus card</b>.</p></div></div>`;
   const day=Math.min(C.dayN,7),wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
@@ -1607,6 +1610,91 @@ function ch2HTML(){const C=ch2();
     ${T?`<h4 class="c2h">★ Bonus: mock stamps <span class="muted">(optional · one a day for a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far${Math.floor(C.mocks/MOCK_PER_CARD)?` · ${Math.floor(C.mocks/MOCK_PER_CARD)} extra card${Math.floor(C.mocks/MOCK_PER_CARD)===1?'':'s'} earned`:''} · ${MOCK_PER_CARD-C.mocks%MOCK_PER_CARD} to the next card</em></div><ul class="c2list bonus"><li class="${T.mock?'ok':''}"><span class="c2tick">${T.mock?'✓':''}</span><span><b>Mock Exam</b> <span class="muted">· 15-minute timing · aim for 17/20 or more</span></span>${T.mock?'':'<button data-w2="mock">Play</button>'}</li></ul>`:''}
     <h4 class="c2h">New cases to master <span class="muted">(7+/8 in Exam mode, quick enough, on 2 different days)</span></h4><div class="c2chips">${chips}</div></div></div>`}
 const CH2_GO={cp1:()=>checkpoint('cp1'),cp2:()=>checkpoint('cp2'),warm:()=>warmup(),mock:()=>mock(),droneH:()=>droneCase(),rot:()=>rotCase()};
+/* ============ 7-day challenge (week 3): new cases first ============ */
+/* Starts the first day she opens the game on or after Thu 5 Nov 2026. Every day: warm-up, then Match the Group (Case 15) until it's
+   mastered (7+/8, quick enough, on 2 different days), then a re-check of one of last week's new cases (Exam mode 7+/8, once this week),
+   then a short cube revision round. Day 7 is Mock Exam day. Win: all 7 missions, Match the Group mastered, all 6 re-checks passed. */
+const CH3_FROM='2026-11-05',CH3_RE=['code','combine','fold','grid','odd','join'];
+const CH3_CUBE=['droneH','edge','tower','rot','edge','brick','mock'];
+Object.assign(CH2_PASS,{tower:6,brick:6});Object.assign(CH2_NAME,{tower:'Tower Count (hidden cubes)',brick:'The Odd Blocks',group:'Match the Group',combine:'Two-piece combine (Join It Up)'});
+function ch3(){let start=store.get('ch3Start',null);const t=today();
+  if(!start){if(t<CH3_FROM)return{pending:true};start=t;store.set('ch3Start',start)}
+  const dayN=Math.floor((Date.parse(t+'T12:00:00Z')-Date.parse(start+'T12:00:00Z'))/864e5)+1,dateOf=k=>dayStr(Date.parse(start+'T12:00:00Z')+(k-1)*864e5);
+  const passed=(id,d)=>hist(id).some(r=>r.d===d&&r.n>=CH2_PASS[id]);
+  const readyOn=(m,d)=>hist(m).some(r=>r.d===d&&examReady(m,r));
+  const groupDaysBefore=d=>new Set(hist('group').filter(r=>r.d<d&&examReady('group',r)).map(r=>r.d)).size;
+  const reBefore=(m,d)=>hist(m).some(r=>r.d>=start&&r.d<d&&examReady(m,r));
+  const mission=k=>{const d=dateOf(k),items=[{id:'warm',done:hist('warm').some(r=>r.d===d)}];
+    if(groupDaysBefore(d)<2)items.push({id:'group',done:readyOn('group',d),mast:true,first:k===1||groupDaysBefore(d)===0});
+    else if(k===4||k===6)items.push({id:'group',done:hist('group').some(r=>r.d===d&&r.n>=6),keep:true});
+    const left=CH3_RE.filter(m=>!reBefore(m,d)),nRe=k<=4?1:k<=6?2:left.length;
+    left.slice(0,nRe).forEach(m=>items.push({id:m,done:readyOn(m,d),re:true}));
+    items.push({id:CH3_CUBE[k-1],done:passed(CH3_CUBE[k-1],d),cube:CH3_CUBE[k-1]!=='mock'});
+    return{k,d,items,done:items.every(x=>x.done)}};
+  const days=[1,2,3,4,5,6,7].map(mission),T0=days[dayN-1];
+  days.forEach(x=>x.mock=hist('mock').some(r=>r.d===x.d&&r.n>=MOCK_STAMP_MIN));const mocks=days.filter(x=>x.mock).length;
+  if(T0&&T0.mock&&onceFlag('mockstamp-'+T0.d))toast(`<b>Mock stamp earned!</b> <span>${mocks%MOCK_PER_CARD===0?'':`${MOCK_PER_CARD-mocks%MOCK_PER_CARD} more for an extra card`}</span>`);
+  for(let k=1;k<=Math.floor(mocks/MOCK_PER_CARD);k++)milestone('ch3mockcard'+k,`Bonus: ${MOCK_PER_CARD} mock stamps in week 3 (set ${k})`);
+  const groupDays=Math.min(2,readyDays('group')),re=CH3_RE.map(m=>({m,ok:hist(m).some(r=>r.d>=start&&examReady(m,r))}));
+  const allDays=days.every(x=>x.done),allMods=groupDays>=2&&re.every(x=>x.ok),won=!!rewards().flags.ch3;
+  if(allDays&&allMods&&!won){milestone('ch3','Bonus: 7-day challenge week 3 won: every day played, Match the Group mastered, all 6 re-checks passed');addTrophy('ch3','7-day challenge · week 3','A mission every day for 7 days, Match the Group mastered and all 6 new cases re-checked',start,today())}
+  return{start,dayN,deadline:dateOf(7),days,groupDays,re,mocks,allDays,allMods,won:won||(allDays&&allMods),missed:days.some(x=>x.k<dayN&&!x.done)}}
+function ch3HTML(){const C=ch3();
+  if(C.pending)return'';
+  const day=Math.min(C.dayN,7),wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
+  const dots=C.days.map(x=>{const st=x.done?'done':x.k<C.dayN?'miss':x.k===C.dayN?'today':'';return`<span class="c2dot ${st}" title="Day ${x.k}">${x.done?'✓':x.k<C.dayN?'✗':x.k}${x.mock?'<i class="c2star" title="Mock stamp earned">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
+  const T=C.dayN<=7?C.days[C.dayN-1]:null,dl=new Date(C.deadline+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+  const msg=C.won?'<b>Challenge won!</b> Every day played, Match the Group mastered and every new case re-checked. Bonus card earned.':C.dayN>7?'The 7 days are over. Keep going: warm-up, one new case, one cube case.':
+    C.missed?'A day was missed, so the bonus card is gone this time, but keep going: every mission still builds exam skill.':`New cases first this week. Do <b>every</b> day’s mission, master Match the Group and pass all six re-checks by ${dl} to win a <b>bonus card</b>.`;
+  const sub=x=>x.mast?`Exam mode, 7/8 or more, about ${MASTERY.group.secs}s a question or less · counts towards mastering it${x.first?' · new? do the 4 lessons first':''}`:
+    x.keep?'Exam mode, 6/8 or more · keep it sharp':x.re?`re-check · Exam mode, 7/8 or more, about ${MASTERY[x.id].secs}s a question or less`:x.id==='mock'?'15/20 or more':x.id==='droneH'?'8 questions, 6/8 or more · floating cubes and gaps':'Exam mode, 6/8 or more';
+  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${sub(x)}${x.cube?' · cube revision':''}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
+  const chips=`<span class="c2chip ${C.groupDays>=2?'ok':''}">Match the Group ${C.groupDays>=2?'✓ Mastered':`${C.groupDays}/2 days`}</span>`+C.re.map(x=>`<span class="c2chip ${x.ok?'ok':''}">${CH2_NAME[x.m].replace(/ \(.*\)/,'')} ${x.ok?'✓ Re-checked':'· re-check'}</span>`).join('');
+  return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${C.dayN>7?'7+':day}</b><span>of 7 days</span></div>
+    <div class="ch-main"><div class="tag">7-day challenge · week 3 · new cases first</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
+    ${T&&!C.won?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
+    ${T?`<h4 class="c2h">★ Bonus: mock stamps <span class="muted">(optional · one a day for a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far${Math.floor(C.mocks/MOCK_PER_CARD)?` · ${Math.floor(C.mocks/MOCK_PER_CARD)} extra card${Math.floor(C.mocks/MOCK_PER_CARD)===1?'':'s'} earned`:''} · ${MOCK_PER_CARD-C.mocks%MOCK_PER_CARD} to the next card</em></div><ul class="c2list bonus"><li class="${T.mock?'ok':''}"><span class="c2tick">${T.mock?'✓':''}</span><span><b>Mock Exam</b> <span class="muted">· 15-minute timing · aim for 17/20 or more</span></span>${T.mock?'':'<button data-w2="mock">Play</button>'}</li></ul>`:''}
+    <h4 class="c2h">This week’s targets <span class="muted">(master the new case on 2 different days · re-check each of last week’s cases once: 7+/8, quick enough)</span></h4><div class="c2chips">${chips}</div></div></div>`}
+Object.assign(CH2_GO,{combine:()=>{joinCase();$('#cbExam').click()}});
+/* ============ Exam countdown: ISEB Tue 10 Nov, CEM Sat 14 Nov ============ */
+/* Fixed dates. Matrices (Complete the Grid) every day, because they're in both exams. Thu-Sat: grid, a mock on exam timing,
+   a fix-it round on the weakest skill from the mock, Match the Group. Sun and Fri are light. Mon is ISEB day: no mission. */
+const CD_FROM='2026-11-05',CD_DAYS=[
+  {d:'2026-11-05',items:['warm','grid','mock','fix','group']},{d:'2026-11-06',items:['warm','grid','mock','fix','group']},
+  {d:'2026-11-07',items:['warm','grid','mock','fix','group']},{d:'2026-11-08',items:['warm','grid','mock','fix']},
+  {d:'2026-11-09',items:['warm','grid'],light:true},{d:'2026-11-10',exam:'ISEB'},
+  {d:'2026-11-11',items:['warm','grid','mock','code']},{d:'2026-11-12',items:['warm','grid','group','code']},
+  {d:'2026-11-13',items:['warm','grid'],light:true},{d:'2026-11-14',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
+function cdFix(){const w=store.get('weak',{}),t=Object.keys(w).find(k=>w[k]&&!['grid','group'].includes(k));if(!t)return null;return t==='combine'?'combine':TYPE_CASE[t]}
+function cd(){const t=today(),fix=cdFix();
+  const days=CD_DAYS.map(D=>{if(D.exam)return{...D};const items=D.items.map(id=>{
+      if(id==='fix'){if(!fix)return null;return{id:fix,fix:true,done:hist(fix).some(r=>r.d===D.d)}}
+      if(id==='warm')return{id,done:hist('warm').some(r=>r.d===D.d)};
+      if(id==='mock')return{id,done:hist('mock').some(r=>r.d===D.d)};
+      return{id,done:hist(id).some(r=>r.d===D.d&&r.n>=6)}}).filter(Boolean);return{...D,items,done:items.every(x=>x.done)}});
+  const work=days.filter(x=>!x.exam),T=days.find(x=>x.d===t)||null;
+  days.forEach(x=>{if(!x.exam)x.mock=hist('mock').some(r=>r.d===x.d&&r.n>=MOCK_STAMP_MIN)});const mocks=days.filter(x=>x.mock).length;
+  if(T&&T.mock&&onceFlag('mockstamp-'+T.d))toast(`<b>Mock stamp earned!</b> <span>${mocks%MOCK_PER_CARD===0?'':`${MOCK_PER_CARD-mocks%MOCK_PER_CARD} more for an extra card`}</span>`);
+  for(let k=1;k<=Math.floor(mocks/MOCK_PER_CARD);k++)milestone('cdmockcard'+k,`Bonus: ${MOCK_PER_CARD} mock stamps in the exam countdown (set ${k})`);
+  const allDone=work.every(x=>x.done),won=!!rewards().flags.cd;
+  if(allDone&&!won){milestone('cd','Bonus: exam countdown complete, every mission done before ISEB and CEM');addTrophy('cd','Exam countdown: ISEB and CEM','Every mission done in the run-up to ISEB and CEM','2026-11-05',today())}
+  return{t,days,T,mocks,won:won||allDone,missed:work.some(x=>x.d<t&&!x.done)}}
+function cdHTML(){const C=cd(),t=C.t,wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
+  const toQuest=Math.round((Date.parse('2026-11-27T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toISEB=Math.round((Date.parse('2026-11-10T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toCEM=Math.round((Date.parse('2026-11-14T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5);
+  const dots=C.days.map(x=>{if(x.exam)return`${x.exam==='Quest'?'<span class="muted" style="align-self:center">…</span>':''}<span class="c2dot ${x.d===t?'today':''}" title="${x.exam} exam" style="width:auto;padding:0 6px;border-radius:12px">${x.exam}<em>${wd(x.d)}</em></span>`;
+    const st=x.done?'done':x.d<t?'miss':x.d===t?'today':'';return`<span class="c2dot ${st}">${x.done?'✓':x.d<t?'✗':x.light?'·':'•'}${x.mock?'<i class="c2star">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
+  const T=C.T,sub=x=>x.id==='grid'?'Exam mode, 6/8 or more · matrices are in both exams':x.id==='mock'?'15-minute exam timing, pen and paper · aim for 17/20 · guess and move on after a minute':
+    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':'';
+  const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${x.fix?'Fix-it: '+(CH2_NAME[x.id]||(CASES.find(c=>c.id===x.id)||{}).title||x.id):CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${sub(x)}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
+  let msg;if(T&&T.exam)msg=`<b>${T.exam} exam day. Good luck!</b> No mission today. Pen and paper for every 3D question, never leave a blank, and if one takes more than a minute, guess and move on.`;
+  else if(t>'2026-11-27')msg='<b>All three exams done.</b> Well done for every day of practice.';
+  else if(t>'2026-11-14')msg=`<b>ISEB and CEM done!</b> <b>${toQuest} day${toQuest===1?'':'s'} to Quest</b> (Friday 27 November). The Quest plan is coming: two new cases (pairing shapes and sequences), then mocks.`;
+  else msg=`${toISEB>0?`<b>${toISEB} day${toISEB===1?'':'s'} to ISEB</b> · `:''}<b>${toCEM} day${toCEM===1?'':'s'} to CEM</b> · ${toQuest} days to Quest. ${T&&T.light?'Light day: warm-up and one matrices round, then rest. ':''}${C.won?'Every mission done: countdown card earned!':C.missed?'A day was missed, so the countdown card is gone, but every mission still helps.':'Do every mission to earn the <b>countdown card</b> and trophy.'}`;
+  return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${toISEB>0?toISEB:toCEM>0?toCEM:Math.max(0,toQuest)}</b><span>days to ${toISEB>0?'ISEB':toCEM>0?'CEM':'Quest'}</span></div>
+    <div class="ch-main"><div class="tag">Exam countdown · ISEB Tue 10 Nov · CEM Sat 14 Nov · Quest Fri 27 Nov</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
+    ${T&&!T.exam?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
+    ${T&&!T.exam&&!T.light?`<h4 class="c2h">★ Mock stamps <span class="muted">(a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far</em></div>`:''}
+    <p class="muted" style="margin:10px 0 0;font-size:.85rem"><b>Sequences and pairing shapes</b> (A→B, so C→?): treat them like a grid. List every feature (shape, shading, position, direction, number), find the rule for each, cross out one feature at a time.</p></div></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-w2]');if(!b)return;const id=b.dataset.w2;(CH2_GO[id]||(()=>CASES.find(c=>c.id===id).go()))()});
 
 /* ============ Case 14: Complete the Grid (CEM-style matrices) ============ */
@@ -1713,6 +1801,166 @@ function gridCase(){stopTimer();$('#homeBtn').hidden=false;
   $('#gPace').onclick=()=>runQuiz({id:null,tag:'Case 14 · Paper practice',title:'Complete the Grid',secs:0,total:9*60,level:1,
     rule:'<strong>12 grids in 9 minutes, one clock for all of them, like the CEM paper.</strong> Stuck? Guess, and move on.',plan:repeat('grid',12),remake:()=>repeat('grid',12)});
   scrollTo(0,0)}
+/* ============ Case 15: Match the Group (Atom "Match to a Group") ============ */
+/* Five pictures share one hidden rule. Three families, as in the Atom mocks:
+   ifthen: two features change together (if X then Y): sides even/odd -> colour, regular/irregular -> colour,
+           circle on the left -> right grey, both ends same colour, black triangle size -> direction, dot colour -> even/odd squares.
+   count:  two numbers in the same picture match (dots inside = sides, lines crossing = sides).
+   move:   two copies of one shape; the second is the first mirrored or turned.
+   Every picture also has red herrings: features that change with no pattern. The generator rejects any group where a red herring
+   would also explain the colours (so there is only ever one rule). Wrong options each break the rule. */
+const GR_C={black:'#2A2F3A',grey:'#9AA0AB',white:'#fff'};
+const grNgon=(n,rot=0)=>[...Array(n).keys()].map(k=>{const a=(rot-90+360*k/n)*Math.PI/180;return[Math.cos(a),Math.sin(a)]});
+function grIrreg(n){for(let t=0;t<50;t++){const base=Math.random()*360,ang=[...Array(n).keys()].map(k=>(base+360*k/n+(Math.random()-.5)*360/n*.55)*Math.PI/180),
+    rr=ang.map(()=>.5+Math.random()*.5);if(Math.max(...rr)/Math.min(...rr)<1.4)continue;const p=ang.map((a,i)=>[Math.cos(a)*rr[i],Math.sin(a)*rr[i]]);
+    const mx=Math.max(...p.map(v=>Math.hypot(...v)));return p.map(([x,y])=>[x/mx,y/mx])}return grNgon(n,17)}
+const grShape={circle:null,triangle:3,square:4,pentagon:5,hexagon:6,diamond:'d',star:'s'};
+function grShapeSVG(name,cx,cy,r,fill,extra=''){const st=`fill="${GR_C[fill]||fill}" stroke="#222" stroke-width="1.6" stroke-linejoin="round"${extra}`;
+  if(name==='circle')return`<circle cx="${cx}" cy="${cy}" r="${r}" ${st}/>`;
+  let p=name==='diamond'?[[0,-1],[.7,0],[0,1],[-.7,0]]:name==='star'?[...Array(10).keys()].map(k=>{const a=-Math.PI/2+Math.PI/5*k,q=k%2?.45:1;return[Math.cos(a)*q,Math.sin(a)*q]}):grNgon(grShape[name],name==='square'?45:0);
+  if(name==='square')p=p.map(([x,y])=>[x*1.05,y*1.05]);
+  return`<polygon points="${p.map(([x,y])=>`${(cx+x*r).toFixed(1)},${(cy+y*r).toFixed(1)}`).join(' ')}" ${st}/>`}
+const grRotP=(p,deg)=>{const a=deg*Math.PI/180,c=Math.cos(a),s=Math.sin(a);return p.map(([x,y])=>[x*c-y*s,x*s+y*c])};
+const grPts=(p,cx,cy,r)=>p.map(([x,y])=>`${(cx+x*r).toFixed(1)},${(cy+y*r).toFixed(1)}`).join(' ');
+const GR_T={mirror:([x,y])=>[-x,y],rot90:([x,y])=>[-y,x],rot180:([x,y])=>[-x,-y],flipH:([x,y])=>[x,-y]};
+const GR_TNAME={mirror:'a mirror image, flipped across a line going up and down',rot90:'turned a quarter turn clockwise',rot180:'turned a half turn (upside down)',flipH:'a mirror image, flipped across a line going side to side',diff:'a different shape'};
+function grSVG(it,{w=78,hl=null}={}){
+  let s=`<svg viewBox="0 0 80 80" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px${hl?`;box-shadow:0 0 0 3px ${hl}`:''}">`;
+  if(it.k==='poly'){const R=(it.small?17:27),p=grRotP(it.pts,it.rot||0);
+    s+=`<polygon points="${grPts(p,40,40,R)}" fill="${GR_C[it.fill]}" stroke="#222" stroke-width="1.6" stroke-linejoin="round"/>`;
+    if(it.lines)it.lines.forEach(L=>{const a=L.a*Math.PI/180,dx=Math.cos(a),dy=Math.sin(a),ox=-dy*L.off,oy=dx*L.off;
+      s+=`<line x1="${(40+ox-dx*37).toFixed(1)}" y1="${(40+oy-dy*37).toFixed(1)}" x2="${(40+ox+dx*37).toFixed(1)}" y2="${(40+oy+dy*37).toFixed(1)}" stroke="#222" stroke-width="1.3"${L.dash?' stroke-dasharray="4 3"':''}/>`});
+    if(it.sq)s+=`<rect x="${40+it.sq[0]-4}" y="${40+it.sq[1]-4}" width="8" height="8" fill="#fff" stroke="#222" stroke-width="1.2"/>`;
+    if(it.dots){const k=it.dots,rr=R*.42;for(let i=0;i<k;i++){const a=(it.dotRot+360*i/k)*Math.PI/180,x=k===1?40:40+Math.cos(a)*rr,y=k===1?40:40+Math.sin(a)*rr;
+      s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.7" fill="${it.fill==='black'?'#fff':'#222'}"/>`}}
+    if(it.dot)s+=`<circle cx="40" cy="40" r="3.6" fill="${it.dot==='white'?'#fff':'#222'}" stroke="${it.fill==='black'&&it.dot!=='white'?'#fff':'#222'}" stroke-width="1.2"/>`}
+  else if(it.k==='pair'){s+=`<line x1="27" y1="40" x2="53" y2="40" stroke="#222" stroke-width="1.5"/>`+grShapeSVG(it.a,17,40,11,it.af)+grShapeSVG(it.b,63,40,11,it.bf)}
+  else if(it.k==='tri'){const T=(cx,cy,h,up,f)=>{const pts=up?[[cx,cy-h],[cx+h,cy+h*.8],[cx-h,cy+h*.8]]:[[cx,cy+h],[cx+h,cy-h*.8],[cx-h,cy-h*.8]];
+      return`<polygon points="${pts.map(v=>v.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${f}" stroke="#222" stroke-width="1.4" stroke-linejoin="round"/>`};
+    s+=`<rect x="3" y="3" width="74" height="74" fill="#fff" stroke="#222" stroke-width="1.3"/>`+T(it.bx,it.by,it.big?17:6.5,it.up,GR_C.black)+it.whites.map(W=>T(W.x,W.y,9.5,W.up,'#fff')).join('')}
+  else if(it.k==='cells'){const xs=it.cells.map(c=>c[0]),ys=it.cells.map(c=>c[1]),w0=Math.max(...xs)-Math.min(...xs)+1,h0=Math.max(...ys)-Math.min(...ys)+1,u=Math.min(14,68/Math.max(w0,h0));
+    const ox=40-w0*u/2-Math.min(...xs)*u,oy=40-h0*u/2-Math.min(...ys)*u;
+    s+=it.cells.map(([x,y])=>`<rect x="${(ox+x*u).toFixed(1)}" y="${(oy+y*u).toFixed(1)}" width="${u.toFixed(1)}" height="${u.toFixed(1)}" fill="#fff" stroke="#222" stroke-width="1.3"/>`).join('');
+    const [dx,dy]=it.cells[it.dotAt];s+=`<circle cx="${(ox+(dx+.5)*u).toFixed(1)}" cy="${(oy+(dy+.5)*u).toFixed(1)}" r="${(u*.28).toFixed(1)}" fill="${GR_C[it.dotC]}" stroke="#222" stroke-width="1.1"/>`}
+  else if(it.k==='move'){if(it.line!=null){const a=it.line*Math.PI/180;s+=`<line x1="${(40-Math.cos(a)*36).toFixed(1)}" y1="${(40-Math.sin(a)*36).toFixed(1)}" x2="${(40+Math.cos(a)*36).toFixed(1)}" y2="${(40+Math.sin(a)*36).toFixed(1)}" stroke="#555" stroke-width="1.1" stroke-dasharray="3 3"/>`}
+    const q=it.t==='diff'?it.pts2:it.pts.map(GR_T[it.t]),mk=GR_T[it.t]&&it.t!=='diff'?GR_T[it.t](it.mark):it.mark2;
+    s+=`<polygon points="${grPts(it.pts,21,40,15)}" fill="${GR_C[it.fill]}" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${(21+it.mark[0]*15).toFixed(1)}" cy="${(40+it.mark[1]*15).toFixed(1)}" r="2.6" fill="${it.fill==='black'?'#fff':'#222'}"/>`;
+    s+=`<polygon points="${grPts(q,59,40,15)}" fill="${GR_C[it.fill]}" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${(59+mk[0]*15).toFixed(1)}" cy="${(40+mk[1]*15).toFixed(1)}" r="2.6" fill="${it.fill==='black'?'#fff':'#222'}"/>`}
+  return s+'</svg>'}
+/* a red herring must not also explain the outcome: some herring value has to appear with both outcomes */
+const grNoClash=(items,hs)=>hs.every(h=>{const m=new Map();items.forEach(it=>{const v=String(h(it));(m.get(v)||m.set(v,new Set()).get(v)).add(String(it.out))});return[...m.values()].some(s=>s.size>1)});
+const grBoth=(items,f)=>new Set(items.map(f)).size>1;
+const GR_V={
+  parity:{fam:'ifthen',rule:'Shapes with an <b>even</b> number of sides are <b>black</b>; shapes with an <b>odd</b> number of sides are <b>grey</b>.',
+    wrong:['Big shapes are black and small shapes are grey.','Shapes with a white dot are black; shapes with a black dot are grey.'],feats:['how many sides it has','the colour of the shape'],herr:['how big the shape is','the colour of the dot','which way the shape is turned'],
+    make(out){const even=out==='black',n=pick(even?[4,6,8]:[3,5,7]);return{k:'poly',n,pts:grNgon(n),rot:rnd(360),small:Math.random()<.5,dot:pick(['white','black']),fill:out,out}},
+    outs:['black','grey'],hs:[it=>it.small,it=>it.dot],bad(){const n=3+rnd(6),it={k:'poly',n,pts:grNgon(n),rot:rnd(360),small:Math.random()<.5,dot:pick(['white','black'])};const r=Math.random();
+      it.fill=r<.2?'white':n%2?'black':'grey';return it},
+    ann:it=>`${it.n} sides: ${it.n%2?'odd, grey':'even, black'}`,why:it=>it.fill==='white'?'is white, and no shape in the group is ever white':`has ${it.n} sides (${it.n%2?'odd':'even'}), so it should be ${it.n%2?'grey':'black'}, but it’s ${it.fill}`},
+  reg:{fam:'ifthen',rule:'<b>Regular</b> shapes (all sides equal) are <b>black</b>; <b>irregular</b> shapes are <b>grey</b>.',
+    wrong:['Shapes with an even number of sides are black.','Big shapes are black and small shapes are grey.'],feats:['whether all its sides are equal (regular)','the colour of the shape'],herr:['how many sides it has','how big the shape is','the dot in the middle'],
+    make(out){const n=3+rnd(5),reg=out==='black';return{k:'poly',n,reg,pts:reg?grNgon(n):grIrreg(n),rot:rnd(360),small:Math.random()<.45,dot:'black',fill:out,out}},
+    outs:['black','grey'],hs:[it=>it.n%2,it=>it.small],bad(){const n=3+rnd(5),reg=Math.random()<.5;return{k:'poly',n,reg,pts:reg?grNgon(n):grIrreg(n),rot:rnd(360),small:Math.random()<.45,dot:'black',fill:Math.random()<.15?'white':reg?'grey':'black'}},
+    ann:it=>it.reg?'regular: black':'irregular: grey',why:it=>it.fill==='white'?'is white, and no shape in the group is ever white':`is ${it.reg?'regular':'irregular'}, so it should be ${it.reg?'black':'grey'}, but it’s ${it.fill}`},
+  pair:{fam:'ifthen',rule:'If the shape on the <b>left is a circle</b>, the shape on the right is <b>grey</b>. Otherwise the right shape is <b>white</b>.',
+    wrong:['If the left shape is grey, the right shape is grey.','The two shapes are always the same colour.'],feats:['the shape on the left','the colour of the right shape'],herr:['the colour of the left shape','which shape is on the right'],
+    make(out){const circ=out==='grey';return{k:'pair',a:circ?'circle':pick(['triangle','square','pentagon','hexagon','diamond']),af:pick(['white','grey']),b:pick(['triangle','square','pentagon','hexagon','star','diamond','circle']),bf:out,out}},
+    outs:['grey','white'],hs:[it=>it.af],extra:items=>items.some(it=>it.af!==it.bf),
+    bad(){const circ=Math.random()<.5;return{k:'pair',a:circ?'circle':pick(['triangle','square','pentagon','hexagon','diamond']),af:pick(['white','grey']),b:pick(['triangle','square','pentagon','hexagon','star','diamond']),bf:circ?'white':'grey'}},
+    ann:it=>it.a==='circle'?'circle on the left: grey':'no circle: white',why:it=>it.a==='circle'?'has a circle on the left, so the right shape should be grey, but it’s white':`has no circle on the left, so the right shape should be white, but it’s grey`},
+  same:{fam:'ifthen',rule:'The two joined shapes are <b>always the same colour</b> as each other.',
+    wrong:['The left shape is always a circle.','The two shapes are always the same shape.'],feats:['the colour of the left shape','the colour of the right shape'],herr:['which shapes they are','which colour it is (black, grey or white)'],
+    make(){const f=pick(['black','grey','white']);return{k:'pair',a:pick(['circle','triangle','square','pentagon','hexagon','star']),b:pick(['circle','triangle','square','pentagon','hexagon','diamond']),af:f,bf:f,out:'same'}},
+    outs:['same'],hs:[],extra:items=>items.some(it=>it.a!==it.b)&&items.some(it=>it.a!=='circle')&&grBoth(items,it=>it.af),
+    bad(){const[f,g]=shuffle(['black','grey','white']);return{k:'pair',a:pick(['circle','triangle','square','pentagon','hexagon','star']),b:pick(['circle','triangle','square','pentagon','hexagon','diamond']),af:f,bf:g}},
+    ann:it=>`both ${it.af}`,why:it=>`has a ${it.af} shape joined to a ${it.bf} one: the colours don’t match`},
+  tri:{fam:'ifthen',rule:'If the black triangle is <b>bigger</b> than the white ones, it points <b>up</b>. If it’s <b>smaller</b>, it points <b>down</b>.',
+    wrong:['The black triangle always points the opposite way to the white ones.','The black triangle always points up.'],feats:['the size of the black triangle','which way the black triangle points'],herr:['which way the white triangles point','where the triangles are in the box'],
+    make(out){const big=out==='up';return grTri(big,big)},outs:['up','down'],hs:[it=>it.whites.map(w=>w.up).join()],extra:items=>items.some(it=>it.whites.some(w=>w.up===it.up)),
+    bad(){const big=Math.random()<.5;return grTri(big,!big)},ann:it=>it.big?'bigger: points up':'smaller: points down',why:it=>`has a ${it.big?'bigger':'smaller'} black triangle, so it should point ${it.big?'up':'down'}, but it points ${it.up?'up':'down'}`},
+  dot:{fam:'ifthen',rule:'A <b>grey dot</b> means an <b>even</b> number of squares; a <b>black dot</b> means an <b>odd</b> number of squares.',
+    wrong:['Shapes in a straight line have a black dot.','The dot is always in an end square.'],feats:['the colour of the dot','how many squares there are'],herr:['which square the dot is in','how the squares are arranged'],
+    make(out){const k=pick(out==='grey'?[2,4,6]:[1,3,5]);return grCells(k,out)},outs:['grey','black'],hs:[it=>it.straight],extra:items=>new Set(items.filter(it=>it.out==='black').map(it=>it.cells.length)).size>1,
+    bad(){const k=1+rnd(6);return grCells(k,k%2?'grey':'black')},ann:it=>`${it.cells.length} square${it.cells.length>1?'s':''}: ${it.dotC} dot`,why:it=>`has ${it.cells.length} square${it.cells.length>1?'s':''} (${it.cells.length%2?'odd':'even'}), so its dot should be ${it.cells.length%2?'black':'grey'}, but it’s ${it.dotC}`},
+  dots:{fam:'count',rule:'The <b>number of dots</b> inside is the same as the <b>number of sides</b>.',
+    wrong:['There is always one more dot than the number of sides.','Grey shapes always have more dots than white shapes.'],feats:['the number of sides','the number of dots'],herr:['the colour of the shape','which way it’s turned','where the dots are'],
+    make(){const n=3+rnd(5);return{k:'poly',n,pts:grNgon(n),rot:rnd(360),fill:pick(['white','grey']),dots:n,dotRot:rnd(360),out:'eq'}},outs:['eq'],hs:[],extra:items=>new Set(items.map(it=>it.n)).size>=3,
+    bad(){const n=3+rnd(5),d=Math.max(1,n+pick([1,-1,1,-1,2]));return{k:'poly',n,pts:grNgon(n),rot:rnd(360),fill:pick(['white','grey']),dots:d===n?n+1:d,dotRot:rnd(360)}},
+    ann:it=>`${it.n} sides, ${it.dots} dots`,why:it=>`has ${it.n} sides but ${it.dots} dots`},
+  lines:{fam:'count',rule:'The <b>number of lines</b> crossing the shape is the same as the <b>number of sides</b>.',
+    wrong:['There are always three lines.','There is always one line fewer than the number of sides.'],feats:['the number of sides','the number of lines'],herr:['whether a line is dashed or solid','where the small square is','which way the shape is turned'],
+    make(){const n=3+rnd(3);return grLines(n,n)},outs:['eq'],hs:[],extra:items=>new Set(items.map(it=>it.n)).size>=3,
+    bad(){const n=3+rnd(3),d=n+pick([1,-1,1]);return grLines(n,Math.max(2,d===n?n+1:d))},ann:it=>`${it.n} sides, ${it.lines.length} lines`,why:it=>`has ${it.n} sides but ${it.lines.length} lines`},
+  move:{fam:'move',feats:['how the second shape is moved','the shape itself'],herr:['the colour of the shapes','the dashed line'],
+    make(){return null}}};
+function grTri(big,up){const C=shuffle([[15,15],[65,15],[15,65],[65,65]]);return{k:'tri',big,up,bx:40+pick([-4,0,4]),by:42,whites:C.slice(0,2).map(([x,y])=>({x,y,up:Math.random()<.5})),out:big?'up':'down'}}
+function grCells(k,dotC){const straight=k>2&&Math.random()<.4;let cells=[[0,0]];
+  if(straight||k<=2){const v=Math.random()<.5;cells=[...Array(k).keys()].map(i=>v?[0,i]:[i,0])}
+  else for(let t=0;cells.length<k&&t<200;t++){const[x,y]=pick(cells),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]);if(!cells.some(c=>c[0]===x+dx&&c[1]===y+dy))cells.push([x+dx,y+dy])}
+  const isLine=new Set(cells.map(c=>c[0])).size===1||new Set(cells.map(c=>c[1])).size===1;return{k:'cells',cells,dotAt:rnd(cells.length),dotC,straight:isLine,out:dotC}}
+function grLines(n,k){const a0=rnd(180);return{k:'poly',n,pts:grNgon(n),rot:rnd(360),fill:'grey',lines:[...Array(k).keys()].map(i=>({a:a0+i*180/k+(Math.random()-.5)*12,off:(Math.random()-.5)*10,dash:Math.random()<.4})),sq:[pick([-8,0,8]),pick([-8,0,8])],out:'eq'}}
+function grMove(){for(let t=0;t<40;t++){const T=pick(['mirror','rot90','rot180']),make=(tt)=>{const n=5+rnd(2),pts=grIrreg(n);return{k:'move',t:tt,pts,mark:[pts[0][0]*.5,pts[0][1]*.5],fill:pick(['white','grey','black']),line:Math.random()<.5?pick([0,45,90,135]):null}};
+    const items=[0,1,2,3,4].map(()=>({...make(T),out:T}));if(!grBoth(items,it=>it.fill))continue;
+    const good={...make(T)},others=['mirror','rot90','rot180','flipH'].filter(x=>x!==T);
+    const bads=[...shuffle(others).slice(0,3).map(x=>make(x)),(()=>{const it=make('diff');it.pts2=grIrreg(5+rnd(2));it.mark2=[it.pts2[0][0]*.5,it.pts2[0][1]*.5];return it})()];
+    return{v:'move',T,items,good,bads,rule:`In every picture the second shape is the first one <b>${GR_TNAME[T]}</b>.`,
+      wrong:others.slice(0,2).map(x=>`The second shape is the first one ${GR_TNAME[x]}.`),ann:()=>GR_TNAME[T].replace(/,.*$/,''),why:it=>`shows the second shape ${GR_TNAME[it.t]}, not ${GR_TNAME[T].replace(/,.*$/,'')}`}}return null}
+function genGroup(fam){
+  const vs=Object.keys(GR_V).filter(v=>!fam||GR_V[v].fam===fam),v=pick(fam?vs:['parity','reg','pair','same','tri','dot','dots','lines','move','move','dots','tri']);
+  if(v==='move'){const X=grMove();if(!X)return genGroup(fam);return grFinish(X,GR_V.move)}
+  const V=GR_V[v];for(let t=0;t<300;t++){const outs=V.outs.length>1?shuffle([...V.outs,...V.outs,pick(V.outs)]):[0,1,2,3,4].map(()=>V.outs[0]);
+    const items=outs.map(o=>V.make(o));if(!grNoClash(items,V.hs))continue;if(V.extra&&!V.extra(items))continue;
+    if(v==='parity'&&!grBoth(items,it=>it.small))continue;
+    const good=V.make(pick(V.outs)),bads=[0,1,2,3].map(()=>V.bad());
+    return grFinish({v,items,good,bads,rule:V.rule,wrong:V.wrong,ann:V.ann,why:V.why},V)}
+  return genGroup(fam)}
+function grFinish(X,V){const opts=shuffle([{it:X.good,ok:true},...X.bads.map(b=>({it:b}))]);return{...X,fam:V.fam,feats:V.feats,herr:V.herr,opts,ans:opts.findIndex(o=>o.ok)}}
+function groupSVG(X,{w=80,showAns=false,cap=false}={}){return`<div class="grp">${X.items.map(it=>`<figure>${grSVG(it,{w})}${cap?`<figcaption>${X.ann(it)}</figcaption>`:''}</figure>`).join('')}</div>`}
+function groupCheck(X,herring){
+  if(herring){const ch=shuffle([X.herr[0],...X.feats]);return{q:'Spot the red herring. Which of these does <b>not</b> matter in this group?',choices:ch.map(c=>c[0].toUpperCase()+c.slice(1)),ans:ch.indexOf(X.herr[0]),
+    why:`${X.herr[0][0].toUpperCase()+X.herr[0].slice(1)} changes with no pattern, so it’s a red herring. The real rule: ${X.rule.replace(/<[^>]+>/g,'')}`}}
+  const ch=shuffle([X.rule,...X.wrong]);return{q:'Write the rule on paper first. Which rule fits <b>every</b> picture in the group?',choices:ch.map(c=>c.replace(/<[^>]+>/g,'')),ans:ch.indexOf(X.rule),
+    why:`${X.rule.replace(/<[^>]+>/g,'')} The other rules break on at least one picture.`}}
+function groupNotes(X,i){const o=i!=null?X.opts[i]:null;
+  return{html:`<div class="notes"><h3>Case notes</h3><p class="muted" style="margin:0 0 4px">The group, with the rule checked on every picture:</p>${groupSVG(X,{w:64,cap:true})}
+    <div class="figs"><figure class="fig" style="margin:0">${grSVG(X.opts[X.ans].it,{w:96,hl:'#22A06B'})}<figcaption>The answer, ${LET[X.ans]}: ${X.ann(X.opts[X.ans].it)}</figcaption></figure>${o?`<figure class="fig" style="margin:0">${grSVG(o.it,{w:96,hl:'#D64545'})}<figcaption>Your answer, ${LET[i]}</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${o?`<b>${LET[i]}</b> ${X.why(o.it)}.`:'Time ran out.'} <b>The rule:</b> ${X.rule}</p></div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.group}</p></div>
+    <div class="nb trap"><h4>The red herrings</h4><p>${X.herr.map(h=>h[0].toUpperCase()+h.slice(1)).join(' · ')}. These change from picture to picture with no pattern, so they don’t matter. They’re there to distract you.</p></div></div>`}}
+QB.group=function(host,lvl=1,opt={}){const X=genGroup(opt.fam||null);
+  host.innerHTML=`<p class="qtext">Which picture belongs in the group? <span class="muted">One option follows the same rule as all five pictures.</span></p>${groupSVG(X)}
+    ${opt.learn?`<p class="hint">Hint: ${X.fam==='count'?'count two things in every picture (sides, dots, lines…). Do two numbers always match?':X.fam==='move'?'look at the two copies in each picture. Is the second one flipped (mirror) or turned? Which way?':'pick two pictures that look different. What changes, and what changes with it? Write it as “If ___, then ___”.'}</p>`:''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${grSVG(o.it,{w:76})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,groupCheck(X,opt.herring||(!opt.learn&&Math.random()<.3)));const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:groupNotes(X,i),ok?'It follows the rule.':`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+function groupCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 15 · Match to a Group</div><h2>Match the Group</h2></div></div>
+    <div class="rule"><span class="pp">✎ Write the rule on paper before you look at the answers.</span><strong>Five pictures share one hidden rule. Find it, test it on every picture, then find the option that follows it.</strong>
+      <ol><li><b>Compare two pictures that look different.</b> What changes? What changes <i>with</i> it?</li>
+      <li><b>Write the rule</b> as “If ___, then ___” or “number of ___ = number of ___”, or “the second shape is the first one flipped / turned”.</li>
+      <li><b>Test it on all five.</b> If one picture breaks it, it’s the wrong rule.</li>
+      <li><b>Ignore red herrings:</b> things that change with no pattern (dot position, dashed lines, which way it’s turned).</li>
+      <li><b>About 45 seconds each.</b> Over a minute? Cross out what you can, guess, and move on.</li></ol></div>
+    <h3 class="c2h">Learn it rule by rule</h3>
+    <div class="lessons">
+      <button class="lesson" data-l="ifthen"><span class="ln">1</span><span><b>“If… then…” rules</b><span class="muted"> · two things change together: number of sides and colour, dot colour and even/odd squares, size and direction</span></span></button>
+      <button class="lesson" data-l="count"><span class="ln">2</span><span><b>Count and compare</b><span class="muted"> · two numbers in the same picture match: dots and sides, lines and sides</span></span></button>
+      <button class="lesson" data-l="move"><span class="ln">3</span><span><b>Mirror or turn?</b><span class="muted"> · two copies of one shape: is the second one flipped or turned, and which way?</span></span></button>
+      <button class="lesson" data-l="herring"><span class="ln">4</span><span><b>Spot the red herring</b><span class="muted"> · mixed rules: name what does <i>not</i> matter before you answer</span></span></button></div>
+    <div class="row" style="margin-top:12px"><button class="btn-primary" id="mgExam">Exam mode: 8 timed questions</button><button id="mgPace">Paper practice: 10 in 8 minutes</button></div></section>`;
+  const LES={ifthen:['“If… then…” rules','<strong>Find what changes, and what changes with it.</strong> Say it as “If ___, then ___”, e.g. “If it has an even number of sides, then it’s black.” Test it on every picture.'],
+    count:['Count and compare','<strong>Count two things in every picture</strong> (sides, dots, lines, squares) and write the numbers next to each one. Look for two numbers that always match.'],
+    move:['Mirror or turn?','<strong>Two copies of one shape.</strong> Follow the dot: a <b>mirror</b> flips the shape over (the dot swaps sides); a <b>turn</b> spins it round. Check which way and how far. A dashed line is often a red herring, not a mirror line.'],
+    herring:['Spot the red herring','<strong>Lots of things change, but only some of them follow the rule.</strong> Anything that changes with no pattern is a red herring. Name it, then ignore it.']};
+  view.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{const l=b.dataset.l,[t,r]=LES[l];
+    runQuiz({id:null,tag:`Case 15 · Lesson: ${t}`,title:'Match the Group',secs:0,level:1,learn:true,qopt:l==='herring'?{herring:true}:{fam:l},rule:r,plan:repeat('group',4),remake:()=>repeat('group',4)})});
+  $('#mgExam').onclick=()=>runQuiz({id:'group',tag:'Case 15 · Exam mode',title:'Match the Group',secs:50,level:1,
+    rule:'<strong>Write the rule, test it on all five, cross out options that break it.</strong>',plan:repeat('group',8),remake:()=>repeat('group',8)});
+  $('#mgPace').onclick=()=>runQuiz({id:null,tag:'Case 15 · Paper practice',title:'Match the Group',secs:0,total:8*60,level:1,
+    rule:'<strong>10 questions in 8 minutes, one clock for all of them.</strong> Over a minute on one? Guess and move on.',plan:repeat('group',10),remake:()=>repeat('group',10)});
+  scrollTo(0,0)}
+
 
 /* ============ "Which CANNOT be made?" net questions ============ */
 /* Four cubes the net really makes, plus one that it can't. Built from the same pieces as Edge Buddies. */
@@ -1925,7 +2173,7 @@ const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
 /* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
-const MASTERY={combine:{min:7,of:8,secs:50,label:'7+/8'},grid:{min:7,of:8,secs:45,label:'7+/8'},rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},code:{min:7,of:8,secs:35,label:'7+/8'},fold:{min:7,of:8,secs:40,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+const MASTERY={group:{min:7,of:8,secs:50,label:'7+/8'},combine:{min:7,of:8,secs:50,label:'7+/8'},grid:{min:7,of:8,secs:45,label:'7+/8'},rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},code:{min:7,of:8,secs:35,label:'7+/8'},fold:{min:7,of:8,secs:40,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
   edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
 const secsFor=(m,lvl)=>m.secsHard&&lvl>=2?m.secsHard:m.secs;
 const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=secsFor(m,r.lvl||0)};
@@ -1967,9 +2215,10 @@ const CASES=[
   {id:'join',week:3,bonus:true,tab:'CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
   {id:'code',week:3,bonus:true,tab:'CASE 12',title:'Code Breaker',blurb:'Each letter stands for a feature. Crack the code one letter at a time and spot the red herring.',go:()=>codeCase()},
   {id:'fold',week:3,bonus:true,tab:'CASE 13',title:'Fold and Cut',blurb:'Fold the paper, cut the shapes, then unfold it in your head. Count the layers and mirror every cut.',go:()=>foldCase()},
+  {id:'group',week:3,bonus:true,tab:'CASE 15',title:'Match the Group',blurb:'Five pictures share one hidden rule: “if… then…”, count and compare, or mirror and turn. Find it, test it on all five, ignore the red herrings.',go:()=>groupCase()},
   {id:'grid',week:3,bonus:true,tab:'CASE 14',title:'Complete the Grid',blurb:'CEM-style matrices: two or three rules at once. List every feature and catch the hidden second rule.',go:()=>gridCase()},
   {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option, knowing why. Quick and accurate.',go:()=>elimCase()}];
-const caseType={odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+const caseType={group:'group',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',tower:'count',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 function folderHTML(c){const weak=store.get('weak',{})[caseType[c.id]];const b=store.get('best',{})[c.id];
   let meta;if(c.id==='hunt')meta=`${Math.min(11,store.get('found',[]).length)} of 11 found`;
   else{const L=lastRound(c.id),m=MASTERY[c.id];meta=!L?'Not started':mastered(c.id)?'<span class="mast">Mastered</span>':`Last: ${L.n}/${L.of}${L.a!=null?` · ${L.a}s`:''} · ready ${Math.min(2,readyDays(c.id))}/2 days`}
@@ -1989,7 +2238,7 @@ function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="$
 function home(){
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.<br><b>Detective’s kit:</b> keep a pencil and scrap paper next to you every time you play. In the exam you can use them, so practise with them now.</div>
-  ${ch2HTML()}
+  ${today()>=CD_FROM?cdHTML():ch2HTML()}
   ${challengeHTML()}
   ${streakHTML()}
   ${nextUp()}
@@ -1999,12 +2248,12 @@ function home(){
   <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
     <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Week 2 · New question types</h2><p class="muted" style="margin:0">More question types from Atom and the ISEB pretest. Cases 10–14 are the new cases in the 7-day challenge; Turn It Around is one of the cube revision rounds.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
+  <section class="week"><h2 class="wk">Week 2 · New question types</h2><p class="muted" style="margin:0">More question types from Atom and the ISEB pretest. Cases 10–14 were the new cases in the 7-day challenge, and Case 15 (Match the Group) is the newest. Turn It Around is one of the cube revision rounds.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
   <section class="week"><h2 class="wk">Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 1 Nov (c)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 5 Nov (e)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2046,8 +2295,9 @@ function open(id){parentOpen=false;const c=CASES.find(x=>x.id===id);stopTimer();
 function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',title:cp.title,secs:cp.secs,level:cp.level,pass:cp.pass,mixed:true,
   passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
   rule:`<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
-const CASE_TYPES={grid:['grid'],rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
-const TRICK={combine:'Measure each piece in the main shape first: how long, how wide, where the point or notch is. Then find pieces with exactly those proportions. They can be turned round but never flipped. Check every edge before choosing.',
+const CASE_TYPES={group:['group'],grid:['grid'],rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
+const TRICK={group:'Compare two pictures that look different: what changes, and what changes with it? Write the rule (“If ___, then ___”, “number of ___ = number of ___”, or “the second shape is the first one flipped / turned”). Test it on all five pictures, then cross out every option that breaks it. Anything that changes with no pattern is a red herring.',
+  combine:'Measure each piece in the main shape first: how long, how wide, where the point or notch is. Then find pieces with exactly those proportions. They can be turned round but never flipped. Check every edge before choosing.',
   grid:'List every feature (shape, shading, outline, corner shape, size, direction). For each one, find its rule: once per row and column, same along the row, same down the column, turning a step each time, or adding. Then cross out options one feature at a time: the wrong ones are one detail off.',
   code:'One letter at a time. Find two pictures with the same first letter and ask what they share; check it against a picture with a different first letter. Then the second letter. Ignore a feature that changes but has no letter. A brand-new feature takes the letter nobody else uses.',
   fold:'Count the layers (1 fold = 2, 2 folds = 4): every shape appears that many times. Unfold the last fold first and mirror every cut across the fold line. Shapes are flipped, never turned, and sit exactly opposite across the fold.',
@@ -2060,7 +2310,8 @@ const TRICK={combine:'Measure each piece in the main shape first: how long, how 
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
   edge:'Rule out in order: duds, then opposites shown together, then edge buddies. Edge buddies: on the net, say which neighbour the point touches (“tip touches circle”), then check the same on each cube. Draw a little arrow on the tip if it helps. Flag or L: walk along the pole or upright: is it sticking out left or right? Turning never changes that. Two left? Corner check: go clockwise round the corner, and the faces must come in the same order as on the net.',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
-const WHY={combine:'The wrong pieces are nearly identical: slightly too long, one edge changed, or flipped. Only measuring catches them.',
+const WHY={group:'One rule is hidden among lots of features that don’t matter. Testing the rule on every picture is the only way not to be fooled by the red herrings.',
+  combine:'The wrong pieces are nearly identical: slightly too long, one edge changed, or flipped. Only measuring catches them.',
   grid:'Grid questions hide a second, smaller rule. The wrong answers get the main rule right and change one detail, so only checking every feature catches them.',
   code:'Code questions hide a red herring and put close wrong answers that get one letter right. Cracking each letter separately means you can prove the answer instead of guessing.',
   fold:'Wrong answers usually have the right number of shapes in nearly the right places, but one copied without flipping. Counting layers and mirroring one fold at a time catches them.',
@@ -2093,7 +2344,7 @@ function warmup(){const types=learnedTypes();if(!types.length)return home();
       ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
       <p style="margin:8px 0 0"><span class="pp">✎ Pen and paper ready, just like in the exam.</span> ${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
 function mock(){stopTimer();$('#homeBtn').hidden=false;/* every question type except the net basics (cases 03–05), which are tested inside Edge Buddies */
-  const make=()=>shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',2),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',2),...repeat('join',2),...repeat('code',2),...repeat('fold',1),...repeat('grid',2)]);
+  const make=()=>shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',1),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',1),...repeat('group',2),...repeat('join',2),...repeat('code',2),...repeat('fold',1),...repeat('grid',2)]);
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Exam practice</div><h2>The Mock Exam</h2></div></div>
     <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 mixed questions. Aim for 17 or more.</strong> Choose how the clock works:</div>
     <div class="lessons"><button class="lesson" id="mTotal"><span class="ln">⏱</span><span><b>Exam timing: 15 minutes for all 20</b><span class="muted"> · one clock counts down for the whole paper, like the real exam. Spend longer on hard ones, less on easy ones.</span></span></button>
