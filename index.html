@@ -1660,8 +1660,8 @@ Object.assign(CH2_GO,{combine:()=>{joinCase();$('#cbExam').click()}});
 /* Fixed dates. Matrices (Complete the Grid) every day, because they're in both exams. Thu-Sat: grid, a mock on exam timing,
    a fix-it round on the weakest skill from the mock, Match the Group. Sun and Fri are light. Mon is ISEB day: no mission. */
 const CD_FROM='2026-11-05',CD_DAYS=[
-  {d:'2026-11-05',items:['warm','grid','mock','fix','group']},{d:'2026-11-06',items:['warm','grid','mock','fix','group']},
-  {d:'2026-11-07',items:['warm','grid','mock','fix','group']},{d:'2026-11-08',items:['warm','grid','mock','fix']},
+  {d:'2026-11-05',items:['warm','grid','mock','fix','group']},{d:'2026-11-06',items:['warm','grid','mock','fix','group','fold']},
+  {d:'2026-11-07',items:['warm','grid','mock','fix','group','fold']},{d:'2026-11-08',items:['warm','grid','mock','fix']},
   {d:'2026-11-09',items:['warm','grid'],light:true},{d:'2026-11-10',exam:'ISEB'},
   {d:'2026-11-11',items:['warm','grid','mock','code']},{d:'2026-11-12',items:['warm','grid','group','code']},
   {d:'2026-11-13',items:['warm','grid'],light:true},{d:'2026-11-14',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
@@ -1684,7 +1684,7 @@ function cdHTML(){const C=cd(),t=C.t,wd=d=>new Date(d+'T12:00:00Z').toLocaleDate
   const dots=C.days.map(x=>{if(x.exam)return`${x.exam==='Quest'?'<span class="muted" style="align-self:center">…</span>':''}<span class="c2dot ${x.d===t?'today':''}" title="${x.exam} exam" style="width:auto;padding:0 6px;border-radius:12px">${x.exam}<em>${wd(x.d)}</em></span>`;
     const st=x.done?'done':x.d<t?'miss':x.d===t?'today':'';return`<span class="c2dot ${st}">${x.done?'✓':x.d<t?'✗':x.light?'·':'•'}${x.mock?'<i class="c2star">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
   const T=C.T,sub=x=>x.id==='grid'?'Exam mode, 6/8 or more · matrices are in both exams':x.id==='mock'?'15-minute exam timing, pen and paper · aim for 17/20 · guess and move on after a minute':
-    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':'';
+    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':x.id==='fold'?'Exam mode, 6/8 or more · count the layers first, cross out wrong counts':'';
   const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${x.fix?'Fix-it: '+(CH2_NAME[x.id]||(CASES.find(c=>c.id===x.id)||{}).title||x.id):CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${sub(x)}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
   let msg;if(T&&T.exam)msg=`<b>${T.exam} exam day. Good luck!</b> No mission today. Pen and paper for every 3D question, never leave a blank, and if one takes more than a minute, guess and move on.`;
   else if(t>'2026-11-27')msg='<b>All three exams done.</b> Well done for every day of practice.';
@@ -2253,7 +2253,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 5 Nov (e)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 5 Nov (f)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
