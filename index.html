@@ -143,6 +143,7 @@ h3.sub{margin:16px 0 8px;font-size:1rem}
 .grp{border:2px solid #333;border-radius:50%;background:#fff;padding:20px 26px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:420px;margin:8px auto 12px}.grp figure{margin:0;text-align:center}.grp svg{background:transparent!important}@media (max-width:620px){.grp{border-radius:36px;padding:12px 10px}}.grp figcaption{font-size:.68rem;line-height:1.2;color:#333;max-width:86px}
 .nudge{background:#FFF4D6;border:1px solid #E8B93A;border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:.9rem;color:#5a4300}
 .copts.wc-lock .pick{pointer-events:none;opacity:.55;filter:saturate(.6)}.copts.wc-lock::before{content:'Answer the working check above to unlock the answers. You can look at them and cross options out now.';display:block;grid-column:1/-1;width:100%;font-size:.85rem;color:var(--muted,#8a93a6);margin:0 0 6px}
+.cardtotal{display:flex;align-items:center;gap:12px;margin:12px 0 6px;padding:10px 12px;border-radius:12px;background:rgba(232,185,58,.14);border:1px solid rgba(232,185,58,.45)}.ct-big{font-size:1.9rem;line-height:1}.ct-big b{font-size:2.2rem}.ct-lbl{font-weight:700}.album ol{margin:6px 0 0;padding-left:22px}.album li{margin:2px 0}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -1476,9 +1477,9 @@ function genFold(){
     const regions=[SQ];seq.forEach(f=>regions.push(fcClip(regions.at(-1),FOLDS[f.k].side,f.keep)));const R=regions.at(-1);
     const inR=(p,m)=>p[0]>m&&p[0]<1-m&&p[1]>m&&p[1]<1-m&&seq.every(f=>FOLDS[f.k].side(p)*f.keep>m);
     const nc=2+rnd(2),kinds=shuffle(Object.keys(FC_SHAPES)).slice(0,nc),cuts=[];let ok=true;
-    for(const k of kinds){let placed=null;for(let g=0;g<200&&!placed;g++){const sz=.055,c=[.04+Math.random()*.92,.04+Math.random()*.92],rot=rnd(4);
+    for(const k of kinds){let placed=null;for(let g=0;g<200&&!placed;g++){const sz=.08,c=[.04+Math.random()*.92,.04+Math.random()*.92],rot=rnd(4);
         const pts=FC_SHAPES[k].p.map(([u,v])=>{let[a,b]=[u,v];for(let r=0;r<rot;r++)[a,b]=[-b,a];return[c[0]+a*sz,c[1]+b*sz]});
-        if(!pts.every(p=>inR(p,.035))||!inR(c,.09))continue;if(cuts.some(o=>Math.hypot(o.c[0]-c[0],o.c[1]-c[1])<.2))continue;placed={k,c,pts}}
+        if(!pts.every(p=>inR(p,.03))||!inR(c,.11))continue;if(cuts.some(o=>Math.hypot(o.c[0]-c[0],o.c[1]-c[1])<.24))continue;placed={k,c,pts}}
       if(!placed){ok=false;break}cuts.push(placed)}
     if(!ok)continue;
     /* unfold: last fold first. Each hole remembers which cut it came from. */
@@ -1494,7 +1495,7 @@ function genFold(){
     const key=H=>H.map(h=>h.pts.map(p=>p.map(v=>Math.round(v*200)).join(',')).sort().join(';')).sort().join('|');
     const correct=unfold(cuts,seq),opts=[{holes:correct,kind:'ok',ras:fcRas(correct)}],keys=new Set([key(correct)]);
     const add=(f,kind,extra={})=>{const H=unfold(cuts,seq,f);const k=key(H);if(keys.has(k))return;
-      if(H.some((h,i)=>H.some((g,j)=>j>i&&Math.hypot(...centroid(h.pts).map((v,q)=>v-centroid(g.pts)[q]))<.08)))return;const ras=fcRas(H);if(opts.some(o=>fcDiff(o.ras,ras)<16))return;keys.add(k);opts.push({holes:H,kind,ras,...extra})};
+      if(H.some((h,i)=>H.some((g,j)=>j>i&&Math.hypot(...centroid(h.pts).map((v,q)=>v-centroid(g.pts)[q]))<.13)))return;const ras=fcRas(H);if(opts.some(o=>fcDiff(o.ras,ras)<40))return;keys.add(k);opts.push({holes:H,kind,ras,...extra})};
     const tries=shuffle([
       ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
       ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
@@ -2099,8 +2100,10 @@ function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.s
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${r.points} rank points${nx?` · ${nx[1]-r.points} to ${nx[0]}`:' · top rank reached'}</p></div>
     <div class="stampmeter" aria-label="${inMeter} of ${spc} stamps toward the next card">${Array.from({length:spc},(_,i)=>`<span class="st ${i<inMeter?'on':''}">★</span>`).join('')}
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${full?'All cards earned!':`${spc-inMeter} stamp${spc-inMeter===1?'':'s'} to the next card`} · today ${todayN}/${DAILY_STAMPS}</p></div></div>
-    <div class="col-cards"><span><b>${r.cards.length}</b> card${r.cards.length===1?'':'s'} earned of ${limit}</span><span><b>${r.given}</b> handed over</span>
-      ${owed>0?`<span class="owed">${owed} card${owed===1?'':'s'} to collect! Ask a grown-up.</span>`:''}</div>
+    <div class="cardtotal"><div class="ct-big">🃏 <b>${r.cards.length}</b></div><div><div class="ct-lbl">card${r.cards.length===1?'':'s'} collected in total</div>
+      <div class="muted" style="font-size:.85rem">${r.given} handed over${owed>0?` · <span class="owed">${owed} still to collect! Ask a grown-up.</span>`:' · all collected'}</div></div></div>
+    <details class="album"><summary>See all ${r.cards.length} card${r.cards.length===1?'':'s'}</summary><ol>${r.cards.map((c,i)=>`<li><span class="muted">${new Date(c.d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span> ${c.reason}</li>`).join('')||'<li class="muted">No cards yet.</li>'}</ol>
+      <p class="muted" style="margin:6px 0 0;font-size:.8rem">Card limit ${limit} (a grown-up can change it in settings).</p></details>
     <details><summary>How to earn cards</summary><ul class="howto">
       <li><b>10-day challenge: master all 8 cases within 10 days for a bonus card.</b></li>
       <li><b>Learning: three big cards.</b> Card 1: master counting (cases 01–02). Card 2: master nets (cases 03–05). Card 3: master cases 06–08. Mastered means quick and accurate on two different days; the targets are on the mastery test cards.</li>
@@ -2264,7 +2267,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (c)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (e)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
