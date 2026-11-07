@@ -144,6 +144,8 @@ h3.sub{margin:16px 0 8px;font-size:1rem}
 .nudge{background:#FFF4D6;border:1px solid #E8B93A;border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:.9rem;color:#5a4300}
 .copts.wc-lock .pick{pointer-events:none;opacity:.55;filter:saturate(.6)}.copts.wc-lock::before{content:'Answer the working check above to unlock the answers. You can look at them and cross options out now.';display:block;grid-column:1/-1;width:100%;font-size:.85rem;color:var(--muted,#8a93a6);margin:0 0 6px}
 .cardtotal{display:flex;align-items:center;gap:12px;margin:12px 0 6px;padding:10px 12px;border-radius:12px;background:rgba(232,185,58,.14);border:1px solid rgba(232,185,58,.45)}.ct-big{font-size:1.9rem;line-height:1}.ct-big b{font-size:2.2rem}.ct-lbl{font-weight:700}.album ol{margin:6px 0 0;padding-left:22px}.album li{margin:2px 0}
+.badges{margin:18px 0}.badge{display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:14px;border:2px solid #E8B93A;background:rgba(232,185,58,.10)}.bd-icon{font-size:2.2rem;line-height:1}.badge h3{margin:0}
+.qtype{border:2px solid var(--line,#3a4256);border-radius:14px;padding:14px;margin:0 0 16px}.qt-head{display:flex;gap:12px;align-items:flex-start;margin:0 0 10px}.qt-head h3{margin:0 0 4px}.qt-head p{margin:0}.qt-num{flex:none;width:34px;height:34px;border-radius:50%;background:#E8B93A;color:#2a2200;font-weight:800;display:grid;place-items:center;font-size:1.1rem}.qt-ex{flex:none;margin-left:auto;max-width:130px}.qt-ex svg{max-width:130px;height:auto}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -948,6 +950,8 @@ function runQuiz(cfg){
       if(cfg.id==='warm'){const S=streakInfo();if(S.doneToday&&onceFlag('streak-'+today())){addPoints(5*Math.min(S.n,10));if(STREAK_GOALS.includes(S.n))toast(`<b>${S.n}-day streak!</b> Keep it going.`,'rank')}}
       if(cfg.id==='warm'&&score===plan.length&&onceFlag('warm-'+today()))stamp(`Daily warm-up: ${score}/6`);
       if(cfg.id==='mock'&&score>=17&&!ch2Active()&&onceFlag('mock-'+today()))stamp(`Mock Exam: ${score}/20`);
+      if(cfg.id==='mock'&&score===plan.length&&onceFlag('mockhalf-'+today()))addHalf(`Perfect Mock Exam: ${score}/${plan.length}`);
+      if(cfg.id==='mock'&&score===plan.length)setTimeout(()=>toast(`<b>💯 BADGE: Perfect Mock Exam!</b> It’s in your Badges for good.`,'rank'),1800);
       const passed=cfg.pass!=null&&score>=cfg.pass;if(passed&&cfg.onPass)cfg.onPass();
       const rows=Object.entries(tally).map(([t,v])=>`<tr><td>${TYPE_NAME[t]}</td><td class="num">${v.r} / ${v.a}</td><td>${v.r===v.a?'<span class="y">Solid</span>':v.a-v.r>=2||v.r/v.a<.7?`<span class="n">Refresh: replay ${CASES.find(c=>c.id===TYPE_CASE[t]).title}</span>`:'<span class="s">Nearly</span>'}</td></tr>`).join('');
       g.innerHTML=`<div class="done"><div class="big">${score} / ${plan.length}</div>${cfg.total?`<p>${unreached?`<b>Time ran out with ${unreached} question${unreached===1?'':'s'} not reached.</b> In the real exam, guess any you can’t finish: a guess can score, a blank never does.`:`Finished with <b>${fmt(Math.max(0,left))}</b> to spare.`}</p>`:''}${speedLine(cfg.id,score,plan.length,avg)}${cfg.pass!=null?`<p><b>${passed?(cfg.passMsg||'Passed!'):`Pass mark is ${cfg.pass}. Not this time.`}</b></p>`:''}</div>
@@ -1291,15 +1295,22 @@ QB.join=function(host,lvl=1,opt={}){const X=genJoin();
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:joinNotes(X,i),ok?'Both pieces on the right edges, turned but not flipped.':`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
 function joinCase(){stopTimer();$('#homeBtn').hidden=false;
+  const cbX=genCombine(),cbEx=cbX?combineMainSVG(cbX,11):'';
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 11 · Shapes</div><h2>Join It Up</h2></div></div>
+    <p style="margin:0 0 10px"><b>This case has two kinds of question.</b> Choose one below.</p>
+    <div class="qtype"><div class="qt-head"><span class="qt-num">1</span><div><h3>Join the pieces</h3><p class="muted">You see: a base shape and two loose pieces with lettered edges. You do: join them where the letters match and pick the finished shape.</p></div></div>
     <div class="rule"><span class="pp">✎ Take 20–30 seconds on each one, not 5. Every wrong answer is nearly right.</span><strong>Join the pieces to the base where the letters match.</strong>
       <ol><li><b>Match the letters.</b> The piece’s A edge goes on the base’s A edge. The two edges are always the same length.</li>
       <li><b>Turn, never flip.</b> Imagine sliding the piece round until its edge lines up. Check which end its slope, point or long side ends up at.</li>
       <li><b>Do the same for B.</b></li>
       <li><b>Answers may be turned round.</b> Compare the shape, not which way up it is. One answer is usually the mirror image, and that’s always wrong.</li></ol></div>
-    <div class="row"><button class="btn-primary" id="jLearn">Learn: 6 questions, no timer, coloured edges</button><button id="jExam">Exam mode: 8 timed questions</button></div>
-    <h3 class="sub">Two-piece combine</h3><p class="muted" style="margin:0 0 8px">“Select the two pieces that make the main shape.” Measure first: the wrong pieces are a little too long, have one edge changed, or are flipped.</p>
-    <div class="row"><button id="cbLearn">Learn: 6, no timer</button><button id="cbExam">Timed: 8 questions</button></div></section>`;
+    <div class="row"><button class="btn-primary" id="jLearn">Learn: 6 questions, no timer, coloured edges</button><button id="jExam">Exam mode: 8 timed questions</button></div></div>
+    <div class="qtype"><div class="qt-head"><span class="qt-num">2</span><div><h3>Two-piece combine <span class="muted" style="font-weight:400">· find the pieces in an overlapping shape</span></h3><p class="muted">You see: one shape made of two pieces laid over each other, like this one. You do: pick the <b>two pieces</b> that make it.</p></div>${cbEx?`<div class="qt-ex">${cbEx}</div>`:''}</div>
+    <div class="rule"><strong>Trace one outline, then the other. The overlap belongs to both pieces.</strong>
+      <ol><li><b>Measure each piece</b> in the main shape: how long, how wide, where the point or notch is. Sketch it.</li>
+      <li><b>Cross out</b> pieces that are a little too long or short, have one edge changed, or are flipped.</li>
+      <li><b>Turned is fine, flipped never is.</b></li></ol></div>
+    <div class="row"><button class="btn-primary" id="cbLearn">Learn: 6 questions, no timer</button><button id="cbExam">Exam mode: 8 timed questions</button></div></div></section>`;
   const go=learn=>runQuiz({id:learn?null:'join',tag:`Case 11 · ${learn?'Learn':'Exam mode'}`,title:'Join It Up',secs:learn?0:45,level:1,learn,
     rule:'<strong>Match the letters, turn but never flip, then compare the shape (answers may be turned).</strong>',plan:repeat('join',learn?6:8),remake:()=>repeat('join',learn?6:8)});
   $('#jLearn').onclick=()=>go(true);$('#jExam').onclick=()=>go(false);
@@ -2087,15 +2098,24 @@ function trophyHTML(){backfillTrophies();const r=rewards(),T=r.trophies||[];if(!
   return`<section class="trophies"><h2 class="wk">🏆 Trophy cabinet</h2><p class="muted" style="margin:0 0 8px">Every challenge Greta has won. These stay here for good.</p>
     ${T.map(t=>`<div class="trophy"><div class="tro-icon">🏆</div><div><h3>${t.title}</h3><p class="muted" style="margin:2px 0 6px">${t.detail}. Won on ${fd(t.d)}, in ${t.days} day${t.days===1?'':'s'}.</p>
       <p style="margin:0"><b>${t.cards} card${t.cards===1?'':'s'} earned</b> during the challenge:</p><div class="tro-cards">${t.cardReasons.map(x=>`<span>🃏 ${x}</span>`).join('')}</div></div></div>`).join('')}
-    <p class="muted" style="margin:8px 0 0">Cards earned in total: <b>${r.cards.length}</b>.</p></section>`}
+    <p class="muted" style="margin:8px 0 0">Cards earned in total: <b>${cardTotal(r)}</b>.</p></section>`}
+/* Badges: every perfect Mock Exam (100%) is recorded from her scores, so nothing extra to store and it survives backups. */
+function badgeHTML(){const P=hist('mock').filter(r=>r.n===r.of);if(!P.length)return'';const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+  return`<section class="badges"><h2 class="wk">🏅 Badges</h2><div class="badge"><div class="bd-icon">💯</div><div><h3>Perfect Mock Exam ×${P.length}</h3>
+    <p class="muted" style="margin:2px 0 6px">100% on the Mock Exam${P.length>1?`, ${P.length} times`:''}. Each one also earns half a card (one a day).</p>
+    <div class="tro-cards">${P.map(r=>`<span>💯 ${fd(r.d)} · ${r.n}/${r.of}</span>`).join('')}</div></div></div></section>`}
 function backfillTrophies(){try{const r=rewards();if(!r.flags.speed10||(r.trophies||[]).some(t=>t.key==='ch1'))return;
   const card=r.cards.find(c=>c.from==='speed10'),win=card?card.d:today(),start=store.get('chStart',null)||win;addTrophy('ch1','10-day challenge','All 8 case files mastered',start<win?start:win,win)}catch(e){}}
+/* half cards: a perfect 20/20 Mock Exam earns half a card (once a day). Shown in the card total as ½. */
+function addHalf(reason){const r=rewards();r.halves=r.halves||[];r.halves.push({d:today(),reason});saveRw(r);toast(`<b>HALF CARD EARNED!</b> ${reason}. Ask for your half card.`,'card')}
+const cardTotal=r=>{const h=(r.halves||[]).length,n=r.cards.length+Math.floor(h/2);return h%2?(n?n+'½':'½'):String(n)};
+const owedTotal=r=>{const c=Math.max(0,r.cards.length-r.given),h=Math.max(0,(r.halves||[]).length-(r.halfGiven||0));const n=c+Math.floor(h/2);return{n,half:h%2===1,any:c+h>0,txt:h%2?(n?n+'½':'½'):String(n),halvesOwed:h}};
 function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[key]=true;saveRw(r);return true}
 /* practice time: count minutes while a case is open */
 let inCase=false;
 setInterval(()=>{if(!inCase||document.visibilityState!=='visible')return;const r=rewards(),d=today();r.play[d]=(r.play[d]||0)+15;saveRw(r);
   if(r.play[d]>=PLAY_CAP_MIN*60&&onceFlag('rest-'+d))toast(`<b>Case closed for today. Great work!</b> Rest helps your brain lock it in. You can keep going, but stamps for today are done.`,'rank')},15000);
-function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,owed=Math.max(0,r.cards.length-r.given),full=r.cards.length>=limit;
+function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,OW=owedTotal(r),full=r.cards.length>=limit,tot=cardTotal(r),many=tot!=='1';
   const rk=RANKS[r.rank],nx=RANKS[r.rank+1],pct=nx?Math.round((r.points-rk[1])/(nx[1]-rk[1])*100):100,todayN=r.day[today()]||0;
   const log=r.stamps.slice(-10).reverse().map(s=>`<li><span class="muted">${s.d.slice(5).replace('-','/')}</span> ${s.reason}</li>`).join('')||'<li class="muted">No stamps yet. Finish a daily warm-up to earn the first one.</li>';
   return`<section class="collection"><div class="col-head"><div><div class="tag">Card Collection</div><h3>${rk[0]}</h3>
@@ -2103,15 +2123,16 @@ function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.s
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${r.points} rank points${nx?` · ${nx[1]-r.points} to ${nx[0]}`:' · top rank reached'}</p></div>
     <div class="stampmeter" aria-label="${inMeter} of ${spc} stamps toward the next card">${Array.from({length:spc},(_,i)=>`<span class="st ${i<inMeter?'on':''}">★</span>`).join('')}
       <p class="muted" style="margin:4px 0 0;font-size:.85rem">${full?'All cards earned!':`${spc-inMeter} stamp${spc-inMeter===1?'':'s'} to the next card`} · today ${todayN}/${DAILY_STAMPS}</p></div></div>
-    <div class="cardtotal"><div class="ct-big">🃏 <b>${r.cards.length}</b></div><div><div class="ct-lbl">card${r.cards.length===1?'':'s'} collected in total</div>
-      <div class="muted" style="font-size:.85rem">${r.given} handed over${owed>0?` · <span class="owed">${owed} still to collect! Ask a grown-up.</span>`:' · all collected'}</div></div></div>
-    <details class="album"><summary>See all ${r.cards.length} card${r.cards.length===1?'':'s'}</summary><ol>${r.cards.map((c,i)=>`<li><span class="muted">${new Date(c.d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span> ${c.reason}</li>`).join('')||'<li class="muted">No cards yet.</li>'}</ol>
+    <div class="cardtotal"><div class="ct-big">🃏 <b>${tot}</b></div><div><div class="ct-lbl">card${many?'s':''} collected in total</div>
+      <div class="muted" style="font-size:.85rem">${r.given+((r.halfGiven||0)?` and ${r.halfGiven} half`:'')} handed over${OW.any?` · <span class="owed">${OW.txt} still to collect! Ask a grown-up.</span>`:' · all collected'}</div></div></div>
+    <details class="album"><summary>See all ${tot} card${many?'s':''}</summary><ol>${[...r.cards.map(c=>({...c,h:false})),...(r.halves||[]).map(c=>({...c,h:true}))].sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).map(c=>`<li><span class="muted">${new Date(c.d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span> ${c.h?'<b>½ card:</b> ':''}${c.reason}</li>`).join('')||'<li class="muted">No cards yet.</li>'}</ol>
       <p class="muted" style="margin:6px 0 0;font-size:.8rem">Card limit ${limit} (a grown-up can change it in settings).</p></details>
     <details><summary>How to earn cards</summary><ul class="howto">
       <li><b>10-day challenge: master all 8 cases within 10 days for a bonus card.</b></li>
       <li><b>Learning: three big cards.</b> Card 1: master counting (cases 01–02). Card 2: master nets (cases 03–05). Card 3: master cases 06–08. Mastered means quick and accurate on two different days; the targets are on the mastery test cards.</li>
       <li><b>Practice: stamps</b> (up to ${DAILY_STAMPS} a day): pass a mastery test · 17+ on the Mock Exam · a perfect 6/6 on the daily warm-up. Each can earn one stamp a day.</li>
       <li><b>${spc} stamps = 1 card.</b></li>
+      <li><b>A perfect 20/20 on the Mock Exam = half a card</b> (once a day). Two halves make a whole card.</li>
       <li>Every finished round earns rank points. Fewer mistakes earn more. Rank is for glory: no stamps.</li></ul>
       <h4 class="tag" style="margin:8px 0 4px">Latest stamps</h4><ul class="howto">${log}</ul></details></section>`}
 
@@ -2260,7 +2281,7 @@ function home(){
   ${streakHTML()}
   ${nextUp()}
   ${collectionHTML()}
-  ${trophyHTML()}
+  ${trophyHTML()}${badgeHTML()}
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
   <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
     <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
@@ -2270,7 +2291,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (f)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (h)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2282,7 +2303,7 @@ function home(){
     <div class="row"><button id="pr">Start again from scratch</button><span class="muted" id="prc">Clears scores and unlocked weeks. Stamps and cards stay.</span></div></details>
   <section class="parent" id="parent" ${parentOpen?'':'hidden'}><div class="gate-head"><h3 style="margin:0">For parents</h3><button class="btn-ghost" id="pclose">Close</button></div>
     <p style="margin:0">All case files are open. Each mastery test opens once its targets are ticked (pass marks 10/12 and 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
-    <div class="row"><span><b>${rewards().cards.length}</b> cards earned · <b>${rewards().given}</b> handed over</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}</div>
+    <div class="row"><span><b>${cardTotal(rewards())}</b> cards earned · <b>${rewards().given}</b> handed over${(rewards().halfGiven||0)?` + ${rewards().halfGiven} half`:''}</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}${owedTotal(rewards()).halvesOwed>0?'<button id="gaveh">Half card handed over</button>':''}</div>
     <div class="row"><label for="bonusWhy">Bonus card for</label><input id="bonusWhy" class="num" style="width:min(100%,260px);font-size:1rem" maxlength="60" placeholder="e.g. great effort this week"><button id="bonus">Give bonus card</button><span class="muted" id="bonusm"></span></div>
     <div class="row"><label for="chs">10-day challenge started on</label><input id="chs" type="date" class="num" style="width:auto;font-size:1rem" value="${challenge().start}"></div>
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
@@ -2299,6 +2320,7 @@ function home(){
   {let armed=false;$('#bonus').onclick=()=>{const r=rewards();if(r.cards.length>=rwSettings().limit){$('#bonusm').textContent='Card limit reached. Raise it below first.';return}
     if(!armed){armed=true;$('#bonus').textContent='Tap again to give it';return}
     const why=($('#bonusWhy').value||'').trim()||'Great effort';r.cards.push({d:today(),from:'bonus',reason:`Bonus: ${why}`});saveRw(r);home();toast(`<b>BONUS CARD!</b> ${why.replace(/[<>&]/g,'')}`,'card')}}
+  if($('#gaveh')){let armed=false;$('#gaveh').onclick=()=>{if(!armed){armed=true;$('#gaveh').textContent='Tap again to confirm';return}const r=rewards();r.halfGiven=Math.min((r.halves||[]).length,(r.halfGiven||0)+1);saveRw(r);home()}}
   if($('#gave')){let armed=false;$('#gave').onclick=()=>{if(!armed){armed=true;$('#gave').textContent='Tap again to confirm';return}const r=rewards();r.given=Math.min(r.cards.length,r.given+1);saveRw(r);home()}}
   const twoStep=(btn,msg,act)=>{let armed=false;$(btn).onclick=()=>{if(!armed){armed=true;$(btn).textContent='Tap again to confirm';$(msg).textContent=''}else act()}};
   twoStep('#pu','#puc',()=>{unlock('force');home()});
