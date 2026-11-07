@@ -1671,12 +1671,17 @@ const CD_FROM='2026-11-05',CD_DAYS=[
   {d:'2026-11-11',items:['warm','grid','mock','code']},{d:'2026-11-12',items:['warm','grid','group','code']},
   {d:'2026-11-13',items:['warm','grid'],light:true},{d:'2026-11-14',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
 function cdFix(){const w=store.get('weak',{}),t=Object.keys(w).find(k=>w[k]&&!['grid','group'].includes(k));if(!t)return null;return t==='combine'?'combine':TYPE_CASE[t]}
-function cd(){const t=today(),fix=cdFix();
-  const days=CD_DAYS.map(D=>{if(D.exam)return{...D};const items=D.items.map(id=>{
+/* Days counted as done because her progress was lost (5 Nov, game copy deleted) or a game bug changed what counted (6 Nov). */
+const CD_EXCUSE=['2026-11-05','2026-11-06'];
+function cd(){const t=today(),fixNow=cdFix(),fm=store.get('cdFixDay',{});
+  if(fixNow&&!fm[t]){fm[t]=fixNow;store.set('cdFixDay',fm)}
+  const days=CD_DAYS.map(D=>{if(D.exam)return{...D};
+    const fix=D.d<t?fm[D.d]:D.d===t?(fm[t]||fixNow):fixNow;
+    const items=D.items.map(id=>{
       if(id==='fix'){if(!fix)return null;return{id:fix,fix:true,done:hist(fix).some(r=>r.d===D.d)}}
       if(id==='warm')return{id,done:hist('warm').some(r=>r.d===D.d)};
       if(id==='mock')return{id,done:hist('mock').some(r=>r.d===D.d)};
-      return{id,done:hist(id).some(r=>r.d===D.d&&r.n>=6)}}).filter(Boolean);return{...D,items,done:items.every(x=>x.done)}});
+      return{id,done:hist(id).some(r=>r.d===D.d&&r.n>=6)}}).filter(Boolean);const ex=CD_EXCUSE.includes(D.d);return{...D,items:ex?items.map(x=>({...x,done:true})):items,done:ex||items.every(x=>x.done),excused:ex}});
   const work=days.filter(x=>!x.exam),T=days.find(x=>x.d===t)||null;
   days.forEach(x=>{if(!x.exam)x.mock=hist('mock').some(r=>r.d===x.d&&r.n>=MOCK_STAMP_MIN)});const mocks=days.filter(x=>x.mock).length;
   if(T&&T.mock&&onceFlag('mockstamp-'+T.d))toast(`<b>Mock stamp earned!</b> <span>${mocks%MOCK_PER_CARD===0?'':`${MOCK_PER_CARD-mocks%MOCK_PER_CARD} more for an extra card`}</span>`);
@@ -2259,7 +2264,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (b)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (c)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
