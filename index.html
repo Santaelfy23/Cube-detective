@@ -142,6 +142,7 @@ h3.sub{margin:16px 0 8px;font-size:1rem}
 .copt.sel .pick{outline:3px solid var(--accent);outline-offset:-3px}.notw{color:var(--bad);letter-spacing:.04em}
 .grp{border:2px solid #333;border-radius:50%;background:#fff;padding:20px 26px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:420px;margin:8px auto 12px}.grp figure{margin:0;text-align:center}.grp svg{background:transparent!important}@media (max-width:620px){.grp{border-radius:36px;padding:12px 10px}}.grp figcaption{font-size:.68rem;line-height:1.2;color:#333;max-width:86px}
 .nudge{background:#FFF4D6;border:1px solid #E8B93A;border-radius:8px;padding:8px 10px;margin:0 0 8px;font-size:.9rem;color:#5a4300}
+.copts.wc-lock .pick{pointer-events:none;opacity:.55;filter:saturate(.6)}.copts.wc-lock::before{content:'Answer the working check above to unlock the answers. You can look at them and cross options out now.';display:block;grid-column:1/-1;width:100%;font-size:.85rem;color:var(--muted,#8a93a6);margin:0 0 6px}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -1123,12 +1124,12 @@ function elimCase(){
         if(left.size===1)finish()}})};
   next()}
 /* ---- Working check: before the answers appear, one quick question about what should be on her paper ---- */
-function workCheck(host,W){if(!W)return;const box=host.querySelector('.copts');if(!box)return;box.hidden=true;
+function workCheck(host,W){if(!W)return;const box=host.querySelector('.copts');if(!box)return;box.classList.add('wc-lock');
   const d=document.createElement('div');d.className='wcheck';
   d.innerHTML=`<p><b>✎ Working check:</b> ${W.q}</p><div class="wc-ch">${W.choices.map((c,i)=>`<button data-i="${i}">${c}</button>`).join('')}</div><p class="wc-fb" hidden></p>`;
   box.parentNode.insertBefore(d,box);
   d.querySelectorAll('.wc-ch button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,ok=i===W.ans;d.querySelectorAll('.wc-ch button').forEach((x,k)=>{x.disabled=true;if(k===W.ans)x.classList.add('right');else if(k===i)x.classList.add('wrong')});
-    const fb=d.querySelector('.wc-fb');fb.hidden=false;fb.innerHTML=(ok?'<b>Yes.</b> ':'<b>Not quite.</b> ')+W.why+' Now use your working to choose the answer.';box.hidden=false})}
+    const fb=d.querySelector('.wc-fb');fb.hidden=false;fb.innerHTML=(ok?'<b>Yes.</b> ':'<b>Not quite.</b> ')+W.why+' Now use your working to choose the answer.';box.classList.remove('wc-lock')})}
 function codeCheck(X){const pos=rnd(2),d=pos?X.d2:X.d1,others=Object.keys(CODE_DIMS).filter(k=>![X.d1,X.d2,X.dh].includes(k)),ch=shuffle([X.d1,X.d2,X.dh,pick(others)]);
   return{q:`What does the <b>${pos?'second':'first'}</b> letter stand for? Check your key.`,choices:ch.map(k=>CODE_DIMS[k].name),ans:ch.indexOf(d),
     why:`The ${pos?'second':'first'} letter is the ${CODE_DIMS[d].name}: pictures with the same ${pos?'second':'first'} letter all share it. (The ${CODE_DIMS[X.dh].name} is the red herring.)`}}
@@ -1491,9 +1492,9 @@ function genFold(){
       if(fault&&fault.type==='turned'){const i=H.length-1-H.slice().reverse().findIndex(h=>h.ci===fault.ci),h=H[i],c0=centroid(h.pts);h.pts=h.pts.map(p=>[c0[0]-(p[1]-c0[1]),c0[1]+(p[0]-c0[0])])}
       return H};
     const key=H=>H.map(h=>h.pts.map(p=>p.map(v=>Math.round(v*200)).join(',')).sort().join(';')).sort().join('|');
-    const correct=unfold(cuts,seq),opts=[{holes:correct,kind:'ok'}],keys=new Set([key(correct)]);
+    const correct=unfold(cuts,seq),opts=[{holes:correct,kind:'ok',ras:fcRas(correct)}],keys=new Set([key(correct)]);
     const add=(f,kind,extra={})=>{const H=unfold(cuts,seq,f);const k=key(H);if(keys.has(k))return;
-      if(H.some((h,i)=>H.some((g,j)=>j>i&&Math.hypot(...centroid(h.pts).map((v,q)=>v-centroid(g.pts)[q]))<.08)))return;keys.add(k);opts.push({holes:H,kind,...extra})};
+      if(H.some((h,i)=>H.some((g,j)=>j>i&&Math.hypot(...centroid(h.pts).map((v,q)=>v-centroid(g.pts)[q]))<.08)))return;const ras=fcRas(H);if(opts.some(o=>fcDiff(o.ras,ras)<16))return;keys.add(k);opts.push({holes:H,kind,ras,...extra})};
     const tries=shuffle([
       ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
       ()=>{const ci=rnd(nc),step=rnd(n);add({type:'noflip',ci,step},'noflip',{ci})},
@@ -1505,6 +1506,10 @@ function genFold(){
     if(opts.length<5)continue;
     const sh=shuffle(opts);return{seq,regions,cuts,opts:sh,ans:sh.findIndex(o=>o.kind==='ok'),n}}
   return null}
+/* how an option LOOKS: a 90x90 picture of the holes, so options that look the same are caught even when their numbers differ */
+const FC_N=90;function fcPip(pt,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const[xi,yi]=poly[i],[xj,yj]=poly[j];if(((yi>pt[1])!==(yj>pt[1]))&&(pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi))c=!c}return c}
+function fcRas(H){const a=new Uint8Array(FC_N*FC_N);for(let y=0;y<FC_N;y++)for(let x=0;x<FC_N;x++){const pt=[(x+.5)/FC_N,(y+.5)/FC_N];for(const h of H)if(fcPip(pt,h.pts)){a[y*FC_N+x]=1;break}}return a}
+function fcDiff(a,b){let d=0;for(let k=0;k<a.length;k++)if(a[k]!==b[k])d++;return d}
 function centroid(p){return[p.reduce((a,v)=>a+v[0],0)/p.length,p.reduce((a,v)=>a+v[1],0)/p.length]}
 const FC={paper:'#C9CED8',ink:'#333',hole:'#fff',line:'#555'};
 function foldStepSVG(X,i,{w=110,cuts=false}={}){const s=w-16,P=([x,y])=>[(8+x*s).toFixed(1),(8+y*s).toFixed(1)],pp=a=>a.map(p=>P(p).join(',')).join(' ');
@@ -1905,15 +1910,16 @@ function grMove(){for(let t=0;t<40;t++){const T=pick(['mirror','rot90','rot180']
     const bads=[...shuffle(others).slice(0,3).map(x=>make(x)),(()=>{const it=make('diff');it.pts2=grIrreg(5+rnd(2));it.mark2=[it.pts2[0][0]*.5,it.pts2[0][1]*.5];return it})()];
     return{v:'move',T,items,good,bads,rule:`In every picture the second shape is the first one <b>${GR_TNAME[T]}</b>.`,
       wrong:others.slice(0,2).map(x=>`The second shape is the first one ${GR_TNAME[x]}.`),ann:()=>GR_TNAME[T].replace(/,.*$/,''),why:it=>`shows the second shape ${GR_TNAME[it.t]}, not ${GR_TNAME[T].replace(/,.*$/,'')}`}}return null}
-function genGroup(fam){
+function genGroup(fam){for(let t=0;t<60;t++){const X=genGroup0(fam);if(new Set(X.opts.map(o=>grSVG(o.it))).size===X.opts.length)return X}return genGroup0(fam)}
+function genGroup0(fam){
   const vs=Object.keys(GR_V).filter(v=>!fam||GR_V[v].fam===fam),v=pick(fam?vs:['parity','reg','pair','same','tri','dot','dots','lines','move','move','dots','tri']);
-  if(v==='move'){const X=grMove();if(!X)return genGroup(fam);return grFinish(X,GR_V.move)}
+  if(v==='move'){const X=grMove();if(!X)return genGroup0(fam);return grFinish(X,GR_V.move)}
   const V=GR_V[v];for(let t=0;t<300;t++){const outs=V.outs.length>1?shuffle([...V.outs,...V.outs,pick(V.outs)]):[0,1,2,3,4].map(()=>V.outs[0]);
     const items=outs.map(o=>V.make(o));if(!grNoClash(items,V.hs))continue;if(V.extra&&!V.extra(items))continue;
     if(v==='parity'&&!grBoth(items,it=>it.small))continue;
     const good=V.make(pick(V.outs)),bads=[0,1,2,3].map(()=>V.bad());
     return grFinish({v,items,good,bads,rule:V.rule,wrong:V.wrong,ann:V.ann,why:V.why},V)}
-  return genGroup(fam)}
+  return genGroup0(fam)}
 function grFinish(X,V){const opts=shuffle([{it:X.good,ok:true},...X.bads.map(b=>({it:b}))]);return{...X,fam:V.fam,feats:V.feats,herr:V.herr,opts,ans:opts.findIndex(o=>o.ok)}}
 function groupSVG(X,{w=80,showAns=false,cap=false}={}){return`<div class="grp">${X.items.map(it=>`<figure>${grSVG(it,{w})}${cap?`<figcaption>${X.ann(it)}</figcaption>`:''}</figure>`).join('')}</div>`}
 function groupCheck(X,herring){
@@ -2253,7 +2259,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 5 Nov (f)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (b)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
