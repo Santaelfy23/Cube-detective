@@ -146,6 +146,7 @@ h3.sub{margin:16px 0 8px;font-size:1rem}
 .cardtotal{display:flex;align-items:center;gap:12px;margin:12px 0 6px;padding:10px 12px;border-radius:12px;background:rgba(232,185,58,.14);border:1px solid rgba(232,185,58,.45)}.ct-big{font-size:1.9rem;line-height:1}.ct-big b{font-size:2.2rem}.ct-lbl{font-weight:700}.album ol{margin:6px 0 0;padding-left:22px}.album li{margin:2px 0}
 .badges{margin:18px 0}.badge{display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:14px;border:2px solid #E8B93A;background:rgba(232,185,58,.10)}.bd-icon{font-size:2.2rem;line-height:1}.badge h3{margin:0}
 .qtype{border:2px solid var(--line,#3a4256);border-radius:14px;padding:14px;margin:0 0 16px}.qt-head{display:flex;gap:12px;align-items:flex-start;margin:0 0 10px}.qt-head h3{margin:0 0 4px}.qt-head p{margin:0}.qt-num{flex:none;width:34px;height:34px;border-radius:50%;background:#E8B93A;color:#2a2200;font-weight:800;display:grid;place-items:center;font-size:1.1rem}.qt-ex{flex:none;margin-left:auto;max-width:130px}.qt-ex svg{max-width:130px;height:auto}
+.serrow{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:8px 0 12px}
 p.hint{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;margin:6px 0}.lessons{display:grid;gap:8px}.lesson{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;width:100%}.lesson .ln{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-weight:700;flex:none}.lesson .lt{margin-left:auto;color:var(--good);font-weight:700}ol.steps li{margin:6px 0}
 .checks .y{color:var(--good);font-weight:700}.checks .n{color:var(--bad);font-weight:700}.checks .s{color:var(--muted);font-weight:700}
 .key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;background:var(--hid-top);border:1px solid var(--cube-line)}
@@ -929,8 +930,8 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={group:'Match the group',combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
-const TYPE_CASE={group:'group',combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+const TYPE_NAME={series:'Complete the series',symgrid:'Symmetry grids',missing:'Find the missing piece',hidden:'Hidden shapes',codeH:'Letter codes (harder)',foldline:'Fold along the line',group:'Match the group',combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_CASE={series:'series',symgrid:'series',missing:'series',hidden:'series',codeH:'code',foldline:'fold',group:'group',combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
 function runQuiz(cfg){
@@ -1135,9 +1136,9 @@ function workCheck(host,W){if(!W)return;const box=host.querySelector('.copts');i
   box.parentNode.insertBefore(d,box);
   d.querySelectorAll('.wc-ch button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,ok=i===W.ans;d.querySelectorAll('.wc-ch button').forEach((x,k)=>{x.disabled=true;if(k===W.ans)x.classList.add('right');else if(k===i)x.classList.add('wrong')});
     const fb=d.querySelector('.wc-fb');fb.hidden=false;fb.innerHTML=(ok?'<b>Yes.</b> ':'<b>Not quite.</b> ')+W.why+' Now use your working to choose the answer.';box.classList.remove('wc-lock')})}
-function codeCheck(X){const pos=rnd(2),d=pos?X.d2:X.d1,others=Object.keys(CODE_DIMS).filter(k=>![X.d1,X.d2,X.dh].includes(k)),ch=shuffle([X.d1,X.d2,X.dh,pick(others)]);
-  return{q:`What does the <b>${pos?'second':'first'}</b> letter stand for? Check your key.`,choices:ch.map(k=>CODE_DIMS[k].name),ans:ch.indexOf(d),
-    why:`The ${pos?'second':'first'} letter is the ${CODE_DIMS[d].name}: pictures with the same ${pos?'second':'first'} letter all share it. (The ${CODE_DIMS[X.dh].name} is the red herring.)`}}
+function codeCheck(X){const pos=rnd(2),d=pos?X.d2:X.d1,others=Object.keys(X.dims).filter(k=>![X.d1,X.d2,X.dh].includes(k)),ch=shuffle([X.d1,X.d2,X.dh,pick(others)]);
+  return{q:`What does the <b>${pos?'second':'first'}</b> letter stand for? Check your key.`,choices:ch.map(k=>X.dims[k].name),ans:ch.indexOf(d),
+    why:`The ${pos?'second':'first'} letter is the ${X.dims[d].name}: pictures with the same ${pos?'second':'first'} letter all share it. (The ${X.dims[X.dh].name} is the red herring.)`}}
 function foldCheck(X){const n=2**X.n,ch=[2,4,8];return{q:'How many times will each cut shape appear when the paper is unfolded?',choices:ch.map(String),ans:ch.indexOf(n),why:`${X.n} fold${X.n>1?'s':''} = ${n} layers of paper, so there will be ${n} of each shape.`}}
 function oddCheck(X){const nm=c=>SYM[X.N.symOf[c]].name,seen=[...new Set(X.opts.flatMap(o=>o.view.map(e=>e.cell)))].filter(c=>c!==X.p&&c!==X.q);
   const right=[X.p,X.q],pairs=[right];for(const a of shuffle(seen.concat([X.p,X.q]))){for(const b of shuffle(seen)){if(a===b)continue;const k=[a,b].sort().join();if(pairs.some(p=>p.slice().sort().join()===k))continue;pairs.push([a,b]);break}if(pairs.length===3)break}
@@ -1403,7 +1404,8 @@ const CODE_DIMS={
   line:{name:'line',vals:['no line','vertical line','horizontal line','diagonal line']},
   dots:{name:'number of dots',vals:['1 dot','2 dots','3 dots']},
   arrow:{name:'arrow direction',vals:['arrow up','arrow right','arrow down','arrow left']}};
-function codePic(f,{w=92}={}){const id='st'+(++__pid),ink='#222',fills={white:'#fff',grey:'#A7AEBD',black:'#2A2F3A',striped:`url(#${id})`},cx=46,cy=42,r=24;
+function codePic(f,o={}){if(f.ord)return hardCodePic(f,o);return codePic0(f,o)}
+function codePic0(f,{w=92}={}){const id='st'+(++__pid),ink='#222',fills={white:'#fff',grey:'#A7AEBD',black:'#2A2F3A',striped:`url(#${id})`},cx=46,cy=42,r=24;
   const shape={circle:`<circle cx="${cx}" cy="${cy}" r="${r}"/>`,square:`<rect x="${cx-r+2}" y="${cy-r+2}" width="${2*r-4}" height="${2*r-4}"/>`,
     triangle:`<polygon points="${cx},${cy-r} ${cx+r},${cy+r-4} ${cx-r},${cy+r-4}"/>`,diamond:`<polygon points="${cx},${cy-r} ${cx+r},${cy} ${cx},${cy+r} ${cx-r},${cy}"/>`,
     hexagon:`<polygon points="${[0,1,2,3,4,5].map(k=>{const a=Math.PI/3*k;return`${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`}).join(' ')}"/>`,
@@ -1414,10 +1416,10 @@ function codePic(f,{w=92}={}){const id='st'+(++__pid),ink='#222',fills={white:'#
   return`<svg viewBox="0 0 92 92" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px"><defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fff"/><line x1="0" y1="0" x2="0" y2="6" stroke="${ink}" stroke-width="2"/></pattern></defs>
     <g fill="${fills[f.fill||'white']}" stroke="${ink}" stroke-width="2">${shape}</g><g stroke="${ink}" stroke-width="2.4">${ln}</g>${dots}${ar}</svg>`}
 const LETTERS='ABCDEFGHJKLMNPRSTUVWXYZ'.split('');
-function genCode(){
-  for(let t=0;t<500;t++){const dims=shuffle(Object.keys(CODE_DIMS)).slice(0,3),[d1,d2,dh]=dims,V=d=>shuffle(CODE_DIMS[d].vals.slice()).slice(0,3);
+function genCode(hard){const DIMS=hard?HCODE_DIMS:CODE_DIMS;
+  for(let t=0;t<500;t++){const dims=shuffle(Object.keys(DIMS)).slice(0,3),[d1,d2,dh]=dims,V=d=>shuffle(DIMS[d].vals.slice()).slice(0,3);
     const v1=V(d1),v2=V(d2),vh=V(dh),lt=shuffle(LETTERS.slice()),L1=lt.slice(0,4),L2=lt.slice(4,7);
-    const newVal=Math.random()<.3&&CODE_DIMS[d1].vals.length>3,v1all=newVal?[...v1,CODE_DIMS[d1].vals.find(x=>!v1.includes(x))]:v1;
+    const newVal=Math.random()<.3&&DIMS[d1].vals.length>3,v1all=newVal?[...v1,DIMS[d1].vals.find(x=>!v1.includes(x))]:v1;
     const ex=[...Array(4)].map(()=>({[d1]:pick(v1),[d2]:pick(v2),[dh]:pick(vh)}));
     const code=f=>L1[v1all.indexOf(f[d1])]+L2[v2.indexOf(f[d2])];
     const target={[d1]:newVal?v1all[3]:pick(v1),[d2]:pick(v2),[dh]:pick(vh)};
@@ -1437,27 +1439,78 @@ function genCode(){
     if(newVal)cands.unshift(ans[0]+pick(wrong2));
     for(const c of cands){if(opts.size===5)break;opts.add(c)}
     if(opts.size<5)continue;
-    const list=shuffle([...opts]);return{d1,d2,dh,v1:v1all,v2,L1,L2,ex,target,code,ans:list.indexOf(ans),opts:list,newVal}}
+    const list=shuffle([...opts]);if(hard){const ord=shuffle([d1,d2,dh]);[...ex,target].forEach(f=>{f.ord=ord;f.seed=1+Math.floor(Math.random()*1e9)})}return{dims:DIMS,hard,d1,d2,dh,v1:v1all,v2,L1,L2,ex,target,code,ans:list.indexOf(ans),opts:list,newVal}}
   return null}
 function codeNotes(X,i){const used1=[...new Set(X.ex.map(e=>e[X.d1]))],used2=[...new Set(X.ex.map(e=>e[X.d2]))];
   const row=(d,vals,pos)=>vals.map(v=>`<b>${X.code({[X.d1]:d===X.d1?v:X.ex[0][X.d1],[X.d2]:d===X.d2?v:X.ex[0][X.d2]})[pos]}</b> = ${v}`).join(', ');
   const t=X.opts[X.ans];
   return{html:`<div class="notes"><h3>Case notes</h3><div class="nb"><h4>How to crack it</h4><ol class="steps">
-    <li><b>First letter = the ${CODE_DIMS[X.d1].name}.</b> ${row(X.d1,used1,0)}. Pictures with the same first letter always share this, and nothing else.</li>
-    <li><b>Second letter = the ${CODE_DIMS[X.d2].name}.</b> ${row(X.d2,used2,1)}.</li>
-    <li><b>Red herring:</b> the ${CODE_DIMS[X.dh].name} changes too, but no letter goes with it. Ignore it.</li>
-    <li><b>The last picture:</b> ${X.target[X.d1]} → <b>${t[0]}</b>${X.newVal?` (a ${CODE_DIMS[X.d1].name} not seen before, so it takes the first letter that isn’t used by any picture)`:''}, ${X.target[X.d2]} → <b>${t[1]}</b>. So the code is <b>${t}</b>.</li></ol>
+    <li><b>First letter = the ${X.dims[X.d1].name}.</b> ${row(X.d1,used1,0)}. Pictures with the same first letter always share this, and nothing else.</li>
+    <li><b>Second letter = the ${X.dims[X.d2].name}.</b> ${row(X.d2,used2,1)}.</li>
+    <li><b>Red herring:</b> the ${X.dims[X.dh].name} changes too, but no letter goes with it. Ignore it.</li>
+    <li><b>The last picture:</b> ${X.target[X.d1]} → <b>${t[0]}</b>${X.newVal?` (a ${X.dims[X.d1].name} not seen before, so it takes the first letter that isn’t used by any picture)`:''}, ${X.target[X.d2]} → <b>${t[1]}</b>. So the code is <b>${t}</b>.</li></ol>
     ${i!=null&&i!==X.ans?`<p>You picked <b>${X.opts[i]}</b>. ${X.opts[i][0]!==t[0]?`Its first letter, ${X.opts[i][0]}, is wrong.`:''} ${X.opts[i][1]!==t[1]?`Its second letter, ${X.opts[i][1]}, is wrong.`:''}</p>`:''}</div>
     <div class="nb trick"><h4>The trick</h4><p>${TRICK.code}</p></div>
     <div class="nb trap"><h4>The trap</h4><p><b>Matching the whole picture at once.</b> Take one letter at a time. Find two pictures with the same first letter and ask what they have in common. Then check it on a picture with a different first letter.</p></div></div>`}}
-QB.code=function(host,lvl=1,opt={}){const X=genCode();
+QB.code=function(host,lvl=1,opt={}){const X=genCode(!!opt.hard);
   host.innerHTML=`<p class="qtext">Each letter stands for a feature of the picture. Which code goes with the last picture?</p>
-    <div class="codeq">${X.ex.map(e=>`<figure>${codePic(e)}<figcaption>${X.code(e)}</figcaption></figure>`).join('')}<figure>${codePic(X.target)}<figcaption>?</figcaption></figure></div>
+    <div class="codeq">${X.ex.map(e=>`<figure>${codePic(e,X.hard?{w:132}:{})}<figcaption>${X.code(e)}</figcaption></figure>`).join('')}<figure>${codePic(X.target,X.hard?{w:132}:{})}<figcaption>?</figcaption></figure></div>
     ${opt.learn?'<p class="hint">Hint: look only at the first letters. Which pictures share one? What do they have in common?</p>':''}
     <div class="copts four">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span><span class="codeopt">${o}</span></button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
   crossable(host);workCheck(host,codeCheck(X));const q={};let done=false;
-  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:codeNotes(X,i),ok?`First letter = ${CODE_DIMS[X.d1].name}, second = ${CODE_DIMS[X.d2].name}.`:`The answer is ${LET[X.ans]}.`)};
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:codeNotes(X,i),ok?`First letter = ${X.dims[X.d1].name}, second = ${X.dims[X.d2].name}.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+/* ============ Code Breaker: Harder (book-style relationship codes) ============ */
+/* Each picture has three small panels. Each panel shows one relationship feature (how many, where, which way, symmetry,
+   touching/matching). Two features have letters, one is a red herring. Random details inside each panel change freely. */
+function seedRng(s){let a=s>>>0||1;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const HCODE_DIMS={
+  grey:{name:'number of grey shapes',vals:['one grey shape','two grey shapes','three grey shapes']},
+  turn:{name:'direction the curved arrow turns',vals:['arrow turns clockwise','arrow turns anticlockwise']},
+  layer:{name:'position of the biggest square (front, middle or back)',vals:['biggest square at the front','biggest square in the middle','biggest square at the back']},
+  touch:{name:'dot the line touches',vals:['line touches the black dot','line touches the white dot','line touches neither dot']},
+  sym:{name:'number of lines of symmetry',vals:['one line of symmetry','two lines of symmetry','no lines of symmetry']},
+  side:{name:'side of the dashed line the dots are on',vals:['all dots on one side of the line','dots on both sides of the line']},
+  pair:{name:'way the two flags match (reflection or rotation)',vals:['flags are reflections of each other','flags are rotations of each other']},
+  dir:{name:'direction of the arrow between the rectangles',vals:['arrow points from white to black','arrow points from black to white','arrow points from grey to black']}};
+const HC_FILL={white:'#fff',grey:'#A7AEBD',black:'#2A2F3A'};
+const hcPts=(p,cx,cy,s)=>p.map(([x,y])=>`${(cx+x*s).toFixed(1)},${(cy+y*s).toFixed(1)}`).join(' ');
+function hcPanel(dim,val,cx,cy,R){const ink='#222',st=`stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"`;
+  if(dim==='grey'){const n=parseInt({one:1,two:2,three:3}[val.split(' ')[0]]),shapes=['circle','square','triangle','diamond'].sort(()=>R()-.5),greys=new Set([0,1,2,3].sort(()=>R()-.5).slice(0,n));
+    return shapes.map((sh,k)=>{const x=cx+(k%2?11:-11),y=cy+(k<2?-11:11),f=greys.has(k)?HC_FILL.grey:'#fff';
+      return sh==='circle'?`<circle cx="${x}" cy="${y}" r="7" fill="${f}" ${st}/>`:sh==='square'?`<rect x="${x-6.5}" y="${y-6.5}" width="13" height="13" fill="${f}" ${st}/>`:
+        sh==='triangle'?`<polygon points="${hcPts([[0,-1],[1,.8],[-1,.8]],x,y,7.5)}" fill="${f}" ${st}/>`:`<polygon points="${hcPts([[0,-1],[.75,0],[0,1],[-.75,0]],x,y,8.5)}" fill="${f}" ${st}/>`}).join('')}
+  if(dim==='turn'){const cw=val.includes('anti')?false:true,a0=R()*Math.PI*2,span=4.4,a1=cw?a0+span:a0-span,r=18,P=a=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];
+    const[x0,y0]=P(a0),[x1,y1]=P(a1),t=cw?[-Math.sin(a1),Math.cos(a1)]:[Math.sin(a1),-Math.cos(a1)],n=[-t[1],t[0]];
+    const head=[[x1+t[0]*7,y1+t[1]*7],[x1+n[0]*5,y1+n[1]*5],[x1-n[0]*5,y1-n[1]*5]];
+    return`<circle cx="${cx}" cy="${cy}" r="8" fill="${HC_FILL[R()<.5?'grey':'white']}" ${st}/><path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 1 ${cw?1:0} ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${ink}" stroke-width="2"/><polygon points="${head.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="${ink}"/>`}
+  if(dim==='layer'){const sx=R()<.5?1:-1,sy=R()<.5?1:-1,sq=[{s:30,dx:-6,dy:-6},{s:21,dx:5,dy:2},{s:14,dx:9,dy:11}],cols=['#fff','#C9CED8','#8E96A6'].sort(()=>R()-.5);
+    const others=[1,2].sort(()=>R()-.5),order=val.includes('front')?[...others,0]:val.includes('middle')?[others[0],0,others[1]]:[0,...others];
+    return order.map(k=>{const q=sq[k],x=cx+q.dx*sx-q.s/2,y=cy+q.dy*sy-q.s/2;return`<rect x="${x}" y="${y}" width="${q.s}" height="${q.s}" fill="${cols[k]}" ${st}/>`}).join('')}
+  if(dim==='touch'){const V=[...Array(6).keys()].map(k=>{const a=Math.PI/3*k+Math.PI/6;return[cx+21*Math.cos(a),cy+21*Math.sin(a)]});
+    for(let t=0;t<200;t++){const b=Math.floor(R()*6),w=Math.floor(R()*6),p=Math.floor(R()*6),d=2+Math.floor(R()*2),q=(p+d)%6;if(b===w)continue;
+      const ends=[p,q],ok=val.includes('black')?ends.includes(b)&&!ends.includes(w):val.includes('white')?ends.includes(w)&&!ends.includes(b):!ends.includes(b)&&!ends.includes(w);if(!ok)continue;
+      return`<polygon points="${V.map(v=>v.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="#fff" ${st}/><line x1="${V[p][0].toFixed(1)}" y1="${V[p][1].toFixed(1)}" x2="${V[q][0].toFixed(1)}" y2="${V[q][1].toFixed(1)}" stroke="${ink}" stroke-width="2"/>
+        <circle cx="${V[b][0].toFixed(1)}" cy="${V[b][1].toFixed(1)}" r="4.2" fill="${HC_FILL.black}" ${st}/><circle cx="${V[w][0].toFixed(1)}" cy="${V[w][1].toFixed(1)}" r="4.2" fill="#fff" ${st}/>`}return''}
+  if(dim==='sym'){const S={one:[[[0,-1],[1,.9],[-1,.9]],[[0,-1.1],[.7,-.2],[0,1.1],[-.7,-.2]],[[0,-1],[.9,-.2],[.9,1],[-.9,1],[-.9,-.2]]],
+      two:[[[-1,-.6],[1,-.6],[1,.6],[-1,.6]],[[0,-1],[.65,0],[0,1],[-.65,0]]],no:[[[-1,-.8],[1,-.3],[-.3,1]],[[-.9,-.9],[.6,-.7],[1,.8],[-.5,.5]]]}[val.split(' ')[0]];
+    const p=S[Math.floor(R()*S.length)],rot=R()<.5,q=rot?p.map(([x,y])=>[-y,x]):p;const f=HC_FILL[['white','grey','black'][Math.floor(R()*3)]];
+    return`<polygon points="${hcPts(q,cx,cy,20)}" fill="${f}" ${st}/>`}
+  if(dim==='side'){const flip=R()<.5?1:-1,both=val.includes('both');const xs=[0,1,2].map(k=>{const sgn=both?(k===0?1:k===1?-1:(R()<.5?1:-1)):flip;return sgn*(10+R()*10)});
+    return`<path d="M${cx} ${cy-25} Q${cx+7*flip} ${cy} ${cx} ${cy+25}" fill="none" stroke="${ink}" stroke-width="1.6" stroke-dasharray="4 3"/>`+xs.map((x,k)=>`<circle cx="${(cx+x).toFixed(1)}" cy="${(cy-16+k*16+(R()-.5)*6).toFixed(1)}" r="3.6" fill="${k%2?'#fff':HC_FILL.black}" ${st}/>`).join('')}
+  if(dim==='pair'){const F=[[-1,-1],[1,-.4],[-.3,0],[-.3,1.1],[-1,1.1]],rq=(p,k)=>{let r=p;for(let i=0;i<k;i++)r=r.map(([x,y])=>[-y,x]);return r};
+    const k0=Math.floor(R()*4),A=rq(F,k0),B=val.includes('reflect')?rq(A.map(([x,y])=>[-x,y]),Math.floor(R()*4)):rq(A,1+Math.floor(R()*3)),f=HC_FILL[R()<.5?'white':'grey'];
+    return`<polygon points="${hcPts(A,cx-12,cy,8)}" fill="${f}" ${st}/><polygon points="${hcPts(B,cx+12,cy,8)}" fill="${f}" ${st}/>`}
+  if(dim==='dir'){const[from,to]=val.includes('from white')?['white','black']:val.includes('from black')?['black','white']:['grey','black'],lft=R()<.5,v=R()<.5;
+    const a=v?{x:cx,y:cy+(lft?-15:15)}:{x:cx+(lft?-15:15),y:cy},b=v?{x:cx,y:cy+(lft?15:-15)}:{x:cx+(lft?15:-15),y:cy};
+    const box=(c,f)=>`<rect x="${c.x-(v?7:5)}" y="${c.y-(v?5:7)}" width="${v?14:10}" height="${v?10:14}" fill="${HC_FILL[f]}" ${st}/>`;
+    const ux=Math.sign(b.x-a.x),uy=Math.sign(b.y-a.y),s={x:a.x+ux*7,y:a.y+uy*7},e={x:b.x-ux*9,y:b.y-uy*9};
+    return box(a,from)+box(b,to)+`<line x1="${s.x}" y1="${s.y}" x2="${e.x}" y2="${e.y}" stroke="${ink}" stroke-width="2"/><polygon points="${e.x+ux*4},${e.y+uy*4} ${e.x-uy*4},${e.y+ux*4} ${e.x+uy*4},${e.y-ux*4}" fill="${ink}"/>`}
+  return''}
+function hardCodePic(f,{w=112}={}){const R=seedRng(f.seed),slots=[[30,30],[90,30],[60,90]];
+  return`<svg viewBox="0 0 120 120" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px">${f.ord.map((d,k)=>hcPanel(d,f[d],slots[k][0],slots[k][1],R)).join('')}</svg>`}
+
+QB.codeH=(h,l,o={})=>QB.code(h,l,{...o,hard:true});
 function codeCase(){stopTimer();$('#homeBtn').hidden=false;
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 12 · Codes</div><h2>Code Breaker</h2></div></div>
     <div class="rule"><span class="pp">✎ Jot the code key on paper as you crack it: “1st letter = shape: C hourglass, H oval…”</span><strong>Each letter stands for one feature.</strong>
@@ -1466,10 +1519,18 @@ function codeCase(){stopTimer();$('#homeBtn').hidden=false;
       <li><b>Then the second letter</b>, the same way.</li>
       <li><b>Watch for red herrings:</b> a feature that changes but has no letter.</li>
       <li><b>Something new?</b> If the last picture has a feature no other picture has, its letter is the one that isn’t used anywhere above.</li></ol></div>
-    <div class="row"><button class="btn-primary" id="cLearn">Learn: 6 questions, no timer, hints</button><button id="cExam">Exam mode: 8 timed questions</button></div></section>`;
+    <div class="row"><button class="btn-primary" id="cLearn">Learn: 6 questions, no timer, hints</button><button id="cExam">Exam mode: 8 timed questions</button></div>
+    <div class="qtype" style="margin-top:16px"><div class="qt-head"><span class="qt-num">★</span><div><h3>Harder codes <span class="muted" style="font-weight:400">· like the book and the real exams</span></h3><p class="muted">Each letter means a <b>relationship</b>, not just a shape. Check these five kinds of feature in order:</p></div></div>
+    <div class="rule"><ol><li><b>How many?</b> grey shapes, dots, lines of symmetry</li><li><b>Where?</b> front, middle or back; one side of a line or both</li>
+      <li><b>Which way?</b> clockwise or anticlockwise; arrow from white to black</li><li><b>Symmetry and moves:</b> reflections or rotations of each other</li>
+      <li><b>Touching:</b> what the line touches</li></ol><p style="margin:6px 0 0">Shapes inside a panel change all the time: that’s a red herring. Decide one letter at a time and write each meaning down.</p></div>
+    <div class="row"><button class="btn-primary" id="cHLearn">Harder: learn 6, no timer</button><button id="cHExam">Harder: exam mode, 8 timed</button></div></div></section>`;
   const go=learn=>runQuiz({id:learn?null:'code',tag:`Case 12 · ${learn?'Learn':'Exam mode'}`,title:'Code Breaker',secs:learn?0:45,level:1,learn,
     rule:'<strong>One letter at a time: find what pictures with the same letter share. Ignore red herrings.</strong>',plan:repeat('code',learn?6:8),remake:()=>repeat('code',learn?6:8)});
-  $('#cLearn').onclick=()=>go(true);$('#cExam').onclick=()=>go(false);scrollTo(0,0)}
+  $('#cLearn').onclick=()=>go(true);$('#cExam').onclick=()=>go(false);
+  const goH=learn=>runQuiz({id:learn?null:'codeH',tag:`Case 12 · Harder · ${learn?'Learn':'Exam mode'}`,title:'Code Breaker: harder',secs:learn?0:60,level:1,learn,
+    rule:'<strong>Each letter is a relationship: how many, where, which way, symmetry, touching. One letter at a time.</strong>',plan:repeat('codeH',learn?6:8),remake:()=>repeat('codeH',learn?6:8)});
+  $('#cHLearn').onclick=()=>goH(true);$('#cHExam').onclick=()=>goH(false);scrollTo(0,0)}
 
 /* ============ Bonus · Case 13: Fold and Cut ============ */
 /* A square sheet (0..1, y down) is folded once or twice along its lines of symmetry, then shapes are cut out.
@@ -1569,6 +1630,83 @@ QB.fold=function(host,lvl=1,opt={}){const X=genFold();
   crossable(host);workCheck(host,foldCheck(X));const q={};let done=false;
   const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:foldNotes(X,i),ok?`Every shape mirrored across each fold: ${2**X.n} of each.`:`The answer is ${LET[X.ans]}.`)};
   host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+/* ============ Case 13, type 2: Fold Along the Line ============ */
+/* A flat shape and a dotted line. The part the arrow starts in folds over the line (a mirror image); the other part stays put.
+   Wrong answers: slid across without flipping, fold line moved, the wrong part folded, folded part the wrong shape. */
+const flArea=p=>p.reduce((s,[x,y],i)=>{const[a,b]=p[(i+1)%p.length];return s+x*b-a*y},0)/2;
+function flClip(P,L,sign){const s=([x,y])=>sign*(L.a*x+L.b*y+L.c),out=[];
+  for(let i=0;i<P.length;i++){const p=P[i],q=P[(i+1)%P.length],sp=s(p),sq=s(q);if(sp>=0)out.push(p);
+    if((sp>0&&sq<0)||(sp<0&&sq>0)){const t=sp/(sp-sq);out.push([p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])])}}
+  return out.filter((p,i)=>{const q=out[(i+1)%out.length];return Math.hypot(p[0]-q[0],p[1]-q[1])>1e-6})}
+const flRefl=(L,[x,y])=>{const d=(L.a*x+L.b*y+L.c)/(L.a*L.a+L.b*L.b);return[x-2*d*L.a,y-2*d*L.b]};
+function flCross(P,L){let n=0;for(let i=0;i<P.length;i++){const p=P[i],q=P[(i+1)%P.length],sp=L.a*p[0]+L.b*p[1]+L.c,sq=L.a*q[0]+L.b*q[1]+L.c;
+  if(Math.abs(sp)<1e-9)return 99;if((sp>0)!==(sq>0))n++}return n}
+function flSimple(P){const n=P.length,X=(a,b,c,d)=>{const o=(p,q,r)=>Math.sign((q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]));return o(a,b,c)*o(a,b,d)<0&&o(c,d,a)*o(c,d,b)<0};
+  for(let i=0;i<n;i++)for(let j=i+2;j<n;j++){if(i===0&&j===n-1)continue;if(X(P[i],P[(i+1)%n],P[j],P[(j+1)%n]))return false}return true}
+function flShape(){const w=3+rnd(3),h=3+rnd(3);let P=[[0,0],[w,0],[w,h],[0,h]];
+  for(let m=0;m<2;m++){const k=rnd(P.length),c=P[k],pr=P[(k+P.length-1)%P.length],nx=P[(k+1)%P.length];
+    const u=[Math.sign(pr[0]-c[0]),Math.sign(pr[1]-c[1])],v=[Math.sign(nx[0]-c[0]),Math.sign(nx[1]-c[1])];
+    const lu=Math.hypot(pr[0]-c[0],pr[1]-c[1]),lv=Math.hypot(nx[0]-c[0],nx[1]-c[1]);if(lu<2.1||lv<2.1||(u[0]&&u[1])||(v[0]&&v[1]))continue;
+    const A=[c[0]+u[0],c[1]+u[1]],B=[c[0]+v[0],c[1]+v[1]];
+    P=Math.random()<.5?[...P.slice(0,k),A,B,...P.slice(k+1)]:[...P.slice(0,k),A,[c[0]+u[0]+v[0],c[1]+u[1]+v[1]],B,...P.slice(k+1)]}
+  return P}
+function flLine(P){const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),W=Math.max(...xs),H=Math.max(...ys),k=pick(['v','h','d1','d2']);
+  if(k==='v')return{a:1,b:0,c:-(1+rnd(W-1))-(Math.random()<.5?0:.5)};if(k==='h')return{a:0,b:1,c:-(1+rnd(H-1))-(Math.random()<.5?0:.5)};
+  if(k==='d1')return{a:1,b:-1,c:rnd(W+H)-H};return{a:1,b:1,c:-(1+rnd(W+H-1))}}
+function flResult(P,L,foldSign){const stay=flClip(P,L,-foldSign),part=flClip(P,L,foldSign);return{stay,flap:part.map(p=>flRefl(L,p)),part}}
+function genFoldLine(){
+  for(let t=0;t<400;t++){const P=flShape();if(!flSimple(P))continue;const L=flLine(P);if(flCross(P,L)!==2)continue;
+    const sg=Math.random()<.5?1:-1,R=flResult(P,L,sg);if(Math.abs(flArea(R.stay))<2.5||Math.abs(flArea(R.part))<2.5)continue;
+    const opts=[{...R,kind:'ok'}];
+    const mid=(()=>{const pts=R.part.filter(p=>Math.abs(L.a*p[0]+L.b*p[1]+L.c)<1e-6);return pts.length>=2?[(pts[0][0]+pts[1][0])/2,(pts[0][1]+pts[1][1])/2]:null})();
+    if(!mid)continue;
+    /* slid across, not flipped: turn the part half a turn about the middle of the crease */
+    opts.push({stay:R.stay,flap:R.part.map(([x,y])=>[2*mid[0]-x,2*mid[1]-y]),kind:'noflip'});
+    /* fold line moved */
+    const sh=(Math.random()<.5?1:-1)*(L.a&&L.b?1:.5),L2={...L,c:L.c+sh*Math.hypot(L.a,L.b)};if(flCross(P,L2)===2){const R2=flResult(P,L2,sg);if(Math.abs(flArea(R2.part))>.6)opts.push({...R2,kind:'moved'})}
+    /* the wrong part folded */
+    opts.push({...flResult(P,L,-sg),kind:'wrongpart'});
+    /* folded part the wrong shape: move one corner of the part */
+    for(let g=0;g<30;g++){const i=rnd(R.part.length),p=R.part[i];if(Math.abs(L.a*p[0]+L.b*p[1]+L.c)<1e-6)continue;const d=pick([[1,0],[-1,0],[0,1],[0,-1]]),q=R.part.slice();q[i]=[p[0]+d[0]*.5,p[1]+d[1]*.5];
+      if(!flSimple(q)||Math.sign(flArea(q))!==Math.sign(flArea(R.part)))continue;opts.push({stay:R.stay,flap:q.map(p=>flRefl(L,p)),kind:'shape'});break}
+    /* every option must look clearly different */
+    const all=[P,...opts.flatMap(o=>[o.stay,o.flap])].flat(),mnx=Math.min(...all.map(p=>p[0])),mxx=Math.max(...all.map(p=>p[0])),mny=Math.min(...all.map(p=>p[1])),mxy=Math.max(...all.map(p=>p[1]));
+    const S=Math.max(mxx-mnx,mxy-mny)+1,fr={x:mnx-.5,y:mny-.5,s:S},nm=p=>p.map(([x,y])=>[(x-fr.x)/S,(y-fr.y)/S]);
+    const ras=o=>{const a=fcRas([{pts:nm(o.stay)}]),b=fcRas([{pts:nm(o.flap)}]),c=new Uint8Array(a.length);for(let k=0;k<a.length;k++)c[k]=a[k]+2*b[k];return c};
+    const keep=[];for(const o of opts){o.ras=ras(o);if(keep.every(k=>fcDiff(k.ras,o.ras)>=40))keep.push(o)}
+    if(keep.length<5||keep[0].kind!=='ok')continue;
+    const sh5=shuffle(keep.slice(0,5));return{P,L,sg,fr,opts:sh5,ans:sh5.findIndex(o=>o.kind==='ok'),part:R.part}}
+  return null}
+function flSVG(X,{w=120,opt=null,question=false,hl=null}={}){const{fr}=X,pad=6,s=(w-2*pad)/fr.s,T=([x,y])=>[pad+(x-fr.x)*s,pad+(y-fr.y)*s],pp=p=>p.map(q=>T(q).map(v=>v.toFixed(1)).join(',')).join(' ');
+  let g=`<svg viewBox="0 0 ${w} ${w}" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px${hl?`;box-shadow:0 0 0 3px ${hl}`:''}">`;
+  if(question){const L=X.L,n=Math.hypot(L.a,L.b),dx=-L.b/n,dy=L.a/n,x0=-L.a*L.c/(n*n),y0=-L.b*L.c/(n*n),E=fr.s*1.6,A=[x0-dx*E,y0-dy*E],B=[x0+dx*E,y0+dy*E];
+    g+=`<polygon points="${pp(X.P)}" fill="#DDE1E8" stroke="#222" stroke-width="1.8" stroke-linejoin="round"/><line x1="${T(A)[0]}" y1="${T(A)[1]}" x2="${T(B)[0]}" y2="${T(B)[1]}" stroke="#222" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+    const c=X.part.reduce((a,p)=>[a[0]+p[0]/X.part.length,a[1]+p[1]/X.part.length],[0,0]),c2=flRefl(L,c),[ax,ay]=T(c),[bx,by]=T(c2),mx=(ax+bx)/2-(by-ay)*.25,my=(ay+by)/2+(bx-ax)*.25;
+    const tx=bx-mx,ty=by-my,tl=Math.hypot(tx,ty)||1,ux=tx/tl,uy=ty/tl;
+    g+=`<path d="M${ax.toFixed(1)} ${ay.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${(bx-ux*6).toFixed(1)} ${(by-uy*6).toFixed(1)}" fill="none" stroke="#C0392B" stroke-width="2.2"/><polygon points="${bx},${by} ${(bx-ux*9-uy*5).toFixed(1)},${(by-uy*9+ux*5).toFixed(1)} ${(bx-ux*9+uy*5).toFixed(1)},${(by-uy*9-ux*5).toFixed(1)}" fill="#C0392B"/>`}
+  else{g+=`<polygon points="${pp(opt.stay)}" fill="#fff" stroke="#222" stroke-width="1.8" stroke-linejoin="round"/><polygon points="${pp(opt.flap)}" fill="#C9CED8" stroke="#222" stroke-width="1.8" stroke-linejoin="round"/>`}
+  return g+'</svg>'}
+const FL_WHY={noflip:'the folded part has been <b>slid across without flipping</b>. Folding turns it over the line like a mirror, so it points the other way',
+  moved:'the <b>fold line has moved</b>. The crease is exactly on the dotted line, so the part that stays is cut off in the same place',
+  wrongpart:'the <b>wrong part has been folded</b>. The red arrow shows which part folds over; the other part stays exactly where it was',
+  shape:'the folded part is the <b>wrong shape</b>. It must be an exact mirror image of the part that was folded'};
+function foldLineNotes(X,i){const o=i!=null?X.opts[i]:null;
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${flSVG(X,{w:140,question:true})}<figcaption>The question</figcaption></figure>
+    <figure class="fig" style="margin:0">${flSVG(X,{w:140,opt:X.opts[X.ans],hl:'#22A06B'})}<figcaption>The answer, ${LET[X.ans]} (folded part in grey)</figcaption></figure>
+    ${o?`<figure class="fig" style="margin:0">${flSVG(X,{w:140,opt:o,hl:'#D64545'})}<figcaption>Your answer, ${LET[i]}</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${o?`In answer <b>${LET[i]}</b>, ${FL_WHY[o.kind]}.`:'Time ran out.'}</p></div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.foldline}</p></div></div>`}}
+function foldLineCheck(X){if(Math.random()<.5)return{q:'Before you look: after folding, does the folded part keep the same way round?',choices:['Yes, it just slides across','No, it flips over like a mirror'],ans:1,
+  why:'Folding flips the part over the line, so it becomes a mirror image.'};
+  return{q:'Which part stays exactly where it is?',choices:['The part the red arrow starts in','The part on the other side of the dotted line'],ans:1,why:'The arrow shows the part that folds. Everything on the other side of the line stays exactly the same.'}}
+QB.foldline=function(host,lvl=1,opt={}){const X=genFoldLine();
+  host.innerHTML=`<p class="qtext">The shape is folded along the dotted line, in the direction of the red arrow. What does it look like after folding?</p>
+    <div class="netbox">${flSVG(X,{w:200,question:true})}</div>${opt.learn?'<p class="hint">Hint: the part the arrow doesn’t touch stays exactly the same. The folded part flips over the line like a mirror, and lands the same distance from the line on the other side. It’s shown in grey in the answers.</p>':''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${flSVG(X,{w:120,opt:o})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,foldLineCheck(X));const q={};let done=false;
+  const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:foldLineNotes(X,i),ok?'Same part stays, folded part mirrored on the line.':`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q};
+
 function foldCase(){stopTimer();$('#homeBtn').hidden=false;
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 13 · Paper folding</div><h2>Fold and Cut</h2></div></div>
     <div class="rule"><span class="pp">✎ Try it for real once: fold a square of paper, snip a shape, unfold it.</span><strong>The paper is folded, shapes are cut, then it’s unfolded.</strong>
@@ -1576,10 +1714,205 @@ function foldCase(){stopTimer();$('#homeBtn').hidden=false;
       <li><b>Unfold the last fold first.</b> Mirror every cut across that fold line. Then the fold before it.</li>
       <li><b>Mirror, don’t copy.</b> A shape pointing towards the fold line still points towards it after unfolding. Shapes are flipped, never turned.</li>
       <li><b>Check positions:</b> each copy sits exactly opposite its shape, the same distance from the fold.</li></ol></div>
-    <div class="row"><button class="btn-primary" id="fLearn">Learn: 6 questions, no timer, hints</button><button id="fExam">Exam mode: 8 timed questions</button></div></section>`;
+    <div class="row"><button class="btn-primary" id="fLearn">Learn: 6 questions, no timer, hints</button><button id="fExam">Exam mode: 8 timed questions</button></div>
+    <div class="qtype" style="margin-top:16px"><div class="qt-head"><span class="qt-num">2</span><div><h3>Fold Along the Line</h3><p class="muted">You see: a shape with a dotted line and a red arrow. You do: pick what it looks like after one part is folded over the line.</p></div></div>
+    <div class="rule"><ol><li><b>The part the arrow doesn’t touch stays exactly the same.</b> Cross out answers where it has changed.</li>
+      <li><b>The fold line never moves.</b></li><li><b>The folded part flips over like a mirror</b> and lands the same distance from the line on the other side.</li></ol></div>
+    <div class="row"><button class="btn-primary" id="flLearn">Learn: 6 questions, no timer</button><button id="flExam">Exam mode: 8 timed questions</button></div></div></section>`;
   const go=learn=>runQuiz({id:learn?null:'fold',tag:`Case 13 · ${learn?'Learn':'Exam mode'}`,title:'Fold and Cut',secs:learn?0:50,level:1,learn,
     rule:'<strong>Count the layers, unfold the last fold first, and mirror every shape across each fold line.</strong>',plan:repeat('fold',learn?6:8),remake:()=>repeat('fold',learn?6:8)});
-  $('#fLearn').onclick=()=>go(true);$('#fExam').onclick=()=>go(false);scrollTo(0,0)}
+  $('#fLearn').onclick=()=>go(true);$('#fExam').onclick=()=>go(false);
+  const goL=learn=>runQuiz({id:learn?null:'foldline',tag:`Case 13 · Fold Along the Line · ${learn?'Learn':'Exam mode'}`,title:'Fold Along the Line',secs:learn?0:40,level:1,learn,
+    rule:'<strong>The part the arrow doesn’t touch stays put. The folded part flips like a mirror over the line.</strong>',plan:repeat('foldline',learn?6:8),remake:()=>repeat('foldline',learn?6:8)});
+  $('#flLearn').onclick=()=>goL(true);$('#flExam').onclick=()=>goL(false);scrollTo(0,0)}
+
+/* ============ Case 16: More Shapes (series, symmetry grids, missing piece, hidden shape) ============ */
+const MS_FILL={white:'#fff',grey:'#A7AEBD',black:'#2A2F3A'};
+const msBox=(inner,{w=64,hl=null,q=false}={})=>`<svg viewBox="0 0 60 60" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:4px${hl?`;box-shadow:0 0 0 3px ${hl}`:''}"><rect x=".5" y=".5" width="59" height="59" fill="#fff" stroke="#222" stroke-width="1"/>${q?'<text x="30" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#888">?</text>':inner}</svg>`;
+/* ---------- 1. Complete the Series ---------- */
+const SER_FEATS=['sides','shade','arrow','dot','count'];
+const SER_CORN=[[8,8],[52,8],[52,52],[8,52]],SER_CNAME=['top-left','top-right','bottom-right','bottom-left'];
+function serState(F,i){const s={};for(const f of F){const r=f.r;
+  if(f.k==='sides')s.sides=r.s0+r.d*i;if(f.k==='shade')s.shade=r.cyc[(r.o+i)%r.cyc.length];if(f.k==='arrow')s.arrow=((r.a0+r.d*i)%360+360)%360;
+  if(f.k==='dot')s.dot=((r.p0+r.d*i)%4+4)%4;if(f.k==='count')s.count=r.c0+r.d*i}return s}
+function serCell(s){let o='';const n=s.sides??4,fill=MS_FILL[s.shade||'white'],R=12,cx=30,cy=33;
+  const pts=[...Array(n).keys()].map(k=>{const a=-Math.PI/2+2*Math.PI*k/n;return`${(cx+R*Math.cos(a)).toFixed(1)},${(cy+R*Math.sin(a)).toFixed(1)}`}).join(' ');
+  o+=`<polygon points="${pts}" fill="${fill}" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/>`;
+  if(s.arrow!=null)o+=`<g transform="translate(30 11) rotate(${s.arrow})"><line x1="0" y1="7" x2="0" y2="-5" stroke="#222" stroke-width="1.8"/><polygon points="0,-8 -4,-2 4,-2" fill="#222"/></g>`;
+  if(s.dot!=null){const[x,y]=SER_CORN[s.dot];o+=`<circle cx="${x}" cy="${y}" r="3.5" fill="#222"/>`}
+  if(s.count!=null)for(let k=0;k<s.count;k++)o+=`<circle cx="${(30+(k-(s.count-1)/2)*7).toFixed(1)}" cy="52" r="2.6" fill="#fff" stroke="#222" stroke-width="1.1"/>`;
+  return o}
+const serKey=s=>JSON.stringify([s.sides,s.shade,s.arrow,s.dot,s.count]);
+function serRule(f){const r=f.r;switch(f.k){case'sides':return r.d>0?'the big shape gains one side each time':'the big shape loses one side each time';
+  case'shade':return r.cyc.length===2?`the big shape swaps between ${r.cyc[0]} and ${r.cyc[1]}`:`the big shape goes round ${r.cyc.join(', ')}`;
+  case'arrow':return`the arrow turns ${Math.abs(r.d)}° ${r.d>0?'clockwise':'anticlockwise'} each time`;case'dot':return r.d===2?'the dot jumps to the opposite corner each time':`the dot moves one corner ${r.d>0?'clockwise':'anticlockwise'} each time`;
+  default:return r.d>0?'one more small circle each time':'one fewer small circle each time'}}
+function genSeries(){
+  for(let t=0;t<200;t++){const ks=shuffle(SER_FEATS.slice()).slice(0,3),F=ks.map(k=>{let r;
+      if(k==='sides')r=Math.random()<.5?{s0:3,d:1}:{s0:7,d:-1};if(k==='shade'){const c3=Math.random()<.5;r={cyc:c3?['white','grey','black']:shuffle(['white','grey','black']).slice(0,2),o:rnd(3)}}
+      if(k==='arrow')r={a0:45*rnd(8),d:pick([45,-45,90,-90])};if(k==='dot')r={p0:rnd(4),d:pick([1,-1,1,-1,2])};if(k==='count')r=Math.random()<.5?{c0:1,d:1}:{c0:5,d:-1};return{k,r}});
+    const m=rnd(5),cells=[0,1,2,3,4].map(i=>serState(F,i)),ans=cells[m],seen=new Set([serKey(ans)]),opts=[{s:ans,ok:true}];
+    const alt=(f,s)=>{const v={...s},r=f.r;if(f.k==='sides')v.sides=s.sides+pick([1,-1]);if(f.k==='shade')v.shade=pick(['white','grey','black'].filter(x=>x!==s.shade));
+      if(f.k==='arrow')v.arrow=(s.arrow+pick([r.d,-r.d,180,2*r.d])+720)%360;if(f.k==='dot')v.dot=pick([0,1,2,3].filter(x=>x!==s.dot));if(f.k==='count')v.count=Math.max(1,s.count+pick([1,-1]));
+      if(v.sides!=null&&(v.sides<3||v.sides>8))return null;return{s:v,f:f.k}};
+    for(let g=0;g<60&&opts.length<5;g++){const o=alt(pick(F),ans);if(!o)continue;const k=serKey(o.s);if(seen.has(k))continue;seen.add(k);opts.push(o)}
+    if(opts.length<5)continue;const sh=shuffle(opts);return{F,m,cells,opts:sh,ans:sh.findIndex(o=>o.ok)}}
+  return null}
+const serRow=(X,{fill=false,w=72}={})=>`<div class="serrow">${X.cells.map((c,i)=>msBox(serCell(c),{w,q:i===X.m&&!fill,hl:i===X.m&&fill?'#22A06B':null})).join('')}</div>`;
+function seriesCheck(X){const f=pick(X.F),r=f.r;const C=(()=>{switch(f.k){case'sides':return[['gains one side','loses one side','stays the same'],r.d>0?0:1];
+  case'shade':return[['swaps between two colours','goes round three colours','stays the same'],r.cyc.length===2?0:1];
+  case'arrow':return[['45° clockwise','45° anticlockwise','90° clockwise','90° anticlockwise'],[45,-45,90,-90].indexOf(r.d)];
+  case'dot':return[['one corner clockwise','one corner anticlockwise','to the opposite corner'],r.d===1?0:r.d===-1?1:2];default:return[['one more circle','one fewer circle','the same number'],r.d>0?0:1]}})();
+  const nm={sides:'the big shape’s sides',shade:'the shading of the big shape',arrow:'the arrow at the top',dot:'the black dot',count:'the small circles'}[f.k];
+  return{q:`Track one thing at a time. Each step, what happens to <b>${nm}</b>?`,choices:C[0],ans:C[1],why:`Each step, ${serRule(f)}.`}}
+function seriesNotes(X,i){const o=i!=null?X.opts[i]:null,nm={sides:'number of sides',shade:'shading',arrow:'arrow direction',dot:'dot position',count:'number of small circles'};
+  return{html:`<div class="notes"><h3>Case notes</h3><p class="muted" style="margin:0 0 4px">The series with the answer filled in:</p>${serRow({...X,cells:X.cells},{fill:true})}
+    <div class="nb"><h4>The rules</h4><ol class="steps">${X.F.map(f=>`<li>${serRule(f)[0].toUpperCase()+serRule(f).slice(1)}.</li>`).join('')}</ol>
+    <p>${o?`Answer <b>${LET[i]}</b> has the wrong <b>${nm[o.f]}</b>.`:'Time ran out.'}</p></div>
+    <div class="nb trick"><h4>The trick</h4><p>${TRICK.series}</p></div></div>`}}
+QB.series=function(host,lvl=1,opt={}){const X=genSeries();
+  host.innerHTML=`<p class="qtext">The squares are in order. Which square is missing?</p>${serRow(X)}
+    ${opt.learn?'<p class="hint">Hint: cover everything except one thing (the arrow, the dot, the shading…). How does it change from square to square? Then the next thing.</p>':''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${msBox(serCell(o.s),{w:70})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,seriesCheck(X));return msFinish(host,X,seriesNotes,'Every rule checked.')};
+/* ---------- 2. Symmetry grids ---------- */
+const SY_P=[0,.5,1];
+const syMir={V:([x,y])=>[1-x,y],H:([x,y])=>[x,1-y]};
+function syCell(){const els=[];const pts=[];for(const x of SY_P)for(const y of SY_P)pts.push([x,y]);
+  for(let g=0;g<40&&els.length<2;g++){const a=pick(pts),b=pick(pts);if(a===b||(a[0]===b[0]&&(a[0]===0||a[0]===1))||(a[1]===b[1]&&(a[1]===0||a[1]===1)))continue;els.push({t:'seg',p:[a,b]})}
+  const c=[pick([.25,.75]),pick([.25,.75])],s=.16,k=rnd(4),tri=[[-1,-1],[1,-1],[-1,1]].map(([x,y])=>{for(let i=0;i<k;i++)[x,y]=[-y,x];return[c[0]+x*s,c[1]+y*s]});
+  els.push(Math.random()<.7?{t:'tri',p:tri,f:pick(['black','grey'])}:{t:'dot',p:[c],f:pick(['black','white'])});return els}
+const syMap=(els,fn)=>els.map(e=>({...e,p:e.p.map(fn)}));
+const syRot=els=>syMap(els,([x,y])=>[1-x,1-y]);
+const syKey=els=>els.map(e=>e.t+e.f+':'+(e.t==='seg'?e.p.map(p=>p.map(v=>v.toFixed(2)).join(',')).sort().join('/'):e.p.map(p=>p.map(v=>v.toFixed(2)).join(',')).sort().join('/'))).sort().join('|');
+const sySelf=(els,ax)=>{const all=[...els,...syMap(els,syMir[ax])],seen=new Set();return all.filter(e=>{const k=syKey([e]);if(seen.has(k))return false;seen.add(k);return true})};
+function syDraw(els,s){return els.map(e=>e.t==='seg'?`<line x1="${(e.p[0][0]*s).toFixed(1)}" y1="${(e.p[0][1]*s).toFixed(1)}" x2="${(e.p[1][0]*s).toFixed(1)}" y2="${(e.p[1][1]*s).toFixed(1)}" stroke="#222" stroke-width="1.6"/>`:
+  e.t==='tri'?`<polygon points="${e.p.map(p=>p.map(v=>(v*s).toFixed(1)).join(',')).join(' ')}" fill="${MS_FILL[e.f]}" stroke="#222" stroke-width="1.2"/>`:`<circle cx="${(e.p[0][0]*s).toFixed(1)}" cy="${(e.p[0][1]*s).toFixed(1)}" r="${(s*.09).toFixed(1)}" fill="${MS_FILL[e.f]}" stroke="#222" stroke-width="1.2"/>`).join('')}
+function genSym(){
+  for(let t=0;t<200;t++){const ax=pick(['V','H','B']),G=[[],[],[]].map(()=>[null,null,null]);
+    if(ax==='V'){for(let r=0;r<3;r++){G[r][0]=syCell();G[r][2]=syMap(G[r][0],syMir.V);G[r][1]=sySelf(syCell(),'V')}}
+    else if(ax==='H'){for(let c=0;c<3;c++){G[0][c]=syCell();G[2][c]=syMap(G[0][c],syMir.H);G[1][c]=sySelf(syCell(),'H')}}
+    else{const tl=syCell();G[0][0]=tl;G[0][2]=syMap(tl,syMir.V);G[2][0]=syMap(tl,syMir.H);G[2][2]=syMap(G[0][2],syMir.H);
+      G[0][1]=sySelf(syCell(),'V');G[2][1]=syMap(G[0][1],syMir.H);G[1][0]=sySelf(syCell(),'H');G[1][2]=syMap(G[1][0],syMir.V);G[1][1]=sySelf(sySelf(syCell(),'V'),'H')}
+    const cand=[];for(let r=0;r<3;r++)for(let c=0;c<3;c++){if(ax==='V'&&c===1)continue;if(ax==='H'&&r===1)continue;if(ax==='B'&&(r===1||c===1))continue;cand.push([r,c])}
+    const[mr,mc]=pick(cand),pr=ax==='V'?mr:2-mr,pc=ax==='H'?mc:2-mc,usePart=ax==='B'?pick([[mr,2-mc],[2-mr,mc]]):[pr,pc],[qr,qc]=usePart;
+    const how=qr===mr?'V':'H',ok=G[mr][mc],partner=G[qr][qc];
+    const opts=[{e:ok,kind:'ok'}],seen=new Set([syKey(ok)]),add=(e,kind)=>{const k=syKey(e);if(seen.has(k))return;seen.add(k);opts.push({e,kind})};
+    add(partner,'copy');add(syRot(ok),'rot');add(syMap(ok,syMir[how==='V'?'H':'V']),'wrongaxis');
+    for(let g=0;g<20&&opts.length<5;g++){const ch=ok.slice(),i=rnd(ch.length),nc=syCell();ch[i]=nc[rnd(nc.length)];if(ch[i].t!==ok[i].t)continue;add(ch,'changed')}
+    if(opts.length<5)continue;const sh=shuffle(opts);return{G,ax,mr,mc,qr,qc,how,opts:sh,ans:sh.findIndex(o=>o.kind==='ok')}}
+  return null}
+function symSVG(X,{u=44,fill=false}={}){const W=3*u;let o=`<svg viewBox="-2 -2 ${W+4} ${W+4}" width="${W+4}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:4px">`;
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const miss=r===X.mr&&c===X.mc,hi=fill&&r===X.qr&&c===X.qc;
+    o+=`<g transform="translate(${c*u} ${r*u})"><rect width="${u}" height="${u}" fill="${hi?'#FFF4D6':'#fff'}" stroke="#222" stroke-width="1.2"/>${miss&&!fill?`<text x="${u/2}" y="${u/2+7}" text-anchor="middle" font-size="20" font-weight="700" fill="#888">?</text>`:syDraw(X.G[r][c],u)}${miss&&fill?`<rect width="${u}" height="${u}" fill="none" stroke="#22A06B" stroke-width="3"/>`:''}</g>`}
+  return o+'</svg>'}
+const syOpt=(e,w=62)=>`<svg viewBox="-1 -1 46 46" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff"><rect width="44" height="44" fill="#fff" stroke="#222" stroke-width="1.2"/>${syDraw(e,44)}</svg>`;
+const SY_AX={V:'up and down (a vertical mirror line)',H:'side to side (a horizontal mirror line)',B:'both ways (vertical and horizontal mirror lines)'};
+const SY_WHY={copy:'is the square opposite <b>copied without flipping</b>. Across a mirror line it must be flipped',rot:'is <b>turned upside down</b> instead of mirrored',wrongaxis:'is mirrored across the <b>wrong line</b>',changed:'has <b>one part changed</b>, so it isn’t an exact mirror image'};
+function symNotes(X,i){const o=i!=null?X.opts[i]:null;return{html:`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${symSVG(X,{fill:true})}<figcaption>Yellow: the square opposite. Green: the answer, its mirror image</figcaption></figure></div>
+  <div class="nb"><h4>What happened</h4><p>The whole picture is symmetrical ${SY_AX[X.ax]}. ${o?`Answer <b>${LET[i]}</b> ${SY_WHY[o.kind]}.`:'Time ran out.'}</p></div><div class="nb trick"><h4>The trick</h4><p>${TRICK.symgrid}</p></div></div>`}}
+function symCheck(X){const ch=['Up and down (vertical)','Side to side (horizontal)','Both ways'];return{q:'Find the mirror line first. Which way is the whole picture symmetrical?',choices:ch,ans:{V:0,H:1,B:2}[X.ax],why:`It’s symmetrical ${SY_AX[X.ax]}. Now find the square opposite the gap and mirror it.`}}
+QB.symgrid=function(host,lvl=1,opt={}){const X=genSym();
+  host.innerHTML=`<p class="qtext">Which square completes the picture?</p><div class="netbox">${symSVG(X)}</div>${opt.learn?'<p class="hint">Hint: the picture is a mirror image of itself. Find the square directly opposite the gap, across the mirror line, and flip it.</p>':''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${syOpt(o.e,70)}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,symCheck(X));return msFinish(host,X,symNotes,'An exact mirror image.')};
+/* ---------- 3. Find the missing piece ---------- */
+const pcK=c=>c.map(p=>p.join(',')).sort().join('|');
+const pcNorm=c=>{const mx=Math.min(...c.map(p=>p[0])),my=Math.min(...c.map(p=>p[1]));return c.map(([x,y])=>[x-mx,y-my])};
+const pcRot=c=>pcNorm(c.map(([x,y])=>[-y,x]));
+const pcCanon=c=>{let b=null,r=pcNorm(c);for(let k=0;k<4;k++){const s=pcK(r);if(b===null||s<b)b=s;r=pcRot(r)}return b};
+const pcMir=c=>pcNorm(c.map(([x,y])=>[-x,y]));
+const pcConn=c=>{if(!c.length)return false;const S=new Set(c.map(p=>p.join(','))),seen=new Set([c[0].join(',')]),st=[c[0]];while(st.length){const[x,y]=st.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const k=(x+dx)+','+(y+dy);if(S.has(k)&&!seen.has(k)){seen.add(k);st.push([x+dx,y+dy])}}}return seen.size===c.length};
+function pcGrow(n,W=4){const c=[[rnd(W),rnd(W)]];for(let t=0;t<300&&c.length<n;t++){const[x,y]=pick(c),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]),q=[x+dx,y+dy];if(q[0]<0||q[1]<0||q[0]>=W||q[1]>=W||c.some(p=>p[0]===q[0]&&p[1]===q[1]))continue;c.push(q)}return c}
+function pcSVG(c,{u=18,grid=false,fill='#C9CED8',w=null}={}){const S=new Set(c.map(p=>p.join(','))),mx=Math.max(...c.map(p=>p[0]))+1,my=Math.max(...c.map(p=>p[1]))+1,W=w||Math.max(mx,my);
+  let o=`<svg viewBox="-4 -4 ${W*u+8} ${W*u+8}" width="${W*u+8}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:4px">`;
+  c.forEach(([x,y])=>o+=`<rect x="${x*u}" y="${y*u}" width="${u}" height="${u}" fill="${fill}"${grid?' stroke="#9aa1ad" stroke-width=".6"':''}/>`);
+  c.forEach(([x,y])=>{const e=(dx,dy,x1,y1,x2,y2)=>S.has((x+dx)+','+(y+dy))?'':`<line x1="${x1*u}" y1="${y1*u}" x2="${x2*u}" y2="${y2*u}" stroke="#222" stroke-width="2" stroke-linecap="round"/>`;
+    o+=e(0,-1,x,y,x+1,y)+e(0,1,x,y+1,x+1,y+1)+e(-1,0,x,y,x,y+1)+e(1,0,x+1,y,x+1,y+1)});return o+'</svg>'}
+function genMissing(){
+  for(let t=0;t<300;t++){const T=pcNorm(pcGrow(8+rnd(3)));const nB=3+rnd(2);
+    const seed=pick(T),B=[seed];for(let g=0;g<100&&B.length<nB;g++){const[x,y]=pick(B),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]),q=T.find(p=>p[0]===x+dx&&p[1]===y+dy);if(q&&!B.includes(q))B.push(q)}
+    if(B.length<nB)continue;const A=T.filter(p=>!B.includes(p));if(!pcConn(A))continue;
+    const cB=pcCanon(B),seen=new Set([cB]),opts=[{c:B,kind:'ok'}],add=(c,kind)=>{if(!c||!c.length||!pcConn(c))return;const k=pcCanon(c);if(seen.has(k))return;seen.add(k);opts.push({c:pcNorm(c),kind})};
+    add(pcMir(B),'mirror');
+    {const b=pcNorm(B);for(let g=0;g<20;g++){const[x,y]=pick(b),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]),q=[x+dx,y+dy];if(b.some(p=>p[0]===q[0]&&p[1]===q[1]))continue;add([...b,q],'bigger');break}}
+    {const b=pcNorm(B);for(let g=0;g<20;g++){const i=rnd(b.length),r=b.filter((_,k)=>k!==i);if(!pcConn(r))continue;const[x,y]=pick(r),[dx,dy]=pick([[1,0],[-1,0],[0,1],[0,-1]]),q=[x+dx,y+dy];if(r.some(p=>p[0]===q[0]&&p[1]===q[1]))continue;add([...r,q],'other');break}}
+    for(let g=0;g<20&&opts.length<5;g++)add(pcGrow(nB,3),'other');
+    if(opts.length<5)continue;let o5=opts.slice(0,5).map(o=>{let c=pcNorm(o.c);for(let k=rnd(4);k>0;k--)c=pcRot(c);return{...o,c}});const sh=shuffle(o5);
+    return{T,A,B,opts:sh,ans:sh.findIndex(o=>o.kind==='ok')}}
+  return null}
+const MP_WHY={mirror:'is the right piece <b>flipped over</b>. Pieces can be turned round, never flipped',bigger:'is <b>one square too big</b>',other:'is the <b>wrong shape</b>: it doesn’t fit the gap'};
+function missingNotes(X,i){const o=i!=null?X.opts[i]:null,W=Math.max(...X.T.map(p=>Math.max(p[0],p[1])))+1;
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0"><div style="position:relative">${pcSVG(X.T,{u:22,grid:true,fill:'#fff'})}</div><figcaption>The target</figcaption></figure>
+    <figure class="fig" style="margin:0">${pcSVG(X.B,{u:22,grid:true,fill:'#9BE3BF',w:W})}<figcaption>The gap the given part leaves: ${X.B.length} squares</figcaption></figure></div>
+    <div class="nb"><h4>What happened</h4><p>${o?`Answer <b>${LET[i]}</b> ${MP_WHY[o.kind]}.`:'Time ran out.'} The answer, <b>${LET[X.ans]}</b>, is exactly the gap, turned round.</p></div><div class="nb trick"><h4>The trick</h4><p>${TRICK.missing}</p></div></div>`}}
+function missingCheck(X){const n=X.B.length,ch=shuffle([n-1,n,n+1]);return{q:'Shade the gap on paper. How many squares does the missing piece cover?',choices:ch.map(String),ans:ch.indexOf(n),why:`The target has ${X.T.length} squares and the given part covers ${X.A.length}, so the missing piece is ${n} squares. Cross out any option that isn’t.`}}
+QB.missing=function(host,lvl=1,opt={}){const X=genMissing(),W=Math.max(...X.T.map(p=>Math.max(p[0],p[1])))+1;
+  host.innerHTML=`<p class="qtext">The target shape is made of the part shown plus one more piece. Which piece is missing? <span class="muted">Pieces may be turned, not flipped.</span></p>
+    <div class="joinq"><div>${pcSVG(X.T,{u:20,grid:true,fill:'#fff'})}</div><span class="op">=</span><div>${pcSVG(X.A,{u:20,w:W})}</div><span class="op">+</span><span class="op">?</span></div>
+    ${opt.learn?'<p class="hint">Hint: on the target, shade the squares the given part doesn’t cover. That shaded shape is the answer, perhaps turned round.</p>':''}
+    <div class="copts">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${pcSVG(o.c,{u:16,w:4})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,missingCheck(X));return msFinish(host,X,missingNotes,'It fills the gap exactly.')};
+/* ---------- 4. Hidden shape ---------- */
+const HS_SHAPES=[[[0,0],[2,0],[0,2]],[[0,0],[1,0],[2,1],[0,1]],[[0,0],[2,0],[3,1],[1,1]],[[0,0],[1,0],[1,1],[2,1],[2,2],[0,2]],[[1,0],[2,1],[1,2],[0,1]],
+  [[0,0],[2,0],[2,1],[1,2],[0,1]],[[0,0],[3,0],[2,1],[0,1]],[[0,0],[2,0],[2,2],[1,1],[0,2]],[[0,0],[1,0],[2,1],[2,2],[0,2]]];
+const hsNorm=p=>{const mx=Math.min(...p.map(v=>v[0])),my=Math.min(...p.map(v=>v[1]));return p.map(([x,y])=>[x-mx,y-my])};
+const hsRot=p=>hsNorm(p.map(([x,y])=>[-y,x])),hsMir=p=>hsNorm(p.map(([x,y])=>[-x,y]));
+function hsSteps(p,tx=0,ty=0){const S=[];for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],dx=Math.sign(b[0]-a[0]),dy=Math.sign(b[1]-a[1]),n=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]));
+  for(let k=0;k<n;k++){const u=[a[0]+dx*k+tx,a[1]+dy*k+ty],v=[u[0]+dx,u[1]+dy];S.push([u,v].map(q=>q.join(',')).sort().join('-'))}}return S}
+function hsSegSteps(a,b){const dx=Math.sign(b[0]-a[0]),dy=Math.sign(b[1]-a[1]),n=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])),S=[];for(let k=0;k<n;k++){const u=[a[0]+dx*k,a[1]+dy*k],v=[u[0]+dx,u[1]+dy];S.push([u,v].map(q=>q.join(',')).sort().join('-'))}return S}
+const HS_N=6;
+function hsContains(steps,p){const W=Math.max(...p.map(v=>v[0])),H=Math.max(...p.map(v=>v[1]));for(let tx=0;tx<=HS_N-W;tx++)for(let ty=0;ty<=HS_N-H;ty++)if(hsSteps(p,tx,ty).every(s=>steps.has(s)))return[tx,ty];return null}
+function hsFigure(embed){const segs=[[[0,0],[HS_N,0]],[[HS_N,0],[HS_N,HS_N]],[[HS_N,HS_N],[0,HS_N]],[[0,HS_N],[0,0]]];
+  const W=Math.max(...embed.map(v=>v[0])),H=Math.max(...embed.map(v=>v[1])),tx=rnd(HS_N-W+1),ty=rnd(HS_N-H+1);
+  for(let i=0;i<embed.length;i++){const a=embed[i],b=embed[(i+1)%embed.length];segs.push([[a[0]+tx,a[1]+ty],[b[0]+tx,b[1]+ty]])}
+  const n=9+rnd(3);for(let g=0;g<120&&segs.length<4+embed.length+n;g++){const d=pick([[1,0],[0,1],[1,1],[1,-1]]),a=[rnd(HS_N+1),rnd(HS_N+1)],L=2+rnd(5),b=[a[0]+d[0]*L,a[1]+d[1]*L];
+    if(b[0]<0||b[0]>HS_N||b[1]<0||b[1]>HS_N)continue;segs.push([a,b])}
+  const steps=new Set(segs.flatMap(([a,b])=>hsSegSteps(a,b)));return{segs,steps,at:[tx,ty]}}
+function genHidden(){
+  for(let t=0;t<300;t++){let P=pick(HS_SHAPES).map(v=>v.slice());for(let k=rnd(4);k>0;k--)P=hsRot(P);if(Math.random()<.5)P=hsMir(P);P=hsNorm(P);
+    const key=p=>hsSteps(p).sort().join('|'),pk=key(P),vars=[];
+    const r1=hsRot(P);if(key(r1)!==pk)vars.push({p:r1,kind:'turned'});const m1=hsMir(P);if(key(m1)!==pk)vars.push({p:m1,kind:'mirror'});const r2=hsRot(hsRot(P));if(key(r2)!==pk&&key(r2)!==key(m1))vars.push({p:r2,kind:'turned'});
+    for(let g=0;g<20;g++){const q=P.map(v=>v.slice()),i=rnd(q.length);q[i]=[q[i][0]+pick([1,-1,0]),q[i][1]+pick([1,-1,0])];const qq=hsNorm(q);if(q[i][0]<0||q[i][1]<0)continue;
+      let ok=true;for(let j=0;j<qq.length;j++){const a=qq[j],b=qq[(j+1)%qq.length],dx=Math.abs(b[0]-a[0]),dy=Math.abs(b[1]-a[1]);if(!(dx===0||dy===0||dx===dy)||(dx===0&&dy===0))ok=false}
+      if(ok&&key(qq)!==pk&&flSimple(qq)){vars.push({p:qq,kind:'changed'});break}}
+    if(vars.length<3)continue;
+    const figs=[];const good=hsFigure(P);if(!hsContains(good.steps,P))continue;figs.push({...good,kind:'ok'});
+    const pool=shuffle(vars);for(let g=0;g<40&&figs.length<5;g++){const v=pool[g%pool.length],f=hsFigure(v.p);if(hsContains(f.steps,P))continue;figs.push({...f,kind:v.kind,vp:v.p})}
+    if(figs.length<5)continue;const sh=shuffle(figs);return{P,figs:sh,ans:sh.findIndex(f=>f.kind==='ok')}}
+  return null}
+function hsSVG(F,{u=15,hl=null,show=null}={}){const W=HS_N*u;let o=`<svg viewBox="-3 -3 ${W+6} ${W+6}" width="${W+6}" style="max-width:100%;display:block;margin:0 auto;background:#fff">`;
+  F.segs.forEach(([a,b])=>o+=`<line x1="${a[0]*u}" y1="${a[1]*u}" x2="${b[0]*u}" y2="${b[1]*u}" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>`);
+  if(show){const[tx,ty]=show.at;o+=`<polygon points="${show.p.map(([x,y])=>`${(x+tx)*u},${(y+ty)*u}`).join(' ')}" fill="none" stroke="${hl}" stroke-width="3.2" stroke-linejoin="round"/>`}
+  return o+'</svg>'}
+const hsShape=(P,u=18)=>{const W=Math.max(...P.map(v=>v[0])),H=Math.max(...P.map(v=>v[1]));return`<svg viewBox="-3 -3 ${W*u+6} ${H*u+6}" width="${W*u+6}" style="display:block;margin:0 auto;background:#fff"><polygon points="${P.map(([x,y])=>`${x*u},${y*u}`).join(' ')}" fill="none" stroke="#222" stroke-width="2" stroke-linejoin="round"/></svg>`};
+const HS_WHY={turned:'contains the shape <b>turned round</b>. It must be the same way round',mirror:'contains a <b>mirror image</b> of the shape',changed:'contains a shape that’s <b>nearly right but one corner is different</b>'};
+function hiddenNotes(X,i){const o=i!=null?X.figs[i]:null,A=X.figs[X.ans];
+  return{html:`<div class="notes"><h3>Case notes</h3><div class="figs"><figure class="fig" style="margin:0">${hsSVG(A,{u:18,hl:'#22A06B',show:{p:X.P,at:A.at}})}<figcaption>The answer, ${LET[X.ans]}: the shape is outlined in green</figcaption></figure>
+    ${o?`<figure class="fig" style="margin:0">${hsSVG(o,{u:18,hl:'#D64545',show:{p:o.vp,at:o.at}})}<figcaption>Your answer, ${LET[i]}: the lookalike in red</figcaption></figure>`:''}</div>
+    <div class="nb"><h4>What happened</h4><p>${o?`Answer <b>${LET[i]}</b> ${HS_WHY[o.kind]}.`:'Time ran out.'}</p></div><div class="nb trick"><h4>The trick</h4><p>${TRICK.hidden}</p></div></div>`}}
+const hiddenCheck=()=>({q:'Before you hunt: what has to match?',choices:['Same size and same way round','It can be turned round','It can be bigger or smaller'],ans:0,why:'Same size and same way round. A turned or flipped copy doesn’t count.'});
+QB.hidden=function(host,lvl=1,opt={}){const X=genHidden();
+  host.innerHTML=`<p class="qtext">Which picture contains the hidden shape? <span class="muted">Same size and same way round.</span></p><div class="netbox">${hsShape(X.P,30)}</div>
+    ${opt.learn?'<p class="hint">Hint: pick the most unusual part of the shape (a slanted side, a sharp corner) and hunt for that first. Then trace the whole outline with your finger.</p>':''}
+    <div class="copts">${X.figs.map((f,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${hsSVG(f,{u:13})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
+  crossable(host);workCheck(host,hiddenCheck());return msFinish(host,X,hiddenNotes,'Found it: same size, same way round.')};
+/* shared finish */
+function msFinish(host,X,notes,okMsg){const q={};let done=false;const fin=i=>{if(done)return;done=true;markOpts(host,X.ans,i);const ok=i===X.ans;q.onAnswer(ok,ok?null:notes(X,i),ok?okMsg:`The answer is ${LET[X.ans]}.`)};
+  host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}
+/* case page */
+const MS_TYPES=[['series','Complete the Series','You see: a row of squares in order, one missing. You do: work out each change and find the missing square.',['Track <b>one thing at a time</b>: the arrow, the dot, the shading, the number of sides.','Say the rule out loud: “turns 45° clockwise”, “gains a side”.','Cross out options that break any rule.'],45],
+  ['symgrid','Symmetry Grid','You see: a big symmetrical picture with one square missing. You do: find the square that completes it.',['Find the <b>mirror line</b>: up and down, side to side, or both.','Find the square <b>directly opposite</b> the gap.','The answer is that square <b>flipped</b>, never copied or turned.'],40],
+  ['missing','Find the Missing Piece','You see: a target shape and one part of it. You do: find the piece that fills the gap.',['<b>Shade the gap</b> on the target: what the given part doesn’t cover.','Count its squares and cross out wrong sizes.','The piece may be turned round, never flipped.'],45],
+  ['hidden','Hidden Shape','You see: a small shape and five busy pictures. You do: find the picture that contains the shape.',['<b>Same size, same way round.</b> Turned or flipped copies don’t count.','Hunt for the most unusual corner or slanted side first.','Trace the whole outline with your finger to check.'],45]];
+function moreCase(){stopTimer();$('#homeBtn').hidden=false;
+  view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 16 · More shapes</div><h2>More Shapes</h2></div></div>
+    <p style="margin:0 0 10px"><b>Four more question types from the book and the exams.</b> Pen and paper ready. Learn each one first, then try Exam mode.</p>
+    ${MS_TYPES.map(([id,t,d,tips],k)=>`<div class="qtype"><div class="qt-head"><span class="qt-num">${k+1}</span><div><h3>${t}</h3><p class="muted">${d}</p></div></div>
+      <div class="rule"><ol>${tips.map(x=>`<li>${x}</li>`).join('')}</ol></div><div class="row"><button class="btn-primary" data-ml="${id}">Learn: 6 questions, no timer</button><button data-me="${id}">Exam mode: 8 timed questions</button></div></div>`).join('')}</section>`;
+  view.querySelectorAll('[data-ml],[data-me]').forEach(b=>b.onclick=()=>msGo(b.dataset.ml||b.dataset.me,!!b.dataset.ml));scrollTo(0,0)}
+function msGo(id,learn){const T=MS_TYPES.find(x=>x[0]===id);runQuiz({id:learn?null:id,tag:`Case 16 · ${T[1]} · ${learn?'Learn':'Exam mode'}`,title:T[1],secs:learn?0:T[4],level:1,learn,
+  rule:`<strong>${T[3][0]}</strong>`,plan:repeat(id,learn?6:8),remake:()=>repeat(id,learn?6:8)})}
 
 /* ============ 7-day challenge (week 2): play every day, revise cubes, master the four new cases ============ */
 /* Starts the first day she opens the game on or after Thu 29 Oct 2026. Each day has a mission: the memory warm-up,
@@ -1614,7 +1947,7 @@ function ch2(){let start=store.get('ch2Start',null);const t=today();
   if(allDays&&allMods&&!won){milestone('ch2','Bonus: 7-day challenge won, every day played and all 4 new cases mastered');addTrophy('ch2','7-day challenge · week 2','A mission every day for 7 days, and all 4 new cases mastered',start,today())}
   return{start,dayN,deadline:dateOf(7),days,mastered,mocks,allDays,allMods,won:won||(allDays&&allMods),missed:days.some(x=>x.k<dayN&&!x.done)}}
 /* is the 7-day challenge running today? (then mocks earn mock stamps instead of ordinary stamps) */
-function ch2Active(){const t=today();return(t>=CD_FROM&&t<='2026-11-14')||['ch2Start','ch3Start'].some(k=>{const s=store.get(k,null);return!!s&&t>=s&&t<=dayStr(Date.parse(s+'T12:00:00Z')+6*864e5)})}
+function ch2Active(){const t=today();return(t>=CD_FROM&&t<='2026-11-18')||['ch2Start','ch3Start'].some(k=>{const s=store.get(k,null);return!!s&&t>=s&&t<=dayStr(Date.parse(s+'T12:00:00Z')+6*864e5)})}
 function ch2HTML(){const C=ch2();
   if(C.pending)return`<div class="challenge ch2"><div class="ch-day"><b>7</b><span>day challenge</span></div><div class="ch-main"><div class="tag">Next challenge · starts Thursday 29 October</div><p style="margin:6px 0 0">7 days, a mission every day: the warm-up, a cube revision round, and the new cases. Master all four new cases and play every day to win a <b>bonus card</b>.</p></div></div>`;
   const day=Math.min(C.dayN,7),wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
@@ -1675,16 +2008,17 @@ function ch3HTML(){const C=ch3();
     ${T&&!C.won?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
     ${T?`<h4 class="c2h">★ Bonus: mock stamps <span class="muted">(optional · one a day for a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far${Math.floor(C.mocks/MOCK_PER_CARD)?` · ${Math.floor(C.mocks/MOCK_PER_CARD)} extra card${Math.floor(C.mocks/MOCK_PER_CARD)===1?'':'s'} earned`:''} · ${MOCK_PER_CARD-C.mocks%MOCK_PER_CARD} to the next card</em></div><ul class="c2list bonus"><li class="${T.mock?'ok':''}"><span class="c2tick">${T.mock?'✓':''}</span><span><b>Mock Exam</b> <span class="muted">· 15-minute timing · aim for 17/20 or more</span></span>${T.mock?'':'<button data-w2="mock">Play</button>'}</li></ul>`:''}
     <h4 class="c2h">This week’s targets <span class="muted">(master the new case on 2 different days · re-check each of last week’s cases once: 7+/8, quick enough)</span></h4><div class="c2chips">${chips}</div></div></div>`}
-Object.assign(CH2_GO,{combine:()=>{joinCase();$('#cbExam').click()}});
-/* ============ Exam countdown: ISEB Tue 10 Nov, CEM Sat 14 Nov ============ */
+Object.assign(CH2_NAME,{codeH:'Code Breaker: harder',series:'Complete the Series',symgrid:'Symmetry Grid',missing:'Find the Missing Piece',hidden:'Hidden Shape',foldline:'Fold Along the Line'});Object.assign(CH2_GO,{series:()=>msGo('series',false),symgrid:()=>msGo('symgrid',false),missing:()=>msGo('missing',false),hidden:()=>msGo('hidden',false),foldline:()=>{foldCase();$('#flExam').click()},codeH:()=>{codeCase();$('#cHExam').click()},combine:()=>{joinCase();$('#cbExam').click()}});
+/* ============ Exam countdown: ISEB Tue 10 Nov, CEM Wed 18 Nov ============ */
 /* Fixed dates. Matrices (Complete the Grid) every day, because they're in both exams. Thu-Sat: grid, a mock on exam timing,
    a fix-it round on the weakest skill from the mock, Match the Group. Sun and Fri are light. Mon is ISEB day: no mission. */
 const CD_FROM='2026-11-05',CD_DAYS=[
   {d:'2026-11-05',items:['warm','grid','mock','fix','group']},{d:'2026-11-06',items:['warm','grid','mock','fix','group','fold']},
   {d:'2026-11-07',items:['warm','grid','mock','fix','group','fold']},{d:'2026-11-08',items:['warm','grid','mock','fix']},
   {d:'2026-11-09',items:['warm','grid'],light:true},{d:'2026-11-10',exam:'ISEB'},
-  {d:'2026-11-11',items:['warm','grid','mock','code']},{d:'2026-11-12',items:['warm','grid','group','code']},
-  {d:'2026-11-13',items:['warm','grid'],light:true},{d:'2026-11-14',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
+  {d:'2026-11-11',items:['warm','grid','mock','series']},{d:'2026-11-12',items:['warm','grid','symgrid','codeH']},
+  {d:'2026-11-13',items:['warm','grid','mock','missing','fix']},{d:'2026-11-14',items:['warm','grid','mock','hidden','fold']},{d:'2026-11-15',items:['warm','grid','series','symgrid','codeH']},
+  {d:'2026-11-16',items:['warm','grid','mock','missing','fix']},{d:'2026-11-17',items:['warm','grid'],light:true},{d:'2026-11-18',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
 function cdFix(){const w=store.get('weak',{}),t=Object.keys(w).find(k=>w[k]&&!['grid','group'].includes(k));if(!t)return null;return t==='combine'?'combine':TYPE_CASE[t]}
 /* Days counted as done because her progress was lost (5 Nov, game copy deleted) or a game bug changed what counted (6 Nov). */
 const CD_EXCUSE=['2026-11-05','2026-11-06'];
@@ -1705,18 +2039,18 @@ function cd(){const t=today(),fixNow=cdFix(),fm=store.get('cdFixDay',{});
   if(allDone&&!won){milestone('cd','Bonus: exam countdown complete, every mission done before ISEB and CEM');addTrophy('cd','Exam countdown: ISEB and CEM','Every mission done in the run-up to ISEB and CEM','2026-11-05',today())}
   return{t,days,T,mocks,won:won||allDone,missed:work.some(x=>x.d<t&&!x.done)}}
 function cdHTML(){const C=cd(),t=C.t,wd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}).slice(0,2);
-  const toQuest=Math.round((Date.parse('2026-11-27T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toISEB=Math.round((Date.parse('2026-11-10T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toCEM=Math.round((Date.parse('2026-11-14T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5);
+  const toQuest=Math.round((Date.parse('2026-11-27T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toISEB=Math.round((Date.parse('2026-11-10T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toCEM=Math.round((Date.parse('2026-11-18T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5);
   const dots=C.days.map(x=>{if(x.exam)return`${x.exam==='Quest'?'<span class="muted" style="align-self:center">…</span>':''}<span class="c2dot ${x.d===t?'today':''}" title="${x.exam} exam" style="width:auto;padding:0 6px;border-radius:12px">${x.exam}<em>${wd(x.d)}</em></span>`;
     const st=x.done?'done':x.d<t?'miss':x.d===t?'today':'';return`<span class="c2dot ${st}">${x.done?'✓':x.d<t?'✗':x.light?'·':'•'}${x.mock?'<i class="c2star">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
   const T=C.T,sub=x=>x.id==='grid'?'Exam mode, 6/8 or more · matrices are in both exams':x.id==='mock'?'15-minute exam timing, pen and paper · aim for 17/20 · guess and move on after a minute':
-    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':x.id==='fold'?'Exam mode, 6/8 or more · count the layers first, cross out wrong counts':'';
+    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='codeH'?'Harder codes · exam mode, 6/8 or more · how many, where, which way, symmetry, touching':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':x.id==='fold'?'Exam mode, 6/8 or more · count the layers first, cross out wrong counts':'';
   const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${x.fix?'Fix-it: '+(CH2_NAME[x.id]||(CASES.find(c=>c.id===x.id)||{}).title||x.id):CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${sub(x)}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
   let msg;if(T&&T.exam)msg=`<b>${T.exam} exam day. Good luck!</b> No mission today. Pen and paper for every 3D question, never leave a blank, and if one takes more than a minute, guess and move on.`;
   else if(t>'2026-11-27')msg='<b>All three exams done.</b> Well done for every day of practice.';
-  else if(t>'2026-11-14')msg=`<b>ISEB and CEM done!</b> <b>${toQuest} day${toQuest===1?'':'s'} to Quest</b> (Friday 27 November). The Quest plan is coming: two new cases (pairing shapes and sequences), then mocks.`;
+  else if(t>'2026-11-18')msg=`<b>ISEB and CEM done!</b> <b>${toQuest} day${toQuest===1?'':'s'} to Quest</b> (Friday 27 November). The Quest plan is coming: two new cases (pairing shapes and sequences), then mocks.`;
   else msg=`${toISEB>0?`<b>${toISEB} day${toISEB===1?'':'s'} to ISEB</b> · `:''}<b>${toCEM} day${toCEM===1?'':'s'} to CEM</b> · ${toQuest} days to Quest. ${T&&T.light?'Light day: warm-up and one matrices round, then rest. ':''}${C.won?'Every mission done: countdown card earned!':C.missed?'A day was missed, so the countdown card is gone, but every mission still helps.':'Do every mission to earn the <b>countdown card</b> and trophy.'}`;
   return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${toISEB>0?toISEB:toCEM>0?toCEM:Math.max(0,toQuest)}</b><span>days to ${toISEB>0?'ISEB':toCEM>0?'CEM':'Quest'}</span></div>
-    <div class="ch-main"><div class="tag">Exam countdown · ISEB Tue 10 Nov · CEM Sat 14 Nov · Quest Fri 27 Nov</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
+    <div class="ch-main"><div class="tag">Exam countdown · ISEB Tue 10 Nov · CEM Wed 18 Nov · Quest Fri 27 Nov</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
     ${T&&!T.exam?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
     ${T&&!T.exam&&!T.light?`<h4 class="c2h">★ Mock stamps <span class="muted">(a Mock Exam scoring 17/20+ · every ${MOCK_PER_CARD} stamps = an extra card)</span></h4><div class="c2stamps">${[...Array(MOCK_PER_CARD)].map((_,k)=>`<span class="${k<C.mocks%MOCK_PER_CARD?'on':''}">★</span>`).join('')}<em>${C.mocks} mock stamp${C.mocks===1?'':'s'} so far</em></div>`:''}
     <p class="muted" style="margin:10px 0 0;font-size:.85rem"><b>Sequences and pairing shapes</b> (A→B, so C→?): treat them like a grid. List every feature (shape, shading, position, direction, number), find the rule for each, cross out one feature at a time.</p></div></div>`}
@@ -2211,7 +2545,7 @@ const goodDays=(id,min,lvl=0)=>new Set(hist(id).filter(r=>r.n>=min&&r.lvl>=lvl).
 const unlocked=k=>store.get('unlock',{})[k]===true;
 function unlock(k){const u=store.get('unlock',{});u[k]=true;store.set('unlock',u)}
 /* A case is exam-ready when a round is accurate AND fast enough. It needs that on 2 different days. */
-const MASTERY={group:{min:7,of:8,secs:50,label:'7+/8'},combine:{min:7,of:8,secs:50,label:'7+/8'},grid:{min:7,of:8,secs:45,label:'7+/8'},rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},code:{min:7,of:8,secs:35,label:'7+/8'},fold:{min:7,of:8,secs:40,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
+const MASTERY={series:{min:7,of:8,secs:45,label:'7+/8'},symgrid:{min:7,of:8,secs:40,label:'7+/8'},missing:{min:7,of:8,secs:45,label:'7+/8'},hidden:{min:7,of:8,secs:45,label:'7+/8'},group:{min:7,of:8,secs:50,label:'7+/8'},combine:{min:7,of:8,secs:50,label:'7+/8'},grid:{min:7,of:8,secs:45,label:'7+/8'},rot:{min:7,of:8,secs:30,label:'7+/8'},odd:{min:7,of:8,secs:45,label:'7+/8'},code:{min:7,of:8,secs:35,label:'7+/8'},fold:{min:7,of:8,secs:40,label:'7+/8'},join:{min:7,of:8,secs:35,label:'7+/8'},tower:{min:7,of:8,secs:30,secsHard:40,lvl:1,label:'7+/8 on Medium or Hard'},brick:{min:7,of:8,secs:35,secsHard:45,lvl:1,label:'7+/8 on Medium or Hard'},impostor:{min:9,of:10,secs:10,label:'9+/10'},opp:{min:7,of:8,secs:12,label:'7+/8'},
   edge:{min:7,of:8,secs:35,label:'7+/8'},drone:{min:7,of:8,secs:25,label:'7+/8'},elim:{min:5,of:6,secs:35,label:'5+/6 clean'}};
 const secsFor=(m,lvl)=>m.secsHard&&lvl>=2?m.secsHard:m.secs;
 const examReady=(id,r)=>{const m=MASTERY[id];return r.n>=m.min&&(r.lvl||0)>=(m.lvl||0)&&r.a!=null&&r.a<=secsFor(m,r.lvl||0)};
@@ -2253,6 +2587,7 @@ const CASES=[
   {id:'join',week:3,bonus:true,tab:'CASE 11',title:'Join It Up',blurb:'Join shapes edge to edge where the letters match. Turn them, never flip them.',go:()=>joinCase()},
   {id:'code',week:3,bonus:true,tab:'CASE 12',title:'Code Breaker',blurb:'Each letter stands for a feature. Crack the code one letter at a time and spot the red herring.',go:()=>codeCase()},
   {id:'fold',week:3,bonus:true,tab:'CASE 13',title:'Fold and Cut',blurb:'Fold the paper, cut the shapes, then unfold it in your head. Count the layers and mirror every cut.',go:()=>foldCase()},
+  {id:'series',week:3,bonus:true,tab:'CASE 16',title:'More Shapes',blurb:'Four more types from the book and the exams: complete the series, symmetry grids, find the missing piece, and hidden shapes.',go:()=>moreCase()},
   {id:'group',week:3,bonus:true,tab:'CASE 15',title:'Match the Group',blurb:'Five pictures share one hidden rule: “if… then…”, count and compare, or mirror and turn. Find it, test it on all five, ignore the red herrings.',go:()=>groupCase()},
   {id:'grid',week:3,bonus:true,tab:'CASE 14',title:'Complete the Grid',blurb:'CEM-style matrices: two or three rules at once. List every feature and catch the hidden second rule.',go:()=>gridCase()},
   {id:'elim',week:2,tab:'CASE 08',title:'Rule It Out',blurb:'Speed drill: cross out every wrong option, knowing why. Quick and accurate.',go:()=>elimCase()}];
@@ -2291,7 +2626,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (h)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (l)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2335,7 +2670,13 @@ function checkpoint(k){const cp=CHECKPOINTS[k];runQuiz({id:k,tag:'Mixed test',ti
   passMsg:'Passed! That’s exam standard. Keep it there with the warm-up and the Mock Exam.',onPass:()=>{unlock(cp.unlocks);if(onceFlag(k+'-'+today()))stamp(`Passed ${cp.title.split(':')[0]}`)},plan:cp.make(),remake:cp.make,
   rule:`<span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>Mixed questions, exam timing.</strong> Pass mark ${cp.pass} out of ${cp.of}. Eliminate first, then pick. Wrong answers come with case notes.`})}
 const CASE_TYPES={group:['group'],grid:['grid'],rot:['rot'],tower:['count'],brick:['brick'],impostor:['impostor'],hunt:['impostor'],opp:['opp'],edge:['edge'],drone:['drone'],elim:['edge','drone']};
-const TRICK={group:'Compare two pictures that look different: what changes, and what changes with it? Write the rule (“If ___, then ___”, “number of ___ = number of ___”, or “the second shape is the first one flipped / turned”). Test it on all five pictures, then cross out every option that breaks it. Anything that changes with no pattern is a red herring.',
+const TRICK={series:'Track one thing at a time across the row: the arrow, the dot, the shading, the number of sides or circles. Say each rule (“turns 45° clockwise”, “gains a side”), then cross out options that break any rule.',
+  symgrid:'Find the mirror line first (up and down, side to side, or both). The missing square is the square directly opposite it, flipped across that line. Copied or turned is always wrong.',
+  missing:'Shade the gap: the part of the target the given piece doesn’t cover. Count its squares, cross out wrong sizes, then find the piece that matches, turned round but never flipped.',
+  hidden:'Same size and same way round. Hunt for the most unusual corner or slanted side first, then trace the whole outline with your finger.',
+  codeH:'Each letter is a relationship. Go through the five kinds in order: how many, where (front/back, which side), which way (clockwise, from white to black), symmetry or reflection/rotation, and what touches what. Find two pictures sharing a letter, then check a picture with a different letter. Shapes that change at random are red herrings.',
+  foldline:'The part the arrow doesn’t touch stays exactly where it is. The fold line never moves. The folded part flips over the line like a mirror: a point next to the line stays next to it, and a point far from the line lands the same distance away on the other side.',
+  group:'Compare two pictures that look different: what changes, and what changes with it? Write the rule (“If ___, then ___”, “number of ___ = number of ___”, or “the second shape is the first one flipped / turned”). Test it on all five pictures, then cross out every option that breaks it. Anything that changes with no pattern is a red herring.',
   combine:'Measure each piece in the main shape first: how long, how wide, where the point or notch is. Then find pieces with exactly those proportions. They can be turned round but never flipped. Check every edge before choosing.',
   grid:'List every feature (shape, shading, outline, corner shape, size, direction). For each one, find its rule: once per row and column, same along the row, same down the column, turning a step each time, or adding. Then cross out options one feature at a time: the wrong ones are one detail off.',
   code:'One letter at a time. Find two pictures with the same first letter and ask what they share; check it against a picture with a different first letter. Then the second letter. Ignore a feature that changes but has no letter. A brand-new feature takes the letter nobody else uses.',
@@ -2349,7 +2690,9 @@ const TRICK={group:'Compare two pictures that look different: what changes, and 
   opp:'Line of three: the 1st and 3rd are opposite. Z shape: the two ends are opposite, however long the middle. Touching squares are never opposite.',
   edge:'Rule out in order: duds, then opposites shown together, then edge buddies. Edge buddies: on the net, say which neighbour the point touches (“tip touches circle”), then check the same on each cube. Draw a little arrow on the tip if it helps. Flag or L: walk along the pole or upright: is it sticking out left or right? Turning never changes that. Two left? Corner check: go clockwise round the corner, and the faces must come in the same order as on the net.',
   drone:'Count width × depth first. One tower = one square, heights don’t matter. Check where the gaps are; flipped is always wrong.'};
-const WHY={group:'One rule is hidden among lots of features that don’t matter. Testing the rule on every picture is the only way not to be fooled by the red herrings.',
+const WHY={series:'Series hide two or three rules at once. Tracking them one by one stops you missing one.',symgrid:'Symmetry grids look scary but are quick once you find the mirror line.',missing:'Shading the gap turns a hard picture into a simple shape to match.',hidden:'Lookalikes are turned or flipped. Checking the way round catches them.',
+  codeH:'Real exam codes are about relationships, not just shapes. Checking the five kinds in order stops you guessing.',foldline:'Only one part moves. If you check the part that stays first, you can cross out most answers straight away.',
+  group:'One rule is hidden among lots of features that don’t matter. Testing the rule on every picture is the only way not to be fooled by the red herrings.',
   combine:'The wrong pieces are nearly identical: slightly too long, one edge changed, or flipped. Only measuring catches them.',
   grid:'Grid questions hide a second, smaller rule. The wrong answers get the main rule right and change one detail, so only checking every feature catches them.',
   code:'Code questions hide a red herring and put close wrong answers that get one letter right. Cracking each letter separately means you can prove the answer instead of guessing.',
@@ -2383,7 +2726,7 @@ function warmup(){const types=learnedTypes();if(!types.length)return home();
       ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
       <p style="margin:8px 0 0"><span class="pp">✎ Pen and paper ready, just like in the exam.</span> ${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
 function mock(){stopTimer();$('#homeBtn').hidden=false;/* every question type except the net basics (cases 03–05), which are tested inside Edge Buddies */
-  const make=()=>shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',1),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',1),...repeat('group',2),...repeat('join',2),...repeat('code',2),...repeat('fold',1),...repeat('grid',2)]);
+  const make=()=>shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',1),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',1),...repeat('group',2),...repeat('join',2),...repeat('code',1),...repeat('codeH',1),...repeat('fold',1),...repeat('grid',2)]);
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Exam practice</div><h2>The Mock Exam</h2></div></div>
     <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 mixed questions. Aim for 17 or more.</strong> Choose how the clock works:</div>
     <div class="lessons"><button class="lesson" id="mTotal"><span class="ln">⏱</span><span><b>Exam timing: 15 minutes for all 20</b><span class="muted"> · one clock counts down for the whole paper, like the real exam. Spend longer on hard ones, less on easy ones.</span></span></button>
