@@ -2452,8 +2452,8 @@ function trophyHTML(){backfillTrophies();const r=rewards(),T=r.trophies||[];if(!
       <p style="margin:0"><b>${t.cards} card${t.cards===1?'':'s'} earned</b> during the challenge:</p><div class="tro-cards">${t.cardReasons.map(x=>`<span>🃏 ${x}</span>`).join('')}</div></div></div>`).join('')}
     <p class="muted" style="margin:8px 0 0">Cards earned in total: <b>${cardTotal(r)}</b>.</p></section>`}
 /* Badges: every perfect Mock Exam (100%) is recorded from her scores, so nothing extra to store and it survives backups. */
-function badgeHTML(){const P=hist('mock').filter(r=>r.n===r.of);if(!P.length)return'';const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
-  return`<section class="badges"><h2 class="wk">🏅 Badges</h2><div class="badge"><div class="bd-icon">💯</div><div><h3>Perfect Mock Exam ×${P.length}</h3>
+function badgeHTML(){const P=hist('mock').filter(r=>r.n===r.of),C=cemDays();if(!P.length&&C.length<2)return'';const cemB=C.length>=2?`<div class="badge" style="margin-bottom:10px"><div class="bd-icon">🎓</div><div><h3>CEM mastery</h3><p class="muted" style="margin:2px 0 6px">Passed the CEM mastery test (${CEM_PASS}/15 or more) on ${C.length} different days.</p><div class="tro-cards">${C.map(d=>`<span>🎓 ${new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span>`).join('')}</div></div></div>`:'';if(!P.length)return`<section class="badges"><h2 class="wk">🏅 Badges</h2>${cemB}</section>`;const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+  return`<section class="badges"><h2 class="wk">🏅 Badges</h2>${cemB}<div class="badge"><div class="bd-icon">💯</div><div><h3>Perfect Mock Exam ×${P.length}</h3>
     <p class="muted" style="margin:2px 0 6px">100% on the Mock Exam${P.length>1?`, ${P.length} times`:''}. Each one also earns half a card (one a day).</p>
     <div class="tro-cards">${P.map(r=>`<span>💯 ${fd(r.d)} · ${r.n}/${r.of}</span>`).join('')}</div></div></div></section>`}
 function backfillTrophies(){try{const r=rewards();if(!r.flags.speed10||(r.trophies||[]).some(t=>t.key==='ch1'))return;
@@ -2629,25 +2629,36 @@ function gateHTML(k){const cp=CHECKPOINTS[k],ready=unlocked('force')||gateDone(c
     <button class="${ready||passed?'btn-primary':''}" data-cp="${k}" ${ready||passed?'':'disabled'}>${passed?'Take again':'Start test'}</button></div>
     <p class="muted" style="margin:0">${cp.blurb}${passed?'':' Opens when every target below is ticked.'}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
 function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
+const TOPICS=[['Cubes and blocks','Counting, building, turning and viewing 3D shapes.',['tower','brick','drone','rot','odd']],
+  ['Nets','Folding flat nets into cubes: impostors, opposites, edges and ruling out.',['impostor','hunt','opp','edge','elim']],
+  ['2D shapes','Joining, combining, folding and cutting flat shapes.',['join','fold']],
+  ['Patterns and matrices','The CEM favourites: grids, series, groups, codes and more shapes.',['grid','series','group','code']]];
+function topicHTML(){return TOPICS.map(([t,d,ids])=>`<section class="week"><h2 class="wk">${t}</h2><p class="muted" style="margin:0">${d}</p>${t==='Patterns and matrices'?cemGateHTML():''}<div class="folders">${ids.map(id=>CASES.find(c=>c.id===id)).filter(Boolean).map(folderHTML).join('')}</div></section>`).join('')}
+/* CEM mastery test: CEM favourites at exam level, no prompts. Mastered = pass (13/15+) on 2 different days -> card + badge. */
+const CEM_PASS=13,CEM_OF=15;
+const cemDays=()=>[...new Set(hist('cemM').filter(r=>r.n>=CEM_PASS).map(r=>r.d))];
+function cemMake(){return shuffle([...repeat('grid',6),...repeat('series',3),...repeat('symgrid',2),...repeat('group',2),...repeat('codeH',2)])}
+function cemGateHTML(){const d=cemDays(),m=d.length>=2,best=store.get('best',{}).cemM;
+  return`<div class="gate ${m?'passed':'ready'}"><div class="gate-head"><div><div class="tag">${m?'Mastered ✓':d.length?'Passed on 1 day · pass again on another day':'Ready to take'}</div><h3>CEM mastery test</h3></div><button class="btn-primary" id="cemGo">${m?'Take again':'Start test'}</button></div>
+    <p class="muted" style="margin:0">15 CEM-style questions at exam level: 6 grids, 3 series, 2 symmetry grids, 2 Match the Group, 2 harder codes. One 12-minute clock, no working-check prompts. Pass mark ${CEM_PASS}/15. Pass on <b>2 different days</b> to master it and earn a card and a badge.${best?` Best so far: ${best}.`:''}</p></div>`}
+function cemTest(){runQuiz({id:'cemM',tag:'CEM mastery test',title:'CEM mastery test',secs:0,total:12*60,level:2,pass:CEM_PASS,mixed:true,nocheck:true,
+  pen:'no prompts, like the real CEM paper. For every grid, count to three rules before you choose. Write your working on paper.',
+  passMsg:'Passed! That’s CEM standard.',onPass:()=>{if(cemDays().length>=2)milestone('cemmaster','Mastered the CEM mastery test (passed on 2 different days)')},
+  rule:`<strong>15 questions, 12 minutes, pass mark ${CEM_PASS}.</strong> Count the rules, cross out one feature at a time, and never leave a blank.`,plan:cemMake(),remake:cemMake})}
 function home(){window.__noCheck=false;
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.<br><b>Detective’s kit:</b> keep a pencil and scrap paper next to you every time you play. In the exam you can use them, so practise with them now.</div>
-  ${today()>=CD_FROM?cdHTML():ch2HTML()}
-  ${challengeHTML()}
+  ${cdHTML()}
   ${streakHTML()}
-  ${nextUp()}
   ${collectionHTML()}
   ${trophyHTML()}${badgeHTML()}
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
-  <section class="week"><h2 class="wk">Days 1–10 · Learn every question type</h2>
-    <p class="muted" style="margin:0">Work through the case files in order, one or two a day. Each one teaches a trick, and every mistake shows case notes.</p>
-    <div class="folders">${CASES.filter(c=>!c.bonus).map(folderHTML).join('')}</div></section>
-  <section class="week"><h2 class="wk">Week 2 · New question types</h2><p class="muted" style="margin:0">More question types from Atom and the ISEB pretest. Cases 10–14 were the new cases in the 7-day challenge, and Case 15 (Match the Group) is the newest. Turn It Around is one of the cube revision rounds.</p><div class="folders">${CASES.filter(c=>c.bonus).map(folderHTML).join('')}</div></section>
+${topicHTML()}
   <section class="week"><h2 class="wk">Practise to exam standard</h2>
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 14 Nov (b)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 14 Nov (d)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2661,7 +2672,6 @@ function home(){window.__noCheck=false;
     <p style="margin:0">All case files are open. Each mastery test opens once its targets are ticked (pass marks 10/12 and 12/15). A skill missed twice in a mixed test gets a <b>Refresh</b> tag.</p>
     <div class="row"><span><b>${cardTotal(rewards())}</b> cards earned · <b>${rewards().given}</b> handed over${(rewards().halfGiven||0)?` + ${rewards().halfGiven} half`:''}</span>${Math.max(0,rewards().cards.length-rewards().given)>0?'<button class="btn-primary" id="gave">Card handed over</button>':''}${owedTotal(rewards()).halvesOwed>0?'<button id="gaveh">Half card handed over</button>':''}</div>
     <div class="row"><label for="bonusWhy">Bonus card for</label><input id="bonusWhy" class="num" style="width:min(100%,260px);font-size:1rem" maxlength="60" placeholder="e.g. great effort this week"><button id="bonus">Give bonus card</button><span class="muted" id="bonusm"></span></div>
-    <div class="row"><label for="chs">10-day challenge started on</label><input id="chs" type="date" class="num" style="width:auto;font-size:1rem" value="${challenge().start}"></div>
     <div class="row"><label for="spc">Stamps per card</label><input class="num small" id="spc" type="number" min="1" max="20" value="${rwSettings().spc}"><label for="lim">Card limit</label><input class="num small" id="lim" type="number" min="1" max="99" value="${rwSettings().limit}"></div>
     <div class="row"><button id="pu">Open both mastery tests now</button><span class="muted" id="puc"></span></div>
     <details><summary style="cursor:pointer;font-weight:600">Greta’s feedback (${store.get('feedback',[]).length})</summary>${feedbackHTML()}<p class="muted" style="font-size:.85rem;margin:6px 0 0">Her feedback is included in backup codes, so you can paste one to Claude to get changes made.</p></details>
@@ -2670,6 +2680,7 @@ function home(){window.__noCheck=false;
   const nx=$('#nxcase');if(nx)nx.onclick=()=>{inCase=true;parentOpen=false;open(nx.dataset.id)};
   view.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{inCase=true;checkpoint(b.dataset.cp)});
   $('#warm').onclick=()=>{inCase=true;warmup()};
+  {const cg=$('#cemGo');if(cg)cg.onclick=()=>{inCase=true;parentOpen=false;cemTest()}}
   {const ch=$('#chs');if(ch)ch.onchange=()=>{if(/^\d{4}-\d{2}-\d{2}$/.test(ch.value)){store.set('chStart',ch.value);home()}}}
   wireBackup();
   const setRw=()=>{const spc=Math.max(1,Math.min(20,+$('#spc').value||6)),limit=Math.max(1,Math.min(99,+$('#lim').value||15));store.set('rwset',{spc,limit})};$('#spc').onchange=setRw;$('#lim').onchange=setRw;
