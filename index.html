@@ -1921,7 +1921,7 @@ function msGo(id,learn){const T=MS_TYPES.find(x=>x[0]===id);runQuiz({id:learn?nu
    one cube revision round, and today's new case(s). Win: all 7 daily missions done (one every day) and all four new cases mastered. */
 const MOCK_PER_CARD=3,MOCK_STAMP_MIN=17,CH2_FROM='2026-10-29',CH2_NEW=['grid','odd','join','code','fold'];
 const CH2_CUBE=['edge','opp','edge','rot','droneH','edge','mock'];
-const CH2_NAME={grid:'Complete the Grid',cp1:'Mastery test 1: counting and nets',cp2:'Mastery test 2: everything',edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
+const CH2_NAME={grid:'Complete the Grid',cp1:'Mastery 1: Counting and nets',cp2:'Mastery 2: Cubes, nets and views',cemM:'Mastery 3: CEM patterns and matrices',edge:'Edge Buddies',opp:'Opposite Suspects',rot:'Turn It Around',droneH:'Drone View: Hard practice',mock:'Mock Exam (15-minute timing)',
   odd:'Odd Cube Out',join:'Join It Up',code:'Code Breaker',fold:'Fold and Cut',warm:'Memory warm-up'};
 const CH2_PASS={grid:6,cp1:10,cp2:12,edge:6,opp:6,rot:6,droneH:6,mock:15,odd:6,join:6,code:6,fold:6};
 function ch2(){let start=store.get('ch2Start',null);const t=today();
@@ -2452,7 +2452,7 @@ function trophyHTML(){backfillTrophies();const r=rewards(),T=r.trophies||[];if(!
       <p style="margin:0"><b>${t.cards} card${t.cards===1?'':'s'} earned</b> during the challenge:</p><div class="tro-cards">${t.cardReasons.map(x=>`<span>🃏 ${x}</span>`).join('')}</div></div></div>`).join('')}
     <p class="muted" style="margin:8px 0 0">Cards earned in total: <b>${cardTotal(r)}</b>.</p></section>`}
 /* Badges: every perfect Mock Exam (100%) is recorded from her scores, so nothing extra to store and it survives backups. */
-function badgeHTML(){const P=hist('mock').filter(r=>r.n===r.of),C=cemDays();if(!P.length&&C.length<2)return'';const cemB=C.length>=2?`<div class="badge" style="margin-bottom:10px"><div class="bd-icon">🎓</div><div><h3>CEM mastery</h3><p class="muted" style="margin:2px 0 6px">Passed the CEM mastery test (${CEM_PASS}/15 or more) on ${C.length} different days.</p><div class="tro-cards">${C.map(d=>`<span>🎓 ${new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span>`).join('')}</div></div></div>`:'';if(!P.length)return`<section class="badges"><h2 class="wk">🏅 Badges</h2>${cemB}</section>`;const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+function badgeHTML(){const P=hist('mock').filter(r=>r.n===r.of),C=cemDays();if(!P.length&&C.length<2)return'';const cemB=C.length>=2?`<div class="badge" style="margin-bottom:10px"><div class="bd-icon">🎓</div><div><h3>CEM mastery</h3><p class="muted" style="margin:2px 0 6px">Passed Mastery 3: CEM patterns and matrices (${CEM_PASS}/15 or more) on ${C.length} different days.</p><div class="tro-cards">${C.map(d=>`<span>🎓 ${new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})}</span>`).join('')}</div></div></div>`:'';if(!P.length)return`<section class="badges"><h2 class="wk">🏅 Badges</h2>${cemB}</section>`;const fd=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
   return`<section class="badges"><h2 class="wk">🏅 Badges</h2>${cemB}<div class="badge"><div class="bd-icon">💯</div><div><h3>Perfect Mock Exam ×${P.length}</h3>
     <p class="muted" style="margin:2px 0 6px">100% on the Mock Exam${P.length>1?`, ${P.length} times`:''}. Each one also earns half a card (one a day).</p>
     <div class="tro-cards">${P.map(r=>`<span>💯 ${fd(r.d)} · ${r.n}/${r.of}</span>`).join('')}</div></div></div></section>`}
@@ -2591,10 +2591,10 @@ const GATES={
       {t:'Rule It Out: 5+ clean solves out of 6 at 35s or less, on 2 different days',p:()=>Math.min(2,readyDays('elim')),of:2}]};
 const gateDone=g=>GATES[g].every(c=>c.p()>=c.of);
 const CHECKPOINTS={
-  cp1:{title:'Mastery test 1: counting and nets',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
+  cp1:{title:'Mastery 1: Counting and nets',gate:'w1',needs:null,pass:10,of:12,unlocks:'w2',secs:45,level:1,
     make:()=>shuffle([...repeat('count',3),...repeat('brick',3),...repeat('impostor',3),...repeat('opp',3)]),blurb:'12 mixed questions on counting cubes and blocks, nets and opposites, timed like the exam. Pass mark 10. Earns a stamp each day you pass.'},
-  cp2:{title:'Mastery test 2: everything',gate:'w2',needs:null,pass:12,of:15,unlocks:'w3',secs:45,level:1,
-    make:()=>shuffle([...repeat('count',2),...repeat('brick',2),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',3)]),blurb:'15 mixed questions on all six question types. Pass mark 12. Earns a stamp each day you pass.'}};
+  cp2:{title:'Mastery 2: Cubes, nets and views',gate:'w2',needs:null,pass:12,of:15,unlocks:'w3',secs:45,level:1,
+    make:()=>shuffle([...repeat('count',2),...repeat('brick',2),...repeat('impostor',2),...repeat('opp',2),...repeat('edge',4),...repeat('drone',3)]),blurb:'15 mixed questions on counting, blocks, nets, opposites, edge buddies and views from above. Pass mark 12. Earns a stamp each day you pass.'}};
 const CASES=[
   {id:'tower',week:1,tab:'CASE 01',title:'The Tower Count',blurb:'Every block is a cube. Count the stack without missing hidden ones: learn the Tower Method, then race the clock.',go:()=>tower()},
   {id:'brick',week:1,tab:'CASE 02',title:'The Odd Blocks',blurb:'Blocks that aren’t cubes: long bars or thick slabs, all the same shape, turned different ways. Count blocks, not cubes.',go:()=>brickCase()},
@@ -2633,17 +2633,17 @@ const TOPICS=[['Cubes and blocks','Counting, building, turning and viewing 3D sh
   ['Nets','Folding flat nets into cubes: impostors, opposites, edges and ruling out.',['impostor','hunt','opp','edge','elim']],
   ['2D shapes','Joining, combining, folding and cutting flat shapes.',['join','fold']],
   ['Patterns and matrices','The CEM favourites: grids, series, groups, codes and more shapes.',['grid','series','group','code']]];
-function topicHTML(){return TOPICS.map(([t,d,ids])=>`<section class="week"><h2 class="wk">${t}</h2><p class="muted" style="margin:0">${d}</p>${t==='Patterns and matrices'?cemGateHTML():''}<div class="folders">${ids.map(id=>CASES.find(c=>c.id===id)).filter(Boolean).map(folderHTML).join('')}</div></section>`).join('')}
+function topicHTML(){return TOPICS.map(([t,d,ids])=>`<section class="week"><h2 class="wk">${t}</h2><p class="muted" style="margin:0">${d}</p><div class="folders">${ids.map(id=>CASES.find(c=>c.id===id)).filter(Boolean).map(folderHTML).join('')}</div></section>`).join('')}
 /* CEM mastery test: CEM favourites at exam level, no prompts. Mastered = pass (13/15+) on 2 different days -> card + badge. */
 const CEM_PASS=13,CEM_OF=15;
 const cemDays=()=>[...new Set(hist('cemM').filter(r=>r.n>=CEM_PASS).map(r=>r.d))];
 function cemMake(){return shuffle([...repeat('grid',6),...repeat('series',3),...repeat('symgrid',2),...repeat('group',2),...repeat('codeH',2)])}
 function cemGateHTML(){const d=cemDays(),m=d.length>=2,best=store.get('best',{}).cemM;
-  return`<div class="gate ${m?'passed':'ready'}"><div class="gate-head"><div><div class="tag">${m?'Mastered ✓':d.length?'Passed on 1 day · pass again on another day':'Ready to take'}</div><h3>CEM mastery test</h3></div><button class="btn-primary" id="cemGo">${m?'Take again':'Start test'}</button></div>
+  return`<div class="gate ${m?'passed':'ready'}"><div class="gate-head"><div><div class="tag">${m?'Mastered ✓':d.length?'Passed on 1 day · pass again on another day':'Ready to take'}</div><h3>Mastery 3: CEM patterns and matrices</h3></div><button class="btn-primary" id="cemGo">${m?'Take again':'Start test'}</button></div>
     <p class="muted" style="margin:0">15 CEM-style questions at exam level: 6 grids, 3 series, 2 symmetry grids, 2 Match the Group, 2 harder codes. One 12-minute clock, no working-check prompts. Pass mark ${CEM_PASS}/15. Pass on <b>2 different days</b> to master it and earn a card and a badge.${best?` Best so far: ${best}.`:''}</p></div>`}
-function cemTest(){runQuiz({id:'cemM',tag:'CEM mastery test',title:'CEM mastery test',secs:0,total:12*60,level:2,pass:CEM_PASS,mixed:true,nocheck:true,
+function cemTest(){runQuiz({id:'cemM',tag:'Mastery 3',title:'Mastery 3: CEM patterns and matrices',secs:0,total:12*60,level:2,pass:CEM_PASS,mixed:true,nocheck:true,
   pen:'no prompts, like the real CEM paper. For every grid, count to three rules before you choose. Write your working on paper.',
-  passMsg:'Passed! That’s CEM standard.',onPass:()=>{if(cemDays().length>=2)milestone('cemmaster','Mastered the CEM mastery test (passed on 2 different days)')},
+  passMsg:'Passed! That’s CEM standard.',onPass:()=>{if(cemDays().length>=2)milestone('cemmaster','Mastery 3: CEM patterns and matrices (passed on 2 different days)')},
   rule:`<strong>15 questions, 12 minutes, pass mark ${CEM_PASS}.</strong> Count the rules, cross out one feature at a time, and never leave a blank.`,plan:cemMake(),remake:cemMake})}
 function home(){window.__noCheck=false;
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
@@ -2655,10 +2655,10 @@ function home(){window.__noCheck=false;
   <div class="warm"><div><h3>Memory warm-up</h3><p class="muted" style="margin:0">${learnedTypes().length?'Do this first, every day. It starts with yesterday’s skill, then mixes everything you’ve learned so far, with extra questions on anything getting rusty.':'Opens after your first case file. Start with The Tower Count.'}</p></div><button class="btn-primary" id="warm" ${learnedTypes().length?'':'disabled'}>Start warm-up</button></div>
 ${topicHTML()}
   <section class="week"><h2 class="wk">Practise to exam standard</h2>
-    <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
-    ${gateHTML('cp1')}${gateHTML('cp2')}
+    <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass the mastery tests to prove she’s exam-ready. Mastery 3 is the CEM one.</p>
+    ${gateHTML('cp1')}${gateHTML('cp2')}${cemGateHTML()}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 14 Nov (d)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 14 Nov (e)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
