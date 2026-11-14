@@ -930,14 +930,14 @@ const QB={
     const fin=i=>{if(done)return;done=true;markOpts(host,D.ans,i);const ok=i===D.ans;
       q.onAnswer(ok,ok?null:droneNotes(D,i==null?D.opts.findIndex(o=>o.kind!=='ok'):i),ok?`${D.W} wide, ${D.D} deep, gaps in the right places.`:`The answer is ${LET[D.ans]}.`)};
     host.querySelectorAll('.pick').forEach(b=>b.onclick=()=>fin(+b.dataset.i));q.timeout=()=>fin(null);return q}};
-const TYPE_NAME={series:'Complete the series',symgrid:'Symmetry grids',missing:'Find the missing piece',hidden:'Hidden shapes',codeH:'Letter codes (harder)',foldline:'Fold along the line',group:'Match the group',combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
-const TYPE_CASE={series:'series',symgrid:'series',missing:'series',hidden:'series',codeH:'code',foldline:'fold',group:'group',combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
+const TYPE_NAME={droneX:'View from above (hard)',series:'Complete the series',symgrid:'Symmetry grids',missing:'Find the missing piece',hidden:'Hidden shapes',codeH:'Letter codes (harder)',foldline:'Fold along the line',group:'Match the group',combine:'Combining two pieces',grid:'Grids (matrices)',code:'Letter codes',fold:'Fold and cut',odd:'Odd cube out',join:'Joining shapes',rot:'Rotated blocks',count:'Counting cubes',brick:'Counting blocks',impostor:'Real or fake nets',opp:'Opposite faces',edge:'Nets to cubes',drone:'View from above'};
+const TYPE_CASE={droneX:'drone',series:'series',symgrid:'series',missing:'series',hidden:'series',codeH:'code',foldline:'fold',group:'group',combine:'join',odd:'odd',join:'join',code:'code',fold:'fold',grid:'grid',rot:'rot',count:'tower',brick:'brick',impostor:'impostor',opp:'opp',edge:'edge',drone:'drone'};
 
 /* ============ Quiz runner ============ */
 function runQuiz(cfg){
-  stopTimer();$('#homeBtn').hidden=false;
+  stopTimer();$('#homeBtn').hidden=false;window.__noCheck=!!cfg.nocheck;
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">${cfg.tag}</div><h2>${cfg.title}</h2></div></div>${cfg.rule?`<div class="rule">${cfg.rule}</div>`:''}${cfg.total?'<div class="bigclock" id="clk"></div>':''}<div id="game"></div></section>`;
-  const g=$('#game'),plan=cfg.plan;let n=0,score=0,unreached=0;const tally={},missed={};QT.reset();
+  const g=$('#game'),plan=cfg.plan;let n=0,score=0,unreached=0,saved=false;const tally={},missed={};QT.reset();
   /* exam timing: one clock for the whole paper, counting down. It pauses while case notes are open, so reading them costs nothing. */
   let left=cfg.total||0,running=false,timeUp=false,curQ=null,qSecs=0,nudged=false;const fmt=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
   const paint=()=>{const c=$('#clk');if(!c)return false;const todo=plan.length-n+(running?1:0),pace=todo*45;
@@ -946,7 +946,7 @@ function runQuiz(cfg){
     if(left<=0&&!timeUp){timeUp=true;running=false;paint();curQ&&curQ.timeout()}},250);paint()}
   const next=()=>{stopTimer();redraw=null;
     if(n===plan.length){clearInterval(window.__totalId);const ck=$('#clk');if(ck)ck.remove();
-      const avg=QT.avg();if(cfg.id)record(cfg.id,score,plan.length,cfg.level||0,avg);
+      const avg=QT.avg();if(cfg.id&&!saved){saved=true;record(cfg.id,score,plan.length,cfg.level||0,avg)}
       if(cfg.mixed){const w=store.get('weak',{});Object.entries(tally).forEach(([t,v])=>{const now=(v.a-v.r)>=2||(v.a>=2&&v.r/v.a<.7);w[t]=now});store.set('weak',w)}
       if(cfg.id==='warm'){const S=streakInfo();if(S.doneToday&&onceFlag('streak-'+today())){addPoints(5*Math.min(S.n,10));if(STREAK_GOALS.includes(S.n))toast(`<b>${S.n}-day streak!</b> Keep it going.`,'rank')}}
       if(cfg.id==='warm'&&score===plan.length&&onceFlag('warm-'+today()))stamp(`Daily warm-up: ${score}/6`);
@@ -965,6 +965,7 @@ function runQuiz(cfg){
     const q=QB[type]($('#qh'),cfg.level??1,{learn:cfg.learn,...(cfg.qopt||{})});qSecs=0;nudged=false;QT.start();let notes=null;curQ=q;if(cfg.total){running=true;paint()}redraw=()=>{q.draw&&q.draw();notes&&notes.draw&&notes.draw()};
     q.onAnswer=(ok,nt,line)=>{QT.stop();stopTimer();running=false;(tally[type]=tally[type]||{a:0,r:0}).a++;if(ok){score++;tally[type].r++}notes=nt;
       if(!ok)missed[type]=(missed[type]||0)+1;
+      if(n===plan.length&&cfg.id&&!saved){saved=true;record(cfg.id,score,plan.length,cfg.level||0,QT.avg())}
       $('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><b>${ok?'Correct.':'Not quite.'}</b> ${line||''}</div>${ok?'':ruleBox(type)}${nt?nt.html:''}<div class="row" style="margin-top:10px"><button class="btn-primary" id="nx">${n===plan.length||timeUp?'See results':'Next →'}</button></div>`;
       nt&&nt.draw&&nt.draw();$('#nx').onclick=()=>{if(timeUp&&n<plan.length){plan.slice(n).forEach(t=>{(tally[t]=tally[t]||{a:0,r:0}).a++});unreached=plan.length-n;n=plan.length}next()}};
     if(cfg.secs){let left=cfg.secs;timerId=setInterval(()=>{left-=.25;const b=$('#bar');if(b)b.style.width=Math.max(0,left/cfg.secs*100)+'%';if(left<=0){stopTimer();q.timeout()}},250)}
@@ -1130,7 +1131,7 @@ function elimCase(){
         if(left.size===1)finish()}})};
   next()}
 /* ---- Working check: before the answers appear, one quick question about what should be on her paper ---- */
-function workCheck(host,W){if(!W)return;const box=host.querySelector('.copts');if(!box)return;box.classList.add('wc-lock');
+function workCheck(host,W){if(!W||window.__noCheck)return;const box=host.querySelector('.copts');if(!box)return;box.classList.add('wc-lock');
   const d=document.createElement('div');d.className='wcheck';
   d.innerHTML=`<p><b>✎ Working check:</b> ${W.q}</p><div class="wc-ch">${W.choices.map((c,i)=>`<button data-i="${i}">${c}</button>`).join('')}</div><p class="wc-fb" hidden></p>`;
   box.parentNode.insertBefore(d,box);
@@ -1511,6 +1512,7 @@ function hardCodePic(f,{w=112}={}){const R=seedRng(f.seed),slots=[[30,30],[90,30
   return`<svg viewBox="0 0 120 120" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:6px">${f.ord.map((d,k)=>hcPanel(d,f[d],slots[k][0],slots[k][1],R)).join('')}</svg>`}
 
 QB.codeH=(h,l,o={})=>QB.code(h,l,{...o,hard:true});
+QB.droneX=(h,l,o={})=>QB.drone(h,9,o);
 function codeCase(){stopTimer();$('#homeBtn').hidden=false;
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Case 12 · Codes</div><h2>Code Breaker</h2></div></div>
     <div class="rule"><span class="pp">✎ Jot the code key on paper as you crack it: “1st letter = shape: C hourglass, H oval…”</span><strong>Each letter stands for one feature.</strong>
@@ -2015,14 +2017,14 @@ Object.assign(CH2_NAME,{codeH:'Code Breaker: harder',series:'Complete the Series
 const CD_FROM='2026-11-05',CD_DAYS=[
   {d:'2026-11-05',items:['warm','grid','mock','fix','group']},{d:'2026-11-06',items:['warm','grid','mock','fix','group','fold']},
   {d:'2026-11-07',items:['warm','grid','mock','fix','group','fold']},{d:'2026-11-08',items:['warm','grid','mock','fix']},
-  {d:'2026-11-09',items:['warm','grid'],light:true},{d:'2026-11-10',exam:'ISEB'},
+  {d:'2026-11-09',items:['warm','grid','join'],light:true},{d:'2026-11-10',exam:'ISEB'},
   {d:'2026-11-11',items:['warm','grid','mock','series']},{d:'2026-11-12',items:['warm','grid','symgrid','codeH']},
-  {d:'2026-11-13',items:['warm','grid','mock','missing','fix']},{d:'2026-11-14',items:['warm','grid','mock','hidden','fold']},{d:'2026-11-15',items:['warm','grid','series','symgrid','codeH']},
-  {d:'2026-11-16',items:['warm','grid','mock','missing','fix']},{d:'2026-11-17',items:['warm','grid'],light:true},{d:'2026-11-18',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
+  {d:'2026-11-13',items:['warm','grid','mock','missing','fix']},{d:'2026-11-14',items:['warm','grid','series','mock']},{d:'2026-11-15',items:['warm','grid','symgrid','series','group']},
+  {d:'2026-11-16',items:['warm','grid','series','mock']},{d:'2026-11-17',items:['warm','grid'],light:true},{d:'2026-11-18',exam:'CEM'},{d:'2026-11-27',exam:'Quest'}];
 function cdFix(){const w=store.get('weak',{}),t=Object.keys(w).find(k=>w[k]&&!['grid','group'].includes(k));if(!t)return null;return t==='combine'?'combine':TYPE_CASE[t]}
 /* Days counted as done because her progress was lost (5 Nov, game copy deleted) or a game bug changed what counted (6 Nov). */
 const CD_EXCUSE=['2026-11-05','2026-11-06'];
-function cd(){const t=today(),fixNow=cdFix(),fm=store.get('cdFixDay',{});
+function cd(){fixMissedMock();backfillHalves();const t=today(),fixNow=cdFix(),fm=store.get('cdFixDay',{});
   if(fixNow&&!fm[t]){fm[t]=fixNow;store.set('cdFixDay',fm)}
   const days=CD_DAYS.map(D=>{if(D.exam)return{...D};
     const fix=D.d<t?fm[D.d]:D.d===t?(fm[t]||fixNow):fixNow;
@@ -2042,13 +2044,13 @@ function cdHTML(){const C=cd(),t=C.t,wd=d=>new Date(d+'T12:00:00Z').toLocaleDate
   const toQuest=Math.round((Date.parse('2026-11-27T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toISEB=Math.round((Date.parse('2026-11-10T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5),toCEM=Math.round((Date.parse('2026-11-18T12:00:00Z')-Date.parse(t+'T12:00:00Z'))/864e5);
   const dots=C.days.map(x=>{if(x.exam)return`${x.exam==='Quest'?'<span class="muted" style="align-self:center">…</span>':''}<span class="c2dot ${x.d===t?'today':''}" title="${x.exam} exam" style="width:auto;padding:0 6px;border-radius:12px">${x.exam}<em>${wd(x.d)}</em></span>`;
     const st=x.done?'done':x.d<t?'miss':x.d===t?'today':'';return`<span class="c2dot ${st}">${x.done?'✓':x.d<t?'✗':x.light?'·':'•'}${x.mock?'<i class="c2star">★</i>':''}<em>${wd(x.d)}</em></span>`}).join('');
-  const T=C.T,sub=x=>x.id==='grid'?'Exam mode, 6/8 or more · matrices are in both exams':x.id==='mock'?'15-minute exam timing, pen and paper · aim for 17/20 · guess and move on after a minute':
-    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='codeH'?'Harder codes · exam mode, 6/8 or more · how many, where, which way, symmetry, touching':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':x.id==='fold'?'Exam mode, 6/8 or more · count the layers first, cross out wrong counts':'';
+  const T=C.T,sub=x=>x.id==='grid'?'Exam level, 6/8 or more · count to three rules before you choose':x.id==='mock'?'15-minute exam timing, pen and paper · aim for 17/20 · guess and move on after a minute':
+    x.fix?'your weakest skill from the last mock · Exam mode':x.id==='group'?'Exam mode, 6/8 or more':x.id==='codeH'?'Harder codes · exam mode, 6/8 or more · how many, where, which way, symmetry, touching':x.id==='code'?'Exam mode, 6/8 or more · work out one letter at a time':x.id==='fold'?'Exam mode, 6/8 or more · count the layers first, cross out wrong counts':x.id==='join'?'Exam mode, 6/8 or more · take 20–30 seconds each: match the letters, turn but never flip':'';
   const item=x=>`<li class="${x.done?'ok':''}"><span class="c2tick">${x.done?'✓':''}</span><span><b>${x.fix?'Fix-it: '+(CH2_NAME[x.id]||(CASES.find(c=>c.id===x.id)||{}).title||x.id):CH2_NAME[x.id]}</b>${x.id==='warm'?'':` <span class="muted">· ${sub(x)}</span>`}</span>${x.done?'':`<button class="btn-primary" data-w2="${x.id}">Play</button>`}</li>`;
   let msg;if(T&&T.exam)msg=`<b>${T.exam} exam day. Good luck!</b> No mission today. Pen and paper for every 3D question, never leave a blank, and if one takes more than a minute, guess and move on.`;
   else if(t>'2026-11-27')msg='<b>All three exams done.</b> Well done for every day of practice.';
   else if(t>'2026-11-18')msg=`<b>ISEB and CEM done!</b> <b>${toQuest} day${toQuest===1?'':'s'} to Quest</b> (Friday 27 November). The Quest plan is coming: two new cases (pairing shapes and sequences), then mocks.`;
-  else msg=`${toISEB>0?`<b>${toISEB} day${toISEB===1?'':'s'} to ISEB</b> · `:''}<b>${toCEM} day${toCEM===1?'':'s'} to CEM</b> · ${toQuest} days to Quest. ${T&&T.light?'Light day: warm-up and one matrices round, then rest. ':''}${C.won?'Every mission done: countdown card earned!':C.missed?'A day was missed, so the countdown card is gone, but every mission still helps.':'Do every mission to earn the <b>countdown card</b> and trophy.'}`;
+  else msg=`${toISEB>0?`<b>${toISEB} day${toISEB===1?'':'s'} to ISEB</b> · `:''}<b>${toCEM} day${toCEM===1?'':'s'} to CEM</b> · ${toQuest} days to Quest. ${T&&T.light?(T.d==='2026-11-09'?'Light day before ISEB: three short rounds, then rest. ':'Light day: warm-up and one matrices round, then rest. '):''}${C.won?'Every mission done: countdown card earned!':C.missed?'A day was missed, so the countdown card is gone, but every mission still helps.':'Do every mission to earn the <b>countdown card</b> and trophy.'}`;
   return`<div class="challenge ch2 ${C.won?'won':''}"><div class="ch-day"><b>${toISEB>0?toISEB:toCEM>0?toCEM:Math.max(0,toQuest)}</b><span>days to ${toISEB>0?'ISEB':toCEM>0?'CEM':'Quest'}</span></div>
     <div class="ch-main"><div class="tag">Exam countdown · ISEB Tue 10 Nov · CEM Wed 18 Nov · Quest Fri 27 Nov</div><div class="c2dots">${dots}</div><p style="margin:8px 0 0">${msg}</p>
     ${T&&!T.exam?`<h4 class="c2h">Today’s mission ${T.done?'· done! ✓':''}</h4><ul class="c2list">${T.items.map(item).join('')}</ul>`:''}
@@ -2068,7 +2070,7 @@ const GF={shape:{name:'shape',vals:['circle','square','triangle','hexagon','star
   rot:{name:'direction',vals:[0,1,2,3,4,5,6,7]}};
 const G_ASYM=['arrow','ell','flag','wedge'],G_DIR=['up','up-right','right','down-right','down','down-left','left','up-left'];
 const gVal=(f,v)=>f==='rot'?`pointing ${G_DIR.at(((v%8)+8)%8)}`:f==='corner'?`a small ${v} in the corner`:f==='outline'?`a ${v} outline`:f==='size'?`${v}`:f==='fill'?`${v} shading`:`a ${v}`;
-function genGridA(){const asym=Math.random()<.4,fs=asym?['rot',...shuffle(['fill','corner','outline']).slice(0,1+rnd(2))]:shuffle(['shape','fill','outline','corner','size']).slice(0,2+rnd(2));
+function genGridA(hard){const asym=Math.random()<.4,fs=asym?['rot',...shuffle(['fill','corner','outline']).slice(0,hard?2+rnd(2):1+rnd(2))]:shuffle(['shape','fill','outline','corner','size']).slice(0,hard?3+rnd(2):2+rnd(2));
   const rules={},vals={},base={shape:asym?pick(G_ASYM):'circle',fill:'white',outline:'thin',corner:null,size:'large',rot:0};
   for(const f of fs){if(f==='rot'){const prog=Math.random()<.6;if(prog){const dc=pick([1,2,-1,-2]),dr=pick([1,2,3,4,5,6,7]),b=rnd(8);rules.rot={kind:'prog',dc,dr,b}}
       else{const ang=shuffle([0,2,4,6]).slice(0,3);rules.rot={kind:'row',v:ang}}continue}
@@ -2100,7 +2102,18 @@ function genGridB(){for(let t=0;t<200;t++){const horiz=Math.random()<.5,totalAt=
       ()=>{const add=G_ELS.filter(x=>!ans.els.includes(x));return add.length&&{o:{els:[...ans.els.filter(x=>x!==pick(ans.els)),pick(add)].sort()},f:'swap'}}]);
     for(let g=0;g<20&&opts.length<4;g++){const c=tries[g%3]();if(c&&c.o.els.length&&!seen.has(k(c.o))){seen.add(k(c.o));opts.push(c)}}
     if(opts.length<4)continue;const sh=shuffle(opts);return{fam:'add',grid,mr,mc,horiz,totalAt,opts:sh,ans:sh.findIndex(o=>o.ok)}}return null}
-const genGrid=()=>{for(let t=0;t<30;t++){const X=Math.random()<.25?genGridB():genGridA();if(X)return X}return null};
+/* "What's missing": every row/column uses the same full set of parts; the last picture has exactly the parts the other two DON'T have */
+function genGridC(){for(let t=0;t<200;t++){const horiz=Math.random()<.5,U=shuffle(G_ELS.slice()).slice(0,4+rnd(2)),lines=[];
+    for(let i=0;i<3;i++){const P=shuffle(U.slice()),a=1+rnd(P.length-2),b=1+rnd(P.length-a-1);lines.push([P.slice(0,a),P.slice(a,a+b),P.slice(a+b)])}
+    if(new Set(lines.map(l=>l[2].slice().sort().join())).size<3)continue;
+    const grid=[0,1,2].map(r=>[0,1,2].map(c=>({els:(horiz?lines[r][c]:lines[c][r]).slice().sort()})));
+    const mr=rnd(3),mc=rnd(3),ans=grid[mr][mc];const k=o=>o.els.join(),seen=new Set([k(ans)]),opts=[{o:ans,ok:true}];
+    const others=(horiz?[0,1,2].filter(j=>j!==mc).map(j=>grid[mr][j]):[0,1,2].filter(j=>j!==mr).map(j=>grid[j][mc])).flatMap(o=>o.els);
+    const tries=shuffle([()=>ans.els.length>1&&{o:{els:ans.els.filter(x=>x!==pick(ans.els))}},()=>others.length&&{o:{els:[...new Set([...ans.els,pick(others)])].sort()}},
+      ()=>{const out=G_ELS.filter(x=>!ans.els.includes(x));return out.length&&{o:{els:[...ans.els.filter(x=>x!==pick(ans.els)),pick(out)].sort()}}},()=>others.length&&{o:{els:[...new Set(others)].sort()}}]);
+    for(let g=0;g<30&&opts.length<4;g++){const c=tries[g%4]();if(c&&c.o.els.length&&!seen.has(k(c.o))){seen.add(k(c.o));opts.push(c)}}
+    if(opts.length<4)continue;const sh=shuffle(opts);return{fam:'comp',U,grid,mr,mc,horiz,opts:sh,ans:sh.findIndex(o=>o.ok)}}return null}
+const genGrid=(hard)=>{for(let t=0;t<30;t++){const r=Math.random(),X=hard&&r<.15?genGridC():r<(hard?.33:.25)?genGridB():genGridA(hard);if(X){X.hard=!!hard;return X}}return null};
 function gridCellSVG(o,{w=78,q=false,hl=null}={}){const id='gp'+(++__pid),ink='#222',cx=39,cy=41;
   let s=`<svg viewBox="0 0 78 78" width="${w}" style="max-width:100%;display:block;margin:0 auto;background:#fff;border-radius:4px${hl?`;box-shadow:0 0 0 3px ${hl}`:''}">`;
   if(q)return s+`<rect width="78" height="78" fill="#8a8f99"/><text x="39" y="50" text-anchor="middle" font-size="30" font-weight="800" fill="#fff">?</text></svg>`;
@@ -2122,12 +2135,15 @@ function gridCellSVG(o,{w=78,q=false,hl=null}={}){const id='gp'+(++__pid),ink='#
   return s+'</svg>'}
 function gridSVGq(X,{w=78,showAns=false}={}){return`<div class="mgrid">${[0,1,2].map(r=>[0,1,2].map(c=>{const miss=r===X.mr&&c===X.mc;
   return`<div>${gridCellSVG(X.grid[r][c],{w,q:miss&&!showAns,hl:miss&&showAns?'#22A06B':null})}</div>`}).join('')).join('')}</div>`}
-function gridRuleText(X){if(X.fam==='add'){const pos=['first','middle','last'].at(X.totalAt);
+function gridRuleText(X){if(X.fam==='comp')return[`<b>What’s missing:</b> every ${X.horiz?'row':'column'} uses the same set of parts (${X.U.map(e=>G_ELNAME[e]).join(', ')}). The three pictures share them out: each part appears exactly <b>once</b> in the ${X.horiz?'row':'column'}. So the missing picture has exactly the parts the other two <i>don’t</i> have.`];
+  if(X.fam==='add'){const pos=['first','middle','last'].at(X.totalAt);
     return[`<b>Adding:</b> in each ${X.horiz?'row':'column'}, the ${pos} picture is the other two put together. Everything in the two smaller pictures appears in it, nothing else.`]}
   return X.fs.map(f=>{const R=X.rules[f],n=GF[f].name;if(f==='rot'&&R.kind==='prog')return`<b>Direction:</b> the shape turns ${Math.abs(R.dc)*45}° ${R.dc>0?'clockwise':'anticlockwise'} at each step along the row.`;
     return R.kind==='latin'?`<b>${n[0].toUpperCase()+n.slice(1)}:</b> each one appears once in every row and every column, like a sudoku.`:R.kind==='row'?`<b>${n[0].toUpperCase()+n.slice(1)}:</b> the same all along each row, different in each row${f==='rot'?' (one row is turned or upside down)':''}.`:`<b>${n[0].toUpperCase()+n.slice(1)}:</b> the same all the way down each column.`})}
 function gridNotes(X,i){const a=X.opts[X.ans].o,o=i!=null?X.opts[i]:null;let what='Time ran out.';
-  if(o){if(X.fam==='add'){const miss=a.els.filter(e=>!o.o.els.includes(e)),extra=o.o.els.filter(e=>!a.els.includes(e));
+  if(o){if(X.fam==='comp'){const miss=a.els.filter(e=>!o.o.els.includes(e)),extra=o.o.els.filter(e=>!a.els.includes(e));
+      what=`Answer ${LET[i]} ${miss.length?`is missing the ${miss.map(e=>G_ELNAME[e]).join(' and ')}`:''}${miss.length&&extra.length?', and ':''}${extra.length?`has the ${extra.map(e=>G_ELNAME[e]).join(' and ')}, which is already in another picture in that line`:''}.`}
+    else if(X.fam==='add'){const miss=a.els.filter(e=>!o.o.els.includes(e)),extra=o.o.els.filter(e=>!a.els.includes(e));
       what=`Answer ${LET[i]} ${miss.length?`is missing the ${miss.map(e=>G_ELNAME[e]).join(' and ')}`:''}${miss.length&&extra.length?', and ':''}${extra.length?`has an extra ${extra.map(e=>G_ELNAME[e]).join(' and ')} that isn’t in either of the other pictures`:''}.`}
     else{const f=Object.keys(a).find(k=>JSON.stringify(a[k])!==JSON.stringify(o.o[k]));
       what=`Answer ${LET[i]} gets everything right except the <b>${GF[f].name}</b>: it has ${gVal(f,o.o[f])}, but the grid needs ${gVal(f,a[f])}. ${X.fs.includes(f)?'That’s the rule you missed.':'That feature never changes in this grid.'} Every other answer was one detail away too.`}}
@@ -2135,11 +2151,13 @@ function gridNotes(X,i){const a=X.opts[X.ans].o,o=i!=null?X.opts[i]:null;let wha
     <div class="nb"><h4>What happened</h4><p>${what}</p></div>
     <div class="nb trick"><h4>The rules in this grid</h4><ul>${gridRuleText(X).map(t=>`<li>${t}</li>`).join('')}</ul><p>${TRICK.grid}</p></div>
     <div class="nb trap"><h4>The trap</h4><p><b>Stopping at the first rule.</b> Grids usually have two or three rules running at once. The wrong answers get the main rule right and change one small detail. List every feature on paper, then cross out options one feature at a time.</p></div></div>`}}
-function gridCheck(X){if(X.fam==='add'){const ch=shuffle(['One picture is the other two put together','Each picture appears once per row','The shapes turn a step each time']);
+function gridCheck(X){if(X.fam==='comp'){const ch=shuffle(['The missing picture has the parts the other two don’t have','One picture is the other two put together','The shapes turn a step each time']);
+    return{q:'Which rule is this grid using? List every part you can see in one line.',choices:ch,ans:ch.indexOf('The missing picture has the parts the other two don’t have'),why:gridRuleText(X)[0].replace(/<[^>]+>/g,'')}}
+  if(X.fam==='add'){const ch=shuffle(['One picture is the other two put together','Each picture appears once per row','The shapes turn a step each time']);
     return{q:'Which rule is this grid using? Look at what’s inside each picture.',choices:ch,ans:ch.indexOf('One picture is the other two put together'),why:gridRuleText(X)[0].replace(/<[^>]+>/g,'')}}
   const n=X.fs.length,ch=['1','2','3','4'];return{q:'List the features on paper. How many different features change in this grid?',choices:ch,ans:ch.indexOf(String(n)),
     why:`${n} features change: ${X.fs.map(f=>GF[f].name).join(', ')}. Every one of them has to be right in your answer.`}}
-QB.grid=function(host,lvl=1,opt={}){const X=genGrid();
+QB.grid=function(host,lvl=1,opt={}){const X=genGrid(lvl>=2&&!opt.learn);
   host.innerHTML=`<p class="qtext">Which picture completes the grid? <span class="muted">Tap “Cross out” to rule an option out.</span></p>${gridSVGq(X)}
     ${opt.learn?'<p class="hint">Hint: take one feature at a time (shape, shading, outline, corner shape, size, direction). Does it change along the rows, down the columns, or both?</p>':''}
     <div class="copts four">${X.opts.map((o,i)=>`<div class="copt"><button class="pick" data-i="${i}" aria-label="Answer ${LET[i]}"><span class="lbl">${LET[i]}</span>${gridCellSVG(o.o,{w:80})}</button><button class="xo" aria-pressed="false" aria-label="Cross out ${LET[i]}">✕</button></div>`).join('')}</div>`;
@@ -2153,11 +2171,11 @@ function gridCase(){stopTimer();$('#homeBtn').hidden=false;
       <li><b>For each feature, find its rule.</b> The four rules: <b>once per row and column</b> (like a sudoku) · <b>same along the row</b> · <b>same down the column</b> · <b>turns a step each time</b>. Or <b>adding</b>: one picture is the other two put together.</li>
       <li><b>Cross out one feature at a time.</b> Wrong answers are one detail off, so check every feature, not just the first.</li>
       <li><b>About 40 seconds each.</b> Stuck? Guess and move on. Never leave a blank.</li></ol></div>
-    <div class="row"><button class="btn-primary" id="gLearn">Learn: 6 questions, no timer, hints</button><button id="gExam">Exam mode: 8 timed questions</button><button id="gPace">Paper practice: 12 in 9 minutes</button></div></section>`;
-  const go=learn=>runQuiz({id:learn?null:'grid',tag:`Case 14 · ${learn?'Learn':'Exam mode'}`,title:'Complete the Grid',secs:learn?0:45,level:1,learn,
+    <div class="row"><button class="btn-primary" id="gLearn">Learn: 6 questions, no timer, hints</button><button id="gExam">Exam level: 8 timed questions, 3–4 rules</button><button id="gPace">Paper practice: 12 in 9 minutes</button></div></section>`;
+  const go=learn=>runQuiz({id:learn?null:'grid',tag:`Case 14 · ${learn?'Learn':'Exam mode'}`,title:'Complete the Grid',secs:learn?0:50,level:learn?1:2,learn,
     rule:'<strong>List the features, find a rule for each, cross out one feature at a time.</strong>',plan:repeat('grid',learn?6:8),remake:()=>repeat('grid',learn?6:8)});
   $('#gLearn').onclick=()=>go(true);$('#gExam').onclick=()=>go(false);
-  $('#gPace').onclick=()=>runQuiz({id:null,tag:'Case 14 · Paper practice',title:'Complete the Grid',secs:0,total:9*60,level:1,
+  $('#gPace').onclick=()=>runQuiz({id:null,tag:'Case 14 · Paper practice',title:'Complete the Grid',secs:0,total:9*60,level:2,
     rule:'<strong>12 grids in 9 minutes, one clock for all of them, like the CEM paper.</strong> Stuck? Guess, and move on.',plan:repeat('grid',12),remake:()=>repeat('grid',12)});
   scrollTo(0,0)}
 /* ============ Case 15: Match the Group (Atom "Match to a Group") ============ */
@@ -2442,6 +2460,9 @@ function backfillTrophies(){try{const r=rewards();if(!r.flags.speed10||(r.trophi
   const card=r.cards.find(c=>c.from==='speed10'),win=card?card.d:today(),start=store.get('chStart',null)||win;addTrophy('ch1','10-day challenge','All 8 case files mastered',start<win?start:win,win)}catch(e){}}
 /* half cards: a perfect 20/20 Mock Exam earns half a card (once a day). Shown in the card total as ½. */
 function addHalf(reason){const r=rewards();r.halves=r.halves||[];r.halves.push({d:today(),reason});saveRw(r);toast(`<b>HALF CARD EARNED!</b> ${reason}. Ask for your half card.`,'card')}
+function record0(id,n,of,lvl,a,d){const h=store.get('hist',{});(h[id]=h[id]||[]).push({d,n,of,lvl,a});h[id].sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:0);store.set('hist',h);const b=store.get('best',{}),cur=b[id]?parseInt(b[id]):-1;if(n>cur){b[id]=`${n}/${of}`;store.set('best',b)}}
+function fixMissedMock(){try{if(today()<'2026-11-08')return;if(!hist('mock').some(r=>r.d==='2026-11-08'))record0('mock',18,20,2,null,'2026-11-08')}catch(e){}}
+function backfillHalves(){try{const r=rewards();r.halves=r.halves||[];let ch=false;hist('mock').filter(x=>x.n===x.of).forEach(x=>{if(!r.halves.some(h=>h.d===x.d)){r.halves.push({d:x.d,reason:`Perfect Mock Exam: ${x.n}/${x.of}`});ch=true}});if(ch){r.flags['mockhalf-'+today()]=r.flags['mockhalf-'+today()]||r.halves.some(h=>h.d===today());saveRw(r)}}catch(e){}}
 const cardTotal=r=>{const h=(r.halves||[]).length,n=r.cards.length+Math.floor(h/2);return h%2?(n?n+'½':'½'):String(n)};
 const owedTotal=r=>{const c=Math.max(0,r.cards.length-r.given),h=Math.max(0,(r.halves||[]).length-(r.halfGiven||0));const n=c+Math.floor(h/2);return{n,half:h%2===1,any:c+h>0,txt:h%2?(n?n+'½':'½'):String(n),halvesOwed:h}};
 function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[key]=true;saveRw(r);return true}
@@ -2449,7 +2470,7 @@ function onceFlag(key){const r=rewards();if(r.flags[key])return false;r.flags[ke
 let inCase=false;
 setInterval(()=>{if(!inCase||document.visibilityState!=='visible')return;const r=rewards(),d=today();r.play[d]=(r.play[d]||0)+15;saveRw(r);
   if(r.play[d]>=PLAY_CAP_MIN*60&&onceFlag('rest-'+d))toast(`<b>Case closed for today. Great work!</b> Rest helps your brain lock it in. You can keep going, but stamps for today are done.`,'rank')},15000);
-function collectionHTML(){const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,OW=owedTotal(r),full=r.cards.length>=limit,tot=cardTotal(r),many=tot!=='1';
+function collectionHTML(){fixMissedMock();backfillHalves();const r=rewards(),{spc,limit}=rwSettings(),inMeter=r.stamps.length%spc,OW=owedTotal(r),full=r.cards.length>=limit,tot=cardTotal(r),many=tot!=='1';
   const rk=RANKS[r.rank],nx=RANKS[r.rank+1],pct=nx?Math.round((r.points-rk[1])/(nx[1]-rk[1])*100):100,todayN=r.day[today()]||0;
   const log=r.stamps.slice(-10).reverse().map(s=>`<li><span class="muted">${s.d.slice(5).replace('-','/')}</span> ${s.reason}</li>`).join('')||'<li class="muted">No stamps yet. Finish a daily warm-up to earn the first one.</li>';
   return`<section class="collection"><div class="col-head"><div><div class="tag">Card Collection</div><h3>${rk[0]}</h3>
@@ -2608,7 +2629,7 @@ function gateHTML(k){const cp=CHECKPOINTS[k],ready=unlocked('force')||gateDone(c
     <button class="${ready||passed?'btn-primary':''}" data-cp="${k}" ${ready||passed?'':'disabled'}>${passed?'Take again':'Start test'}</button></div>
     <p class="muted" style="margin:0">${cp.blurb}${passed?'':' Opens when every target below is ticked.'}</p>${passed?'':`<ul class="checks">${items}</ul>`}</div>`}
 function sealedHTML(tab,title,why){return`<div class="folder sealed" data-tab="${tab}" aria-disabled="true"><span class="classified">CLASSIFIED</span><h2>${title}</h2><p>${why}</p></div>`}
-function home(){
+function home(){window.__noCheck=false;
   stopTimer();redraw=null;inCase=false;if(!view.querySelector('#parent'))parentOpen=false;$('#homeBtn').hidden=true;document.onkeydown=null;
   view.innerHTML=`<div class="motto"><b>The detective’s rule:</b> never pick an answer because it looks right. Cross options out, one reason at a time.<br><b>Detective’s kit:</b> keep a pencil and scrap paper next to you every time you play. In the exam you can use them, so practise with them now.</div>
   ${today()>=CD_FROM?cdHTML():ch2HTML()}
@@ -2626,7 +2647,7 @@ function home(){
     <p class="muted" style="margin:0">Every day: the warm-up, plus any case file with a Refresh tag. Every other day: the Mock Exam. Pass both mastery tests to prove she’s exam-ready.</p>
     ${gateHTML('cp1')}${gateHTML('cp2')}
     <div class="folders"><button class="folder" data-tab="FINAL" data-id="mock"><h2>The Mock Exam</h2><p>20 mixed questions covering every question type: 15 minutes for the whole paper (like the real exam), or 45 seconds each. Skill-by-skill report. Aim for 17+.</p><div class="meta"><span>Practice</span><span>${store.get('best',{}).mock?'Best: '+store.get('best',{}).mock:'Not started'}</span></div></button></div></section>
-  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 7 Nov (l)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin:14px 0 4px">Game version 14 Nov (b)</p>
   <details class="mine"><summary>Save and restore</summary>
     <div class="backup"><h4 class="tag" style="margin:0">Back up and restore progress</h4>
       <p class="muted" style="margin:0;font-size:.88rem">Progress is saved in this browser only. Make a backup now and then, and use it to move your progress to another browser or to the GitHub version.</p>
@@ -2726,12 +2747,13 @@ function warmup(){const types=learnedTypes();if(!types.length)return home();
       ${recall.map(t=>`<details class="recall"><summary>${TYPE_NAME[t]}: what’s the trick?</summary><p>${TRICK[t]}</p></details>`).join('')}
       <p style="margin:8px 0 0"><span class="pp">✎ Pen and paper ready, just like in the exam.</span> ${yday.length?'The first questions are on yesterday’s skill. Then a mix of everything you’ve learned so far.':'A mix of everything you’ve learned so far.'}</p>`})}
 function mock(){stopTimer();$('#homeBtn').hidden=false;/* every question type except the net basics (cases 03–05), which are tested inside Edge Buddies */
-  const make=()=>shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',1),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',1),...repeat('group',2),...repeat('join',2),...repeat('code',1),...repeat('codeH',1),...repeat('fold',1),...repeat('grid',2)]);
+  const EXAM=today()>='2026-11-10';
+  const make=()=>EXAM?shuffle([...repeat('grid',3),...repeat('series',2),...repeat('symgrid',1),...repeat('group',2),...repeat('codeH',2),...repeat('hidden',1),...repeat('fold',1),...repeat('edge',2),...repeat('rot',1),...repeat('droneX',1),...repeat('brick',1),...repeat('combine',1),...repeat('join',1),...repeat('odd',1)]):shuffle([...repeat('count',1),...repeat('combine',1),...repeat('brick',1),...repeat('edge',3),...repeat('drone',2),...repeat('rot',2),...repeat('odd',1),...repeat('group',2),...repeat('join',2),...repeat('code',1),...repeat('codeH',1),...repeat('fold',1),...repeat('grid',2)]);
   view.innerHTML=`<section class="sheet"><div class="sheet-head"><div><div class="tag">Exam practice</div><h2>The Mock Exam</h2></div></div>
-    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 mixed questions. Aim for 17 or more.</strong> Choose how the clock works:</div>
+    <div class="rule"><span class="pp">✎ Pen and paper ready, just like in the exam.</span><strong>20 mixed questions. Aim for 17 or more.</strong>${EXAM?' <b>Exam level:</b> harder questions, weighted towards CEM (grids, series, codes), and no working-check prompts, just like the real exam.':''} Choose how the clock works:</div>
     <div class="lessons"><button class="lesson" id="mTotal"><span class="ln">⏱</span><span><b>Exam timing: 15 minutes for all 20</b><span class="muted"> · one clock counts down for the whole paper, like the real exam. Spend longer on hard ones, less on easy ones.</span></span></button>
       <button class="lesson" id="mEach"><span class="ln">45</span><span><b>45 seconds per question</b><span class="muted"> · a fresh timer for every question</span></span></button></div></section>`;
-  const base={id:'mock',title:'The Mock Exam',level:2,mixed:true,plan:make(),remake:make};
+  const base={id:'mock',title:'The Mock Exam',level:2,mixed:true,plan:make(),remake:make,nocheck:EXAM,pen:EXAM?'no prompts this time, like the real exam. Before each answer ask yourself: how many features change? How many layers? Which letter first? Is it flipped or turned? Write your working on paper.':undefined};
   $('#mTotal').onclick=()=>runQuiz({...base,tag:'Mock Exam · Exam timing',secs:0,total:15*60,
     rule:'<span class="pp">✎ Pen and paper ready.</span><strong>15 minutes for 20 questions.</strong> The clock keeps going until you answer, then pauses while you read the notes. Stuck? Cross out what you can, guess, and move on. Don’t let one question eat the clock.'});
   $('#mEach').onclick=()=>runQuiz({...base,tag:'Mock Exam · 45s per question',secs:45,
